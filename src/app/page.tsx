@@ -35,7 +35,7 @@ export default function Home() {
             INA Ornamental Fish | West African Ornamental Fish Exporter
           </p>
           <h1 className="text-4xl md:text-6xl font-black leading-[1.06] max-w-4xl">
-            Bringing Africa's Rarest and Most Vibrant Species to the World
+            Bringing Africa&apos;s Rarest and Most Vibrant Species to the World
           </h1>
           <p className="mt-6 max-w-3xl text-sky-100 text-base md:text-lg leading-relaxed">
             Expert exporter and importer of premium West African ornamental

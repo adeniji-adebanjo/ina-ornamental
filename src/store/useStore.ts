@@ -22,7 +22,9 @@ interface StoreState {
   quoteModalOpen: boolean;
   setQuoteModalOpen: (open: boolean) => void;
   selectedProduct: FishProduct | null;
+  selectedSize: string;
   setSelectedProduct: (product: FishProduct | null) => void;
+  setSelectedSize: (size: string) => void;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -81,5 +83,7 @@ export const useStore = create<StoreState>((set, get) => ({
   quoteModalOpen: false,
   setQuoteModalOpen: (open) => set({ quoteModalOpen: open }),
   selectedProduct: null,
+  selectedSize: "",
   setSelectedProduct: (product) => set({ selectedProduct: product }),
+  setSelectedSize: (size) => set({ selectedSize: size }),
 }));

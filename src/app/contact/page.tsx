@@ -13,7 +13,7 @@ export default function ContactPage() {
             Reach Out To Us
           </p>
           <h1 className="text-3xl md:text-5xl font-black leading-tight">
-            Let's Build a Reliable Supply Partnership
+            Let&apos;s Build a Reliable Supply Partnership
           </h1>
           <p className="mt-5 text-slate-300 max-w-2xl leading-relaxed">
             For business inquiries, species availability, and shipment planning,

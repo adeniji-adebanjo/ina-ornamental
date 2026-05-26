@@ -2,17 +2,15 @@
 
 import Image from "next/image";
 import { useStore } from "@/store/useStore";
-import { useEffect, useState } from "react";
 
 export default function ProductModal() {
-  const { selectedProduct, setSelectedProduct, addToCart } = useStore();
-  const [selectedSize, setSelectedSize] = useState("");
-
-  useEffect(() => {
-    if (selectedProduct) {
-      setSelectedSize(selectedProduct.sizes[0] || "");
-    }
-  }, [selectedProduct]);
+  const {
+    selectedProduct,
+    selectedSize,
+    setSelectedSize,
+    setSelectedProduct,
+    addToCart,
+  } = useStore();
 
   if (!selectedProduct) return null;
 
