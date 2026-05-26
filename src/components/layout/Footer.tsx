@@ -25,7 +25,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-sky-500 to-emerald-500 flex items-center justify-center text-white font-bold text-lg">
                 iNA
               </div>
               <div>

@@ -28,8 +28,8 @@ export default function Home() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_#10b981_0,_transparent_45%),radial-gradient(circle_at_bottom_left,_#0ea5e9_0,_transparent_40%)]" />
+      <section className="relative overflow-hidden bg-linear-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,#10b981_0,transparent_45%),radial-gradient(circle_at_bottom_left,#0ea5e9_0,transparent_40%)]" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <p className="text-xs uppercase tracking-[0.25em] text-sky-200 font-semibold mb-4">
             INA Ornamental Fish | West African Ornamental Fish Exporter

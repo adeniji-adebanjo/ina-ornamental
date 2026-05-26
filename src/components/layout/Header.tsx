@@ -35,7 +35,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-sky-800 to-emerald-600 flex items-center justify-center text-white font-bold text-lg md:text-xl">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-linear-to-br from-sky-800 to-emerald-600 flex items-center justify-center text-white font-bold text-lg md:text-xl">
               iNA
             </div>
             <div className="hidden sm:block">
