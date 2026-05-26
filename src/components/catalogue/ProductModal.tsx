@@ -18,14 +18,14 @@ export default function ProductModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={() => setSelectedProduct(null)}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full sm:max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-300"
       >
-        <div className="relative aspect-[16/8] bg-gradient-to-br from-sky-50 to-emerald-50">
+        <div className="relative aspect-16/8 bg-linear-to-br from-sky-50 to-emerald-50">
           <Image
             src={selectedProduct.imageUrl}
             alt={selectedProduct.commonName}

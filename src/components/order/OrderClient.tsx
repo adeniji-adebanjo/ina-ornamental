@@ -16,7 +16,7 @@ export default function OrderClient() {
 
   return (
     <>
-      <section className="bg-gradient-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">
+      <section className="bg-linear-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200 mb-3">
             iNA Ornamental Portal

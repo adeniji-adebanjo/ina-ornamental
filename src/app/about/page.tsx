@@ -15,7 +15,7 @@ const highlights = [
 export default function AboutPage() {
   return (
     <>
-      <section className="bg-gradient-to-br from-sky-900 via-sky-800 to-emerald-800 text-white">
+      <section className="bg-linear-to-br from-sky-900 via-sky-800 to-emerald-800 text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20">
           <p className="text-xs uppercase tracking-[0.2em] text-sky-200 font-semibold mb-3">
             About INA Ornamental Fish

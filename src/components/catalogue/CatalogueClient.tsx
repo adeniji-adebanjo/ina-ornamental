@@ -39,7 +39,7 @@ export default function CatalogueClient({ products }: CatalogueClientProps) {
 
   return (
     <>
-      <section className="bg-gradient-to-b from-sky-50 to-white border-b border-sky-100">
+      <section className="bg-linear-to-b from-sky-50 to-white border-b border-sky-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
           <p className="text-xs font-semibold tracking-[0.18em] text-sky-700 uppercase mb-3">
             B2B GLOBAL EXPORT • LAGOS, NIGERIA
