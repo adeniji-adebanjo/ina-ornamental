@@ -38,9 +38,9 @@ export default function Home() {
             Bringing Africa's Rarest and Most Vibrant Species to the World
           </h1>
           <p className="mt-6 max-w-3xl text-sky-100 text-base md:text-lg leading-relaxed">
-            Expert exporter and importer of premium West African ornamental fish.
-            We specialize in bichirs, puffers, cichlids, tetras, catfish, and
-            unique oddballs for B2B wholesale and retail aquarium markets.
+            Expert exporter and importer of premium West African ornamental
+            fish. We specialize in bichirs, puffers, cichlids, tetras, catfish,
+            and unique oddballs for B2B wholesale and retail aquarium markets.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
@@ -62,9 +62,16 @@ export default function Home() {
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center">
-              <p className="text-2xl md:text-3xl font-black text-sky-800">{stat.value}</p>
-              <p className="text-xs md:text-sm text-slate-500 mt-1">{stat.label}</p>
+            <div
+              key={stat.label}
+              className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center"
+            >
+              <p className="text-2xl md:text-3xl font-black text-sky-800">
+                {stat.value}
+              </p>
+              <p className="text-xs md:text-sm text-slate-500 mt-1">
+                {stat.label}
+              </p>
             </div>
           ))}
         </div>
@@ -72,12 +79,21 @@ export default function Home() {
 
       <section className="bg-slate-50 border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-          <h2 className="text-2xl md:text-3xl font-black text-slate-900">Why Global Buyers Choose INA Export</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900">
+            Why Global Buyers Choose INA Export
+          </h2>
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             {features.map((feature) => (
-              <article key={feature.title} className="bg-white border border-slate-100 rounded-2xl p-5 md:p-6 shadow-sm">
-                <h3 className="font-bold text-slate-900 leading-tight">{feature.title}</h3>
-                <p className="mt-3 text-sm text-slate-600 leading-relaxed">{feature.body}</p>
+              <article
+                key={feature.title}
+                className="bg-white border border-slate-100 rounded-2xl p-5 md:p-6 shadow-sm"
+              >
+                <h3 className="font-bold text-slate-900 leading-tight">
+                  {feature.title}
+                </h3>
+                <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+                  {feature.body}
+                </p>
               </article>
             ))}
           </div>
@@ -87,21 +103,39 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-sky-700 font-semibold">Best Sellers</p>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">Featured Species</h2>
+            <p className="text-xs uppercase tracking-[0.2em] text-sky-700 font-semibold">
+              Best Sellers
+            </p>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">
+              Featured Species
+            </h2>
           </div>
-          <Link href="/catalogue" className="text-sm font-semibold text-sky-700 hover:text-sky-600">
+          <Link
+            href="/catalogue"
+            className="text-sm font-semibold text-sky-700 hover:text-sky-600"
+          >
             View All Species →
           </Link>
         </div>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {featured.map((fish) => (
-            <article key={fish.id} className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-xs uppercase tracking-wider text-emerald-700 font-semibold">{fish.category}</p>
-              <h3 className="text-lg font-bold text-slate-900 mt-1">{fish.commonName}</h3>
-              <p className="text-sm italic text-sky-700">{fish.scientificName}</p>
-              <p className="text-sm text-slate-500 mt-3 line-clamp-2">{fish.description}</p>
+            <article
+              key={fish.id}
+              className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <p className="text-xs uppercase tracking-wider text-emerald-700 font-semibold">
+                {fish.category}
+              </p>
+              <h3 className="text-lg font-bold text-slate-900 mt-1">
+                {fish.commonName}
+              </h3>
+              <p className="text-sm italic text-sky-700">
+                {fish.scientificName}
+              </p>
+              <p className="text-sm text-slate-500 mt-3 line-clamp-2">
+                {fish.description}
+              </p>
               <Link
                 href="/order"
                 className="mt-4 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-600"
@@ -116,9 +150,13 @@ export default function Home() {
       <section className="bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black">Need Live Inventory from WordPress?</h2>
+            <h2 className="text-2xl md:text-3xl font-black">
+              Need Live Inventory from WordPress?
+            </h2>
             <p className="mt-2 text-slate-300 max-w-2xl">
-              This app is prepared for headless WordPress integration so your team can manage products, categories, and stock status from a familiar CMS workflow.
+              This app is prepared for headless WordPress integration so your
+              team can manage products, categories, and stock status from a
+              familiar CMS workflow.
             </p>
           </div>
           <Link

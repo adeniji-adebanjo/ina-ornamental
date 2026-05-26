@@ -26,8 +26,8 @@ export default function AboutPage() {
           <p className="mt-5 text-sky-100 max-w-3xl leading-relaxed">
             As a leading West African ornamental fish exporter and a subsidiary
             of Monehin Global Fish Ltd. Nigeria, INA Ornamental Fish has been
-            serving international aquarium businesses with premium quality species for
-            over two decades.
+            serving international aquarium businesses with premium quality
+            species for over two decades.
           </p>
         </div>
       </section>
@@ -35,26 +35,39 @@ export default function AboutPage() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
         <div className="bg-white border border-slate-100 rounded-2xl p-6 md:p-8 shadow-sm">
           <p className="text-slate-600 leading-relaxed">
-            Our facilities are equipped with modern systems that help us acclimate
-            wild-caught species to aquarium conditions. We specialize in freshwater
-            ornamental fishes, crustaceans, molluscs, amphibians, and other exotic
-            aquatic animals from West Africa. Every shipment goes through careful
-            conditioning, packing, and compliance checks to ensure healthy arrivals
-            in destination countries.
+            Our facilities are equipped with modern systems that help us
+            acclimate wild-caught species to aquarium conditions. We specialize
+            in freshwater ornamental fishes, crustaceans, molluscs, amphibians,
+            and other exotic aquatic animals from West Africa. Every shipment
+            goes through careful conditioning, packing, and compliance checks to
+            ensure healthy arrivals in destination countries.
           </p>
           <p className="text-slate-600 leading-relaxed mt-4">
             We build long-term B2B partnerships by focusing on quality,
-            communication, and operational consistency. Our mission is to make your
-            stocking process simple, profitable, and reliable.
+            communication, and operational consistency. Our mission is to make
+            your stocking process simple, profitable, and reliable.
           </p>
         </div>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {highlights.map((item) => (
-            <div key={item} className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-start gap-3">
+            <div
+              key={item}
+              className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-start gap-3"
+            >
               <span className="mt-0.5 text-emerald-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </span>
               <p className="text-sm text-slate-700">{item}</p>

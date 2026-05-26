@@ -18,7 +18,7 @@ function mapWPProductToFish(wp: WPProduct): FishProduct {
     category: acf.category || "Oddballs",
     classOrder: acf.class_order || "",
     description: stripHtml(wp.excerpt?.rendered || wp.content?.rendered || ""),
-    imageUrl: media?.source_url || "/images/fish-placeholder.jpg",
+    imageUrl: media?.source_url || "/images/fish-placeholder.svg",
     sizes: acf.sizes ? acf.sizes.split(",").map((s: string) => s.trim()) : [],
     tags: acf.tags ? acf.tags.split(",").map((t: string) => t.trim()) : [],
     inStock: acf.in_stock !== false,

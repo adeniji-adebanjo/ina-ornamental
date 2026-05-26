@@ -29,7 +29,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col"
     >
       <div className="relative aspect-[4/3] bg-gradient-to-br from-sky-50 to-emerald-50 overflow-hidden">
-        {!imgError && product.imageUrl !== "/images/fish-placeholder.jpg" ? (
+        {!imgError && product.imageUrl !== "/images/fish-placeholder.svg" ? (
           <Image
             src={product.imageUrl}
             alt={product.commonName}
