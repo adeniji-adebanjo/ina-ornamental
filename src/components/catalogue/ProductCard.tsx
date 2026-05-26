@@ -10,8 +10,11 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { addToCart, setSelectedProduct, setSelectedSize: setStoreSize } =
-    useStore();
+  const {
+    addToCart,
+    setSelectedProduct,
+    setSelectedSize: setStoreSize,
+  } = useStore();
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] || "");
   const [imgError, setImgError] = useState(false);
   const [added, setAdded] = useState(false);
