@@ -1,6 +1,6 @@
 import { FishProduct } from "@/types";
 
-const PLACEHOLDER = "/images/fish-placeholder.jpg";
+const PLACEHOLDER = "/images/fish-placeholder.svg";
 
 export const fishProducts: FishProduct[] = [
   {

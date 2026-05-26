@@ -37,31 +37,57 @@ export default function ProductModal() {
             onClick={() => setSelectedProduct(null)}
             className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow flex items-center justify-center"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
         <div className="p-5 sm:p-6">
-          <h3 className="text-2xl font-bold text-slate-900">{selectedProduct.commonName}</h3>
-          <p className="text-emerald-700 italic mt-1">{selectedProduct.scientificName}</p>
+          <h3 className="text-2xl font-bold text-slate-900">
+            {selectedProduct.commonName}
+          </h3>
+          <p className="text-emerald-700 italic mt-1">
+            {selectedProduct.scientificName}
+          </p>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Category</p>
-              <p className="font-semibold text-slate-800">{selectedProduct.category}</p>
+              <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">
+                Category
+              </p>
+              <p className="font-semibold text-slate-800">
+                {selectedProduct.category}
+              </p>
             </div>
             <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Class/Order</p>
-              <p className="font-semibold text-slate-800">{selectedProduct.classOrder || "-"}</p>
+              <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">
+                Class/Order
+              </p>
+              <p className="font-semibold text-slate-800">
+                {selectedProduct.classOrder || "-"}
+              </p>
             </div>
           </div>
 
-          <p className="mt-4 text-slate-600 leading-relaxed">{selectedProduct.description}</p>
+          <p className="mt-4 text-slate-600 leading-relaxed">
+            {selectedProduct.description}
+          </p>
 
           <div className="mt-5">
-            <p className="text-sm font-semibold text-slate-700 mb-2">Available Sizes</p>
+            <p className="text-sm font-semibold text-slate-700 mb-2">
+              Available Sizes
+            </p>
             <div className="flex flex-wrap gap-2">
               {selectedProduct.sizes.map((size) => (
                 <button
@@ -82,7 +108,10 @@ export default function ProductModal() {
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => {
-                addToCart(selectedProduct, selectedSize || selectedProduct.sizes[0] || "");
+                addToCart(
+                  selectedProduct,
+                  selectedSize || selectedProduct.sizes[0] || "",
+                );
                 setSelectedProduct(null);
               }}
               className="flex-1 bg-sky-800 hover:bg-sky-700 text-white font-semibold py-3 rounded-xl transition-colors"

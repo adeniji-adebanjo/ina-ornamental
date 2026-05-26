@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@/store/useStore";
 
 const navLinks = [
@@ -16,11 +16,12 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  if (typeof window !== "undefined") {
-    window.addEventListener("scroll", () => {
-      setIsScrolled(window.scrollY > 20);
-    });
-  }
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <header

@@ -40,17 +40,33 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-sky-300">
-            <svg className="w-14 h-14 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            <svg
+              className="w-14 h-14 mb-2 opacity-50"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
             </svg>
-            <span className="text-xs font-medium text-sky-400 px-2 text-center">{product.commonName}</span>
+            <span className="text-xs font-medium text-sky-400 px-2 text-center">
+              {product.commonName}
+            </span>
           </div>
         )}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           {product.featured && (
-            <span className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full uppercase">Featured</span>
+            <span className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full uppercase">
+              Featured
+            </span>
           )}
-          <span className={`px-2 py-0.5 text-white text-[10px] font-bold rounded-full uppercase ${product.inStock ? "bg-emerald-500" : "bg-red-500"}`}>
+          <span
+            className={`px-2 py-0.5 text-white text-[10px] font-bold rounded-full uppercase ${product.inStock ? "bg-emerald-500" : "bg-red-500"}`}
+          >
             {product.inStock ? "In Stock" : "Sold Out"}
           </span>
         </div>
@@ -61,11 +77,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           <h3 className="font-bold text-slate-900 text-lg leading-tight group-hover:text-sky-700 transition-colors">
             {product.commonName}
           </h3>
-          <p className="text-sm text-emerald-700 italic mt-0.5">{product.scientificName}</p>
+          <p className="text-sm text-emerald-700 italic mt-0.5">
+            {product.scientificName}
+          </p>
           <span className="inline-block mt-2 text-xs font-medium text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full">
             {product.category}
           </span>
-          <p className="text-sm text-slate-500 mt-2 line-clamp-2">{product.description}</p>
+          <p className="text-sm text-slate-500 mt-2 line-clamp-2">
+            {product.description}
+          </p>
         </div>
 
         <div className="mt-4 pt-3 border-t border-slate-100">
@@ -94,8 +114,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               added
                 ? "bg-emerald-600 text-white"
                 : product.inStock
-                ? "bg-sky-800 hover:bg-sky-700 text-white"
-                : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                  ? "bg-sky-800 hover:bg-sky-700 text-white"
+                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
             }`}
           >
             {added ? "Added" : "Add to Quote"}
