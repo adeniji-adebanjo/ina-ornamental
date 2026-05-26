@@ -10,7 +10,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { addToCart, setSelectedProduct, setSelectedSize } = useStore();
+  const { addToCart, setSelectedProduct, setSelectedSize: setStoreSize } =
+    useStore();
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] || "");
   const [imgError, setImgError] = useState(false);
   const [added, setAdded] = useState(false);
@@ -27,7 +28,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <article
       onClick={() => {
         setSelectedProduct(product);
-        setSelectedSize(product.sizes[0] || "");
+        setStoreSize(product.sizes[0] || "");
       }}
       className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col"
     >
