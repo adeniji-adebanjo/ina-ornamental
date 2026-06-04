@@ -13,15 +13,63 @@ import { toast } from "sonner";
 export default function OrderClient() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useStore();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [orderRef, setOrderRef] = useState("");
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
-    toast.success("Quote request submitted!", {
-      description: "Our team will contact you shortly.",
-    });
+    if (cart.length === 0) return;
+
+    setSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+
+    const body = {
+      customer_name: formData.get("customer_name") as string,
+      company_name: formData.get("company_name") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+      country: formData.get("country") as string,
+      delivery_address: formData.get("delivery_address") as string,
+      notes: formData.get("notes") as string,
+      groups: [
+        {
+          name: "Order A",
+          items: cart.map((item) => ({
+            species_id: item.product.slug, // used as reference
+            species_name: item.product.commonName,
+            scientific_name: item.product.scientificName,
+            size: item.selectedSize,
+            quantity: item.quantity,
+          })),
+        },
+      ],
+    };
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setOrderRef(data.order_reference);
+        setSubmitted(true);
+        clearCart();
+        toast.success("Order submitted!", {
+          description: `Reference: ${data.order_reference}`,
+        });
+      } else {
+        const err = await res.json().catch(() => null);
+        toast.error(err?.error || "Failed to submit order");
+      }
+    } catch {
+      toast.error("Network error. Please try again.");
+    }
+    setSubmitting(false);
   };
 
   return (
@@ -172,11 +220,13 @@ export default function OrderClient() {
                   <Card className="bg-emerald-50 border-emerald-200 rounded-xl">
                     <CardContent className="p-4">
                       <h3 className="font-semibold text-emerald-800">
-                        Quote request received
+                        Order submitted successfully
                       </h3>
                       <p className="text-sm text-emerald-700 mt-1">
-                        Thank you. Our team will contact you shortly via email
-                        or WhatsApp.
+                        Reference: <strong>{orderRef}</strong>
+                      </p>
+                      <p className="text-sm text-emerald-700 mt-1">
+                        Our team will contact you shortly via email or WhatsApp.
                       </p>
                     </CardContent>
                   </Card>
@@ -184,30 +234,41 @@ export default function OrderClient() {
                   <form className="space-y-3" onSubmit={handleSubmit}>
                     <Input
                       required
+                      name="customer_name"
                       placeholder="Full Name"
                       className="rounded-xl h-10"
                     />
                     <Input
+                      name="company_name"
                       placeholder="Company Name"
                       className="rounded-xl h-10"
                     />
                     <Input
                       required
+                      name="email"
                       type="email"
                       placeholder="Email Address"
                       className="rounded-xl h-10"
                     />
                     <Input
                       required
+                      name="phone"
                       placeholder="WhatsApp / Phone"
                       className="rounded-xl h-10"
                     />
                     <Input
                       required
+                      name="country"
                       placeholder="Country"
                       className="rounded-xl h-10"
                     />
+                    <Input
+                      name="delivery_address"
+                      placeholder="Delivery Address"
+                      className="rounded-xl h-10"
+                    />
                     <Textarea
+                      name="notes"
                       placeholder="Additional notes (species preference, shipment timeline, special requests)"
                       rows={4}
                       className="rounded-xl"
@@ -215,14 +276,14 @@ export default function OrderClient() {
 
                     <Button
                       type="submit"
-                      disabled={cart.length === 0}
+                      disabled={cart.length === 0 || submitting}
                       className={`w-full rounded-xl h-11 ${
                         cart.length === 0
                           ? "bg-slate-300 cursor-not-allowed"
                           : "bg-sky-800 hover:bg-sky-700 text-white"
                       }`}
                     >
-                      Submit Quote Request
+                      {submitting ? "Submitting..." : "Submit Order"}
                     </Button>
                   </form>
                 )}

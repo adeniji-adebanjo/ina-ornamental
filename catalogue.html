@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INA Ornamental Fish • Premium West African Ornamental Fish</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Montserrat', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            deep: '#040b16',
+                            blue: '#0a192f',
+                            accent: '#64ffda',
+                            gold: '#d4af37'
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: 0, transform: 'translateY(30px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #040b16; 
+            color: #e2e8f0;
+        }
+        .heading-font { letter-spacing: -1px; }
+        .glass {
+            background: rgba(10, 25, 47, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(100, 255, 218, 0.3);
+            box-shadow: 0 20px 40px -10px rgba(100, 255, 218, 0.1);
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .modal-enter { animation: modalPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .img-zoom:hover img { transform: scale(1.08); }
+        .hero-bg {
+            background: radial-gradient(circle at center, rgba(10, 25, 47, 0) 0%, #040b16 100%),
+                        url('https://inaornamentalfish.com/wp-content/uploads/2024/04/Phago-maculatus-Phago-2.jpg?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: #64ffda; box-shadow: 0 0 0 1px #64ffda;
+        }
+        /* Tab styling */
+        .tab-btn {
+            white-space: nowrap;
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #94a3b8;
+            transition: all 0.3s ease;
+        }
+        .tab-btn:hover { border-color: #64ffda; color: #fff; }
+        .tab-btn.active {
+            background: #64ffda;
+            color: #0a192f;
+            border-color: #64ffda;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-brand-accent selection:text-brand-blue">
+
+    <nav class="glass fixed w-full top-0 z-50">
+    <div class="max-w-screen-2xl mx-auto px-6 lg:px-12 py-4 flex items-center justify-between">
+        
+        <a href="https://inaornamentalfish.com" class="flex items-center gap-x-4 group cursor-pointer">
+            <img src="https://inaornamentalfish.com/wp-content/uploads/2023/04/cropped-cropped-without-backgound-2022.png" alt="INA Export Logo" class="h-12 w-auto object-contain transition-transform group-hover:scale-105">
+            
+            <div class="hidden sm:flex flex-col">
+                <h1 class="heading-font text-2xl font-bold text-white tracking-wider group-hover:text-brand-accent transition-colors">INA Ornamental Fish</h1>
+                <p class="text-[10px] text-brand-accent tracking-[0.2em] uppercase">West African Exotics</p>
+            </div>
+        </a>
+        <div class="hidden lg:flex items-center gap-x-8 text-sm font-medium tracking-wide">
+            <a href="#best-sellers" class="hover:text-brand-accent transition-colors">Best Sellers</a>
+            <a href="#catalogue" class="hover:text-brand-accent transition-colors">Catalogue</a>
+            <a href="#why-us" class="hover:text-brand-accent transition-colors">Why Us</a>
+            <a href="#contact" class="px-6 py-2.5 rounded-full border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-brand-blue transition-all">
+                Wholesale Inquiry
+            </a>
+        </div>
+        <div class="lg:hidden text-2xl text-brand-accent">☰</div>
+    </div>
+</nav>
+
+    <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 hero-bg min-h-[90vh] flex items-center">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-12 relative z-10 w-full">
+            <div class="max-w-3xl animate-fade-in-up">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-brand-accent text-xs font-semibold tracking-widest uppercase mb-6 border-brand-accent/30">
+                    <span class="w-2 h-2 rounded-full bg-brand-accent animate-pulse"></span>
+                    B2B Global Export • Lagos, Nigeria
+                </div>
+                <h1 class="heading-font text-5xl lg:text-7xl font-bold text-white leading-[1.1] mb-6">
+                    Premium West African <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-blue-400">Ornamental Fish</span>
+                </h1>
+                <p class="text-lg lg:text-xl text-slate-300 font-light leading-relaxed mb-10 max-w-2xl">
+                    Sustainably sourced. Expertly quarantined. Delivered worldwide with a live arrival guarantee. We supply international aquarium retailers, wholesalers, and specialized collectors with the rarest species.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="#catalogue" class="bg-brand-accent text-brand-blue font-semibold px-8 py-4 rounded-sm text-center hover:bg-white transition-colors tracking-wide">
+                        Browse Catalogue
+                    </a>
+                    <a href="javascript:contactWhatsApp()" class="glass text-white font-medium px-8 py-4 rounded-sm text-center hover:bg-white/10 transition-colors tracking-wide border-white/20">
+                        Chat on WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="best-sellers" class="py-20 border-t border-white/5 bg-[#061022]">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-12">
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h2 class="heading-font text-3xl lg:text-4xl font-bold text-white mb-2">Best Sellers</h2>
+                    <p class="text-slate-400 text-sm">Our most requested Nigerian exports.</p>
+                </div>
+                <a href="#catalogue" class="text-brand-accent text-sm hover:underline hidden sm:block">View All Species →</a>
+            </div>
+            
+            <div id="best-sellers-grid" class="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide">
+                <p class="text-slate-500 text-sm py-10" id="best-sellers-loading">Loading top exports...</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="catalogue" class="py-24 relative">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-12">
+            
+            <div class="flex flex-col lg:flex-row justify-between items-end mb-8 gap-6">
+                <div>
+                    <h2 class="heading-font text-3xl lg:text-5xl font-bold text-white mb-4">Species Catalogue</h2>
+                    <p class="text-slate-400 max-w-xl">Explore our current inventory. Data is synced live.</p>
+                </div>
+                
+                <div class="w-full lg:w-auto">
+                    <div class="relative glass-card rounded-md px-4 py-2 flex items-center">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 01-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input id="search-input" type="text" placeholder="Search species..." 
+                               onkeyup="applyFilters()"
+                               class="bg-transparent border-none text-sm ml-3 w-full sm:w-64 placeholder-slate-500 text-white focus:ring-0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex overflow-x-auto gap-3 pb-8 scrollbar-hide mb-4" id="category-tabs">
+    <button class="tab-btn active" onclick="setCategory('all', this)">All Species</button>
+    <button class="tab-btn" onclick="setCategory('monster', this)">Monster Fish</button>
+    <button class="tab-btn" onclick="setCategory('tetra', this)">Tetras</button>
+    <button class="tab-btn" onclick="setCategory('polypterus', this)">Polypterus</button>
+    <button class="tab-btn" onclick="setCategory('puffers', this)">Puffers</button>
+    <button class="tab-btn" onclick="setCategory('cute', this)">Cute</button>
+    <button class="tab-btn" onclick="setCategory('cichlids', this)">Cichlids</button>
+    <button class="tab-btn" onclick="setCategory('crabs', this)">Crabs</button>
+    <button class="tab-btn" onclick="setCategory('aggressive', this)">Aggressive</button>
+    <button class="tab-btn" onclick="setCategory('gentle', this)">Gentle</button>
+    <button class="tab-btn" onclick="setCategory('oddballs', this)">Oddballs</button>
+</div>
+
+            <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                </div>
+            
+            <div id="no-results" class="hidden text-center py-20 text-slate-500">
+                No species match your criteria. Please adjust your search.
+            </div>
+        </div>
+    </section>
+
+    <footer id="contact" class="bg-black py-12 border-t border-white/5">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-12 grid grid-cols-1 md:grid-cols-4 gap-10">
+            <div class="col-span-1 md:col-span-2">
+                <div class="flex items-center gap-x-3 mb-6">
+                    <div class="w-8 h-8 rounded-full bg-brand-accent flex items-center justify-center text-brand-blue font-bold">I</div>
+                    <h2 class="heading-font text-xl font-bold text-white tracking-widest">INA EXPORT</h2>
+                </div>
+                <p class="text-slate-500 text-sm max-w-sm mb-6">Premium exporters of Nigerian and West African ornamental fishes. Connecting the wild beauty of Africa to global aquariums with integrity and expertise.</p>
+            </div>
+            
+            <div>
+                <h4 class="text-white font-semibold mb-6 uppercase tracking-wider text-sm">Quick Links</h4>
+                <ul class="space-y-3 text-sm text-slate-500">
+                    <li><a href="#best-sellers" class="hover:text-brand-accent">Best Sellers</a></li>
+                    <li><a href="#catalogue" class="hover:text-brand-accent">Live Inventory</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-semibold mb-6 uppercase tracking-wider text-sm">Contact Us</h4>
+                <ul class="space-y-3 text-sm text-slate-500">
+                    <li>WhatsApp: <a href="javascript:contactWhatsApp()" class="text-brand-accent hover:underline">+234 816 885 0307</a></li>
+                    <li>Email 1: <a href="mailto:alfred@inaornamentalfish.com" class="hover:text-brand-accent">alfred@inaornamentalfish.com</a></li>
+                    <li>Email 2: <a href="mailto:inaornmental@gmail.com" class="hover:text-brand-accent">inaornmental@gmail.com</a></li>
+                    <li>Location: Lagos, Nigeria</li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-12 mt-12 pt-8 border-t border-white/5 text-center text-xs text-slate-600">
+            &copy; 2026 INA Ornamental Fish Export. All rights reserved.
+        </div>
+    </footer>
+
+    <div onclick="if(event.target.id === 'detail-modal') hideDetailModal()" id="detail-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 lg:p-10">
+        <div onclick="event.stopImmediatePropagation()" class="modal-enter w-full max-w-5xl bg-[#0a192f] border border-white/10 rounded-xl overflow-hidden shadow-2xl relative">
+            <button onclick="hideDetailModal()" class="absolute top-4 right-6 text-4xl text-slate-400 hover:text-white z-10">&times;</button>
+            <div class="flex flex-col lg:flex-row h-full lg:max-h-[80vh] overflow-y-auto scrollbar-hide">
+                <div class="lg:w-1/2 bg-[#040b16] relative p-6 flex flex-col justify-center">
+                    <img id="modal-main-image" class="w-full aspect-[4/3] object-cover rounded-lg border border-white/5 shadow-lg" alt="">
+                </div>
+                <div class="lg:w-1/2 p-8 lg:p-12 flex flex-col">
+                    <div class="mb-2">
+                        <span id="modal-origin" class="text-xs font-bold text-brand-accent tracking-widest uppercase border border-brand-accent/30 px-3 py-1 rounded-full"></span>
+                    </div>
+                    <h1 id="modal-name" class="heading-font text-3xl lg:text-4xl font-bold text-white mt-4"></h1>
+                    <p id="modal-sci" class="text-brand-gold italic text-lg mb-6 font-serif"></p>
+                    <p id="modal-desc" class="text-slate-400 text-sm leading-relaxed flex-1"></p>
+                    <div class="grid grid-cols-2 gap-6 my-8 py-6 border-y border-white/10">
+                        <div>
+                            <div class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Export Size</div>
+                            <div id="modal-size" class="text-white text-xl font-medium"></div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Box Quantity</div>
+                            <div id="modal-qty" class="text-white text-xl font-medium"></div>
+                        </div>
+                    </div>
+                    <div class="mt-auto pt-4">
+                        <button onclick="contactWhatsAppCurrent()" class="w-full bg-[#25D366] hover:bg-[#20b858] text-white py-4 rounded-sm flex items-center justify-center gap-3 text-sm font-bold uppercase tracking-wider transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.485-.888-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.569-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.48 0 1.463 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 20.75c-4.97 0-9-4.03-9-9s4.03-9 9-9 9 4.03 9 9-4.03 9-9 9z"/></svg>
+                            Inquire via WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="contactWhatsApp()" class="fixed bottom-8 right-8 bg-[#25D366] text-white rounded-full w-14 h-14 flex items-center justify-center text-3xl shadow-xl hover:-translate-y-1 transition-transform z-40 ring-4 ring-[#25D366]/30">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.485-.888-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.569-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.48 0 1.463 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 20.75c-4.97 0-9-4.03-9-9s4.03-9 9-9 9 4.03 9 9-4.03 9-9 9z"/></svg>
+    </button>
+
+       <script>
+    // 1. YOUR SETTINGS
+    const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxt7zdT9AI4m3So--uVHcP-BRSTaQMBwL0xeNYt2SObVsb35YNGQDNQ_v0RkzJQB7fm/exec"; 
+    const WHATSAPP_NUMBER = "2348168850307";
+
+    let FISH = [];
+    let ACTIVE_CATEGORY = 'all';
+    let CURRENT_DETAIL_FISH = null;
+
+    // 2. FETCH DATA
+    async function fetchFishData() {
+        try {
+            // Updated logic: Always try to fetch unless the URL is blank
+            const response = await fetch(GOOGLE_SHEET_URL);
+            if (!response.ok) throw new Error('Network response was not ok');
+            FISH = await response.json();
+            console.log("Data loaded successfully:", FISH);
+        } catch (error) {
+            console.error("Error fetching data, using fallback.", error);
+            FISH = [
+                { name: "Connection Error", sci: "Check Sheet Permissions", category: "all", description: "Make sure your Google Script is deployed to 'Anyone'.", sizes: "-", qty_bx: "-", origin: "-", images: "", best_seller: "no" }
+            ];
+        }
+        renderBestSellers();
+        applyFilters();
+    }
+
+    // 3. RENDER LOGIC
+    function createCardHTML(f) {
+    // Split the images string by comma and take the first one
+    // We also use .trim() to remove any accidental spaces between commas
+    const allImages = f.images ? f.images.split(',') : [];
+    const mainImage = allImages.length > 0 ? allImages[0].trim() : 'https://via.placeholder.com/800x600?text=No+Image';
+
+    return `
+    <div class="glass-card rounded-lg overflow-hidden flex flex-col h-full group min-w-[280px]">
+        <div class="relative overflow-hidden aspect-[4/3] img-zoom cursor-pointer" onclick="showDetail('${f.name.replace(/'/g, "\\'")}')">
+            <img src="${mainImage}" class="w-full h-full object-cover transition-transform duration-700" alt="${f.name}">
+            <div class="absolute inset-0 bg-brand-blue/20 group-hover:bg-transparent transition-colors"></div>
+        </div>
+        <div class="p-6 flex flex-col flex-1">
+            <div class="text-[10px] text-brand-accent uppercase tracking-widest mb-2">${f.origin || 'West Africa'}</div>
+            <h3 class="font-bold text-xl text-white mb-1">${f.name}</h3>
+            <div class="text-slate-400 italic font-serif text-sm mb-4">${f.sci || ''}</div>
+            
+            <div class="mt-auto border-t border-white/10 pt-4 flex justify-between items-center text-xs text-slate-300">
+                <div class="flex flex-col">
+                    <span class="text-slate-500 uppercase text-[9px] tracking-wider">Size</span>
+                    <span class="font-medium">${f.sizes || '-'}</span>
+                </div>
+                <div class="flex flex-col text-right">
+                    <span class="text-slate-500 uppercase text-[9px] tracking-wider">Qty/Box</span>
+                    <span class="font-medium">${f.qty_bx || '-'} pcs</span>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+    function renderBestSellers() {
+        const container = document.getElementById('best-sellers-grid');
+        const bestSellers = FISH.filter(f => 
+            (f.best_seller || '').toString().toLowerCase() === 'yes' || 
+            (f.best_seller || '').toString().toLowerCase() === 'true'
+        );
+        
+        if (bestSellers.length === 0) {
+            container.innerHTML = '<p class="text-slate-500 text-sm py-10">Updating top exports...</p>';
+            return;
+        }
+        container.innerHTML = bestSellers.map(f => createCardHTML(f)).join('');
+    }
+
+    function renderGrid(filteredData) {
+        const grid = document.getElementById('grid');
+        const noResults = document.getElementById('no-results');
+        
+        if (filteredData.length === 0) {
+            grid.innerHTML = '';
+            grid.style.display = 'none';
+            noResults.classList.remove('hidden');
+            return;
+        }
+        
+        grid.style.display = 'grid';
+        noResults.classList.add('hidden');
+        grid.innerHTML = filteredData.map(f => createCardHTML(f)).join('');
+    }
+
+    // 4. FILTERING LOGIC (With Multi-Category Support)
+    function setCategory(category, element) {
+        ACTIVE_CATEGORY = category;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        if(element) element.classList.add('active');
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+        let filtered = FISH;
+        
+        // Filter by Search
+        if (searchTerm) {
+            filtered = filtered.filter(f => 
+                (f.name || '').toLowerCase().includes(searchTerm) ||
+                (f.sci || '').toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Filter by Tab (Allows multiple categories like "tetra, cute")
+        if (ACTIVE_CATEGORY !== 'all') {
+            filtered = filtered.filter(f => {
+                if (!f.category) return false;
+                const cats = f.category.split(',').map(c => c.trim().toLowerCase());
+                return cats.includes(ACTIVE_CATEGORY.toLowerCase());
+            });
+        }
+        
+        renderGrid(filtered);
+    }
+
+    // 5. MODAL & CONTACT
+    function showDetail(name) {
+        const fish = FISH.find(f => f.name === name);
+        if (!fish) return;
+        CURRENT_DETAIL_FISH = fish;
+        
+        document.getElementById('modal-name').textContent = fish.name;
+        document.getElementById('modal-sci').textContent = fish.sci || '';
+        document.getElementById('modal-origin').textContent = fish.origin || 'West Africa';
+        document.getElementById('modal-desc').textContent = fish.description || '';
+        document.getElementById('modal-size').textContent = fish.sizes || '-';
+        document.getElementById('modal-qty').textContent = fish.qty_bx || '-';
+        document.getElementById('modal-main-image').src = fish.images || 'https://via.placeholder.com/800x600?text=No+Image';
+        
+        document.getElementById('detail-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hideDetailModal() {
+        document.getElementById('detail-modal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    function contactWhatsApp() {
+        const msg = encodeURIComponent("Hello INA Export. I am an international buyer interested in your wholesale fish catalogue.");
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
+    }
+
+    function contactWhatsAppCurrent() {
+        if (!CURRENT_DETAIL_FISH) return;
+        const msg = encodeURIComponent(`Hello INA Export. I'm interested in wholesale details for: ${CURRENT_DETAIL_FISH.name} (${CURRENT_DETAIL_FISH.sci || ''}).`);
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
+    }
+
+    window.onload = fetchFishData;
+</script>

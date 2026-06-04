@@ -1,6 +1,7 @@
 import CatalogueClient from "@/components/catalogue/CatalogueClient";
 import { fishProducts } from "@/data/products";
-import { fetchProducts } from "@/lib/wordpress";
+import { getSpecies } from "@/lib/queries/species";
+import { speciesToFishProduct } from "@/lib/adapters";
 
 export const metadata = {
   title: "Catalogue",
@@ -10,8 +11,16 @@ export const metadata = {
 };
 
 export default async function CataloguePage() {
-  const wpProducts = await fetchProducts();
-  const products = wpProducts.length > 0 ? wpProducts : fishProducts;
+  let products;
+  try {
+    const supabaseSpecies = await getSpecies();
+    products =
+      supabaseSpecies.length > 0
+        ? supabaseSpecies.map(speciesToFishProduct)
+        : fishProducts;
+  } catch {
+    products = fishProducts;
+  }
 
   return <CatalogueClient products={products} />;
 }
