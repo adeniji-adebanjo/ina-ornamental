@@ -1,14 +1,24 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-let resend: Resend | null = null;
+let transporter: nodemailer.Transporter | null = null;
 
-function getResend(): Resend | null {
-  if (!process.env.RESEND_API_KEY) return null;
-  if (!resend) resend = new Resend(process.env.RESEND_API_KEY);
-  return resend;
+function getTransporter(): nodemailer.Transporter | null {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: (process.env.SMTP_PORT || "465") === "465",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+  return transporter;
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "orders@inaornamentalfish.com";
+const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || "orders@inaornamentalfish.com";
 const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "inaornamental@gmail.com")
   .split(",")
   .map((e) => e.trim());
@@ -125,9 +135,9 @@ function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
 }
 
 export async function sendOrderConfirmation(data: OrderEmailData) {
-  const client = getResend();
-  if (!client) {
-    console.warn("RESEND_API_KEY not set, skipping email notifications");
+  const transport = getTransporter();
+  if (!transport) {
+    console.warn("SMTP_USER/SMTP_PASS not set, skipping email notifications");
     return;
   }
 
@@ -136,8 +146,8 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
   // Send confirmation to customer
   if (data.email) {
     promises.push(
-      client.emails.send({
-        from: FROM_EMAIL,
+      transport.sendMail({
+        from: `"iNA Ornamental Fish" <${FROM_EMAIL}>`,
         to: data.email,
         subject: `Order Confirmed — ${data.order_reference} | iNA Ornamental Fish`,
         html: buildEmailHTML(data, false),
@@ -147,9 +157,9 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
 
   // Send notification to admin
   promises.push(
-    client.emails.send({
-      from: FROM_EMAIL,
-      to: ADMIN_EMAILS,
+    transport.sendMail({
+      from: `"iNA Ornamental Fish" <${FROM_EMAIL}>`,
+      to: ADMIN_EMAILS.join(", "),
       subject: `New Order: ${data.order_reference} from ${data.customer_name}`,
       html: buildEmailHTML(data, true),
     }),
@@ -168,8 +178,8 @@ export async function sendOrderStatusUpdate(data: {
   email: string;
   status: string;
 }) {
-  const client = getResend();
-  if (!client || !data.email) return;
+  const transport = getTransporter();
+  if (!transport || !data.email) return;
 
   const statusLabels: Record<string, string> = {
     confirmed: "Your order has been confirmed",
@@ -182,8 +192,8 @@ export async function sendOrderStatusUpdate(data: {
   const message = statusLabels[data.status] || `Order status: ${data.status}`;
 
   try {
-    await client.emails.send({
-      from: FROM_EMAIL,
+    await transport.sendMail({
+      from: `"iNA Ornamental Fish" <${FROM_EMAIL}>`,
       to: data.email,
       subject: `${message} — ${data.order_reference} | iNA Ornamental Fish`,
       html: `
