@@ -27,10 +27,7 @@ export default function NotFound() {
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "bg-sky-800 hover:bg-sky-700 text-white rounded-xl gap-2",
-              )}
+              className={cn(buttonVariants({ size: "lg" }), "rounded-xl gap-2")}
             >
               <Home className="size-4" />
               Back to Home

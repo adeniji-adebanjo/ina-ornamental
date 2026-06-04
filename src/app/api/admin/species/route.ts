@@ -1,4 +1,7 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createServerSupabaseClient,
+  createAdminSupabaseClient,
+} from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -12,7 +15,8 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { image_urls, ...speciesData } = body;
 
-  const { data, error } = await supabase
+  const admin = await createAdminSupabaseClient();
+  const { data, error } = await admin
     .from("species")
     .insert(speciesData)
     .select()
@@ -28,7 +32,7 @@ export async function POST(request: NextRequest) {
       image_url: url,
       sort_order: i,
     }));
-    await supabase.from("species_images").insert(images);
+    await admin.from("species_images").insert(images);
   }
 
   return NextResponse.json(data);

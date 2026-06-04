@@ -123,7 +123,7 @@ export default function OrderClient() {
                     href="/catalogue"
                     className={cn(
                       buttonVariants({ variant: "default" }),
-                      "mt-4 bg-sky-800 hover:bg-sky-700 text-white rounded-xl",
+                      "mt-4 rounded-xl",
                     )}
                   >
                     Browse Catalogue
@@ -280,7 +280,7 @@ export default function OrderClient() {
                       className={`w-full rounded-xl h-11 ${
                         cart.length === 0
                           ? "bg-slate-300 cursor-not-allowed"
-                          : "bg-sky-800 hover:bg-sky-700 text-white"
+                          : ""
                       }`}
                     >
                       {submitting ? "Submitting..." : "Submit Order"}

@@ -122,7 +122,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               added
                 ? "bg-emerald-600 text-white"
                 : product.inStock
-                  ? "bg-sky-800 hover:bg-sky-700 text-white"
+                  ? ""
                   : "bg-slate-200 text-slate-400 cursor-not-allowed"
             }`}
           >

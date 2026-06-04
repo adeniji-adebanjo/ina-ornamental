@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { RefreshCw, Instagram, ExternalLink } from "lucide-react";
+import { RefreshCw, Camera, ExternalLink } from "lucide-react";
 
 export default function GalleryClient({
   posts: initial,
@@ -61,7 +61,7 @@ export default function GalleryClient({
       {posts.length === 0 ? (
         <Card className="rounded-xl">
           <CardContent className="p-12 text-center">
-            <Instagram className="size-12 text-slate-300 mx-auto mb-4" />
+            <Camera className="size-12 text-slate-300 mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-slate-700">
               No Posts Yet
             </h2>

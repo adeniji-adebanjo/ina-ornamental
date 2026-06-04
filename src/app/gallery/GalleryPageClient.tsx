@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { InstagramPost } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Instagram, ExternalLink } from "lucide-react";
+import { X, Camera, ExternalLink } from "lucide-react";
 
 export default function GalleryPageClient({
   posts,
@@ -19,11 +19,12 @@ export default function GalleryPageClient({
       <section className="bg-gradient-to-br from-sky-900 via-sky-800 to-emerald-800 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Instagram className="size-8" />
+            <Camera className="size-8" />
             <h1 className="text-3xl md:text-4xl font-bold">Our Gallery</h1>
           </div>
           <p className="text-sky-200 max-w-lg mx-auto">
-            Explore our collection of premium ornamental fish, straight from Indonesia&apos;s finest waters.
+            Explore our collection of premium ornamental fish, straight from
+            Indonesia&apos;s finest waters.
           </p>
         </div>
       </section>
@@ -32,7 +33,7 @@ export default function GalleryPageClient({
       <section className="max-w-7xl mx-auto px-4 py-12">
         {posts.length === 0 ? (
           <div className="text-center py-20">
-            <Instagram className="size-16 text-slate-200 mx-auto mb-4" />
+            <Camera className="size-16 text-slate-200 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-slate-600">
               Gallery coming soon
             </h2>

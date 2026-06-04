@@ -418,7 +418,7 @@ export default function SpeciesFormClient({ species, categories }: Props) {
           <Button
             type="submit"
             disabled={saving}
-            className="w-full h-11 rounded-xl bg-sky-800 hover:bg-sky-700 text-white font-semibold"
+            className="w-full h-11 rounded-xl font-semibold"
           >
             {saving
               ? "Saving..."

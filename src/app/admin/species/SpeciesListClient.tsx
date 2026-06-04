@@ -55,7 +55,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Species</h1>
         <Link href="/admin/species/new">
-          <Button className="bg-sky-800 hover:bg-sky-700 text-white rounded-xl">
+          <Button className="rounded-xl">
             <Plus className="size-4 mr-2" />
             Add Species
           </Button>

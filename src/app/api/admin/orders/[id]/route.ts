@@ -1,4 +1,8 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createServerSupabaseClient,
+  createAdminSupabaseClient,
+} from "@/lib/supabase/server";
+import { sendOrderStatusUpdate } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -29,7 +33,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const admin = await createAdminSupabaseClient();
+  const { data, error } = await admin
     .from("orders")
     .update({ status })
     .eq("id", id)
@@ -38,5 +43,16 @@ export async function PATCH(
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 400 });
+
+  // Send status update email if order has customer email
+  if (data.email && status) {
+    sendOrderStatusUpdate({
+      order_reference: data.order_reference,
+      customer_name: data.customer_name,
+      email: data.email,
+      status,
+    }).catch(console.error);
+  }
+
   return NextResponse.json(data);
 }

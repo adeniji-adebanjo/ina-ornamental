@@ -3,7 +3,8 @@ import GalleryPageClient from "./GalleryPageClient";
 
 export const metadata = {
   title: "Gallery | iNA Ornamental Fish",
-  description: "Browse our Instagram gallery of premium ornamental fish from Indonesia.",
+  description:
+    "Browse our Instagram gallery of premium ornamental fish from Indonesia.",
 };
 
 export default async function GalleryPage() {

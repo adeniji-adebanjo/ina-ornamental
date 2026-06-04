@@ -33,8 +33,8 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(redirect);
-    router.refresh();
+    // Full page navigation to go through middleware and set cookies
+    window.location.href = redirect;
   }
 
   return (
@@ -77,7 +77,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-xl bg-sky-800 hover:bg-sky-700 text-white font-semibold"
+              className="w-full h-11 rounded-xl font-semibold"
             >
               {loading ? "Signing in..." : "Sign In"}
             </Button>

@@ -86,7 +86,7 @@ export default function ClientsListClient({
             setEditing(null);
             setShowForm(true);
           }}
-          className="rounded-xl bg-sky-800 hover:bg-sky-700"
+          className="rounded-xl"
         >
           <Plus className="size-4 mr-2" /> Add Client
         </Button>
@@ -136,11 +136,7 @@ export default function ClientsListClient({
                 className="rounded-xl"
               />
               <div className="flex gap-2 sm:col-span-2">
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-xl bg-sky-800 hover:bg-sky-700"
-                >
+                <Button type="submit" disabled={saving} className="rounded-xl">
                   {saving ? "Saving..." : editing ? "Update" : "Create"}
                 </Button>
                 <Button

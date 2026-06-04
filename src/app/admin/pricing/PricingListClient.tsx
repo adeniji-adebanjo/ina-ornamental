@@ -146,10 +146,7 @@ export default function PricingListClient({
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Custom Pricing</h1>
-        <Button
-          onClick={() => setShowForm(!showForm)}
-          className="rounded-xl bg-sky-800 hover:bg-sky-700"
-        >
+        <Button onClick={() => setShowForm(!showForm)} className="rounded-xl">
           <Plus className="size-4 mr-2" /> New Price List
         </Button>
       </div>
@@ -254,11 +251,7 @@ export default function PricingListClient({
               </div>
 
               <div className="flex gap-2">
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-xl bg-sky-800 hover:bg-sky-700"
-                >
+                <Button type="submit" disabled={saving} className="rounded-xl">
                   {saving ? "Creating..." : "Create Price List"}
                 </Button>
                 <Button

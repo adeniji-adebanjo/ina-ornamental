@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { STIX_Two_Text, Manrope, Geist } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import LayoutShell from "@/components/layout/LayoutShell";
 import Providers from "@/components/Providers";
 import { cn } from "@/lib/utils";
 
@@ -123,9 +122,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Providers>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <LayoutShell>{children}</LayoutShell>
         </Providers>
       </body>
     </html>

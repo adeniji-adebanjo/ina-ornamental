@@ -398,7 +398,7 @@ export default function ClientOrderClient({
                       <Button
                         type="submit"
                         disabled={submitting}
-                        className="w-full h-11 rounded-xl bg-sky-800 hover:bg-sky-700 text-white font-semibold"
+                        className="w-full h-11 rounded-xl font-semibold"
                       >
                         {submitting ? "Submitting..." : "Submit Order"}
                       </Button>

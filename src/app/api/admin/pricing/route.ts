@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createServerSupabaseClient,
+  createAdminSupabaseClient,
+} from "@/lib/supabase/server";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -28,8 +31,10 @@ export async function POST(request: NextRequest) {
     .slice(0, 60);
   const token = crypto.randomBytes(24).toString("hex");
 
+  const admin = await createAdminSupabaseClient();
+
   // Create the price list
-  const { data: priceList, error: plError } = await supabase
+  const { data: priceList, error: plError } = await admin
     .from("client_price_lists")
     .insert({
       client_id,
@@ -56,13 +61,13 @@ export async function POST(request: NextRequest) {
     }),
   );
 
-  const { error: itemsError } = await supabase
+  const { error: itemsError } = await admin
     .from("client_price_items")
     .insert(priceItems);
 
   if (itemsError) {
     // Clean up the price list if items failed
-    await supabase.from("client_price_lists").delete().eq("id", priceList.id);
+    await admin.from("client_price_lists").delete().eq("id", priceList.id);
     return NextResponse.json({ error: itemsError.message }, { status: 400 });
   }
 

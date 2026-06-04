@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { generateOrderReference } from "@/lib/queries/orders";
+import { sendOrderConfirmation } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -110,6 +111,22 @@ export async function POST(request: NextRequest) {
       }
     }
   }
+
+  // Send email notifications (non-blocking)
+  sendOrderConfirmation({
+    order_reference,
+    customer_name,
+    company_name,
+    email,
+    phone,
+    country,
+    delivery_address,
+    notes,
+    groups: groups.map((g: { name: string; items: { species_name: string; scientific_name?: string; size?: string; quantity: number; unit_price?: number }[] }) => ({
+      name: g.name,
+      items: g.items,
+    })),
+  }).catch(console.error);
 
   return NextResponse.json({
     success: true,

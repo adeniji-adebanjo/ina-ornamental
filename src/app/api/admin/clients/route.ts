@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   const supabase = await createServerSupabaseClient();
@@ -10,7 +10,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { data, error } = await supabase
+  const admin = await createAdminSupabaseClient();
+  const { data, error } = await admin
     .from("clients")
     .insert({
       name: body.name,

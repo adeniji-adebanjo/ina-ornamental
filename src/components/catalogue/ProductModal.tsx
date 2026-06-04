@@ -117,7 +117,7 @@ export default function ProductModal() {
                 );
                 setSelectedProduct(null);
               }}
-              className="flex-1 bg-sky-800 hover:bg-sky-700 text-white rounded-xl h-12"
+              className="flex-1 rounded-xl h-12"
             >
               Add to Quote Cart
             </Button>

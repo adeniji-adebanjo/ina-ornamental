@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createServerSupabaseClient,
+  createAdminSupabaseClient,
+} from "@/lib/supabase/server";
 
 export async function PUT(
   request: NextRequest,
@@ -14,7 +17,8 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { data, error } = await supabase
+  const admin = await createAdminSupabaseClient();
+  const { data, error } = await admin
     .from("clients")
     .update({
       name: body.name,
@@ -44,7 +48,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { error } = await supabase.from("clients").delete().eq("id", id);
+  const admin = await createAdminSupabaseClient();
+  const { error } = await admin.from("clients").delete().eq("id", id);
   if (error)
     return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ success: true });
