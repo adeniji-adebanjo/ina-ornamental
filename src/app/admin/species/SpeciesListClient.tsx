@@ -19,6 +19,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import {
+  ConfirmDialog,
+  useConfirmDialog,
+} from "@/components/ui/confirm-dialog";
 
 interface Props {
   species: SpeciesWithImages[];

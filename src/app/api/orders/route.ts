@@ -80,6 +80,33 @@ export async function POST(request: NextRequest) {
     }
 
     if (group.items?.length) {
+      // Resolve species slugs to UUIDs
+      const slugs = group.items
+        .map((item: { species_id: string }) => item.species_id)
+        .filter(
+          (id: string) =>
+            id &&
+            !id.match(
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+            ),
+        );
+
+      let slugToUuid: Record<string, string> = {};
+      if (slugs.length > 0) {
+        const { data: speciesRows } = await supabase
+          .from("species")
+          .select("id, slug")
+          .in("slug", slugs);
+        if (speciesRows) {
+          slugToUuid = Object.fromEntries(
+            speciesRows.map((r: { id: string; slug: string }) => [
+              r.slug,
+              r.id,
+            ]),
+          );
+        }
+      }
+
       const items = group.items.map(
         (item: {
           species_id: string;
@@ -90,7 +117,7 @@ export async function POST(request: NextRequest) {
           unit_price?: number;
         }) => ({
           order_group_id: groupData.id,
-          species_id: item.species_id,
+          species_id: slugToUuid[item.species_id] || item.species_id,
           species_name: item.species_name,
           scientific_name: item.scientific_name || null,
           size: item.size || null,
