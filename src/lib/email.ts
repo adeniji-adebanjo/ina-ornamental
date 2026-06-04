@@ -1,6 +1,12 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!resend) resend = new Resend(process.env.RESEND_API_KEY);
+  return resend;
+}
 
 const FROM_EMAIL = process.env.FROM_EMAIL || "orders@inaornamentalfish.com";
 const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "inaornamental@gmail.com")
@@ -119,7 +125,8 @@ function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
 }
 
 export async function sendOrderConfirmation(data: OrderEmailData) {
-  if (!process.env.RESEND_API_KEY) {
+  const client = getResend();
+  if (!client) {
     console.warn("RESEND_API_KEY not set, skipping email notifications");
     return;
   }
@@ -129,7 +136,7 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
   // Send confirmation to customer
   if (data.email) {
     promises.push(
-      resend.emails.send({
+      client.emails.send({
         from: FROM_EMAIL,
         to: data.email,
         subject: `Order Confirmed — ${data.order_reference} | iNA Ornamental Fish`,
@@ -140,7 +147,7 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
 
   // Send notification to admin
   promises.push(
-    resend.emails.send({
+    client.emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAILS,
       subject: `New Order: ${data.order_reference} from ${data.customer_name}`,
@@ -161,7 +168,8 @@ export async function sendOrderStatusUpdate(data: {
   email: string;
   status: string;
 }) {
-  if (!process.env.RESEND_API_KEY || !data.email) return;
+  const client = getResend();
+  if (!client || !data.email) return;
 
   const statusLabels: Record<string, string> = {
     confirmed: "Your order has been confirmed",
@@ -174,7 +182,7 @@ export async function sendOrderStatusUpdate(data: {
   const message = statusLabels[data.status] || `Order status: ${data.status}`;
 
   try {
-    await resend.emails.send({
+    await client.emails.send({
       from: FROM_EMAIL,
       to: data.email,
       subject: `${message} — ${data.order_reference} | iNA Ornamental Fish`,

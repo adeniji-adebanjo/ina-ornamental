@@ -5,6 +5,7 @@ import type { InstagramPost } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Camera, ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 export default function GalleryPageClient({
   posts,
@@ -60,7 +61,7 @@ export default function GalleryPageClient({
                     playsInline
                   />
                 ) : (
-                  <img
+                  <Image
                     src={post.media_url}
                     alt={post.caption ?? "Gallery image"}
                     className="w-full rounded-xl"
@@ -107,7 +108,7 @@ export default function GalleryPageClient({
                     muted
                   />
                 ) : (
-                  <img
+                  <Image
                     src={selected.media_url}
                     alt={selected.caption ?? ""}
                     className="w-full max-h-[70vh] object-contain bg-black"
@@ -124,10 +125,12 @@ export default function GalleryPageClient({
                 <p className="text-slate-700 text-sm">{selected.caption}</p>
                 <div className="flex items-center justify-between mt-3">
                   <Badge variant="outline" className="text-xs">
-                    {new Date(selected.posted_at).toLocaleDateString()}
+                    {selected.timestamp
+                      ? new Date(selected.timestamp).toLocaleDateString()
+                      : "—"}
                   </Badge>
                   <a
-                    href={selected.permalink}
+                    href={selected.permalink ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-sky-700 hover:underline flex items-center gap-1"
