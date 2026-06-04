@@ -2,6 +2,10 @@
 
 import Image from "next/image";
 import { useStore } from "@/store/useStore";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { X, MessageCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ProductModal() {
   const {
@@ -31,24 +35,14 @@ export default function ProductModal() {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 768px"
           />
-          <button
+          <Button
             onClick={() => setSelectedProduct(null)}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow flex items-center justify-center"
+            variant="ghost"
+            size="icon-sm"
+            className="absolute top-4 right-4 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+            <X className="size-5" />
+          </Button>
         </div>
 
         <div className="p-5 sm:p-6">
@@ -60,22 +54,26 @@ export default function ProductModal() {
           </p>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">
-                Category
-              </p>
-              <p className="font-semibold text-slate-800">
-                {selectedProduct.category}
-              </p>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">
-                Class/Order
-              </p>
-              <p className="font-semibold text-slate-800">
-                {selectedProduct.classOrder || "-"}
-              </p>
-            </div>
+            <Card className="bg-slate-50 border-0 rounded-xl">
+              <CardContent className="p-3">
+                <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">
+                  Category
+                </p>
+                <p className="font-semibold text-slate-800">
+                  {selectedProduct.category}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-slate-50 border-0 rounded-xl">
+              <CardContent className="p-3">
+                <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">
+                  Class/Order
+                </p>
+                <p className="font-semibold text-slate-800">
+                  {selectedProduct.classOrder || "-"}
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           <p className="mt-4 text-slate-600 leading-relaxed">
@@ -88,23 +86,25 @@ export default function ProductModal() {
             </p>
             <div className="flex flex-wrap gap-2">
               {selectedProduct.sizes.map((size) => (
-                <button
+                <Button
                   key={size}
                   onClick={() => setSelectedSize(size)}
-                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                  variant={selectedSize === size ? "default" : "outline"}
+                  size="sm"
+                  className={`rounded-full ${
                     selectedSize === size
                       ? "bg-sky-800 text-white border-sky-800"
                       : "bg-white text-slate-600 border-slate-200 hover:border-sky-300"
                   }`}
                 >
                   {size}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <button
+            <Button
               onClick={() => {
                 addToCart(
                   selectedProduct,
@@ -112,16 +112,20 @@ export default function ProductModal() {
                 );
                 setSelectedProduct(null);
               }}
-              className="flex-1 bg-sky-800 hover:bg-sky-700 text-white font-semibold py-3 rounded-xl transition-colors"
+              className="flex-1 bg-sky-800 hover:bg-sky-700 text-white rounded-xl h-12"
             >
               Add to Quote Cart
-            </button>
+            </Button>
             <a
               href="https://wa.me/2348168850307"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 text-center bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition-colors"
+              className={cn(
+                buttonVariants({ variant: "default" }),
+                "flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-12 gap-2"
+              )}
             >
+              <MessageCircle className="size-4" />
               Chat on WhatsApp
             </a>
           </div>

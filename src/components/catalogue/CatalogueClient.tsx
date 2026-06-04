@@ -7,6 +7,8 @@ import SearchBar from "@/components/catalogue/SearchBar";
 import CategoryFilter from "@/components/catalogue/CategoryFilter";
 import ProductCard from "@/components/catalogue/ProductCard";
 import ProductModal from "@/components/catalogue/ProductModal";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface CatalogueClientProps {
   products: FishProduct[];
@@ -53,24 +55,30 @@ export default function CatalogueClient({ products }: CatalogueClientProps) {
             a custom B2B quote.
           </p>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
-              <p className="text-2xl font-black text-sky-800">22+</p>
-              <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">
-                Years Experience
-              </p>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
-              <p className="text-2xl font-black text-emerald-700">120+</p>
-              <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">
-                Species Available
-              </p>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
-              <p className="text-2xl font-black text-sky-800">Global</p>
-              <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">
-                Export Coverage
-              </p>
-            </div>
+            <Card className="rounded-xl border-slate-100 shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-2xl font-black text-sky-800">22+</p>
+                <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">
+                  Years Experience
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="rounded-xl border-slate-100 shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-2xl font-black text-emerald-700">120+</p>
+                <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">
+                  Species Available
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="rounded-xl border-slate-100 shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-2xl font-black text-sky-800">Global</p>
+                <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">
+                  Export Coverage
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>

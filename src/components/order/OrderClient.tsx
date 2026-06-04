@@ -2,6 +2,12 @@
 
 import { FormEvent, useState } from "react";
 import { useStore } from "@/store/useStore";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Minus, Plus, Trash2, MessageCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function OrderClient() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useStore();
@@ -40,167 +46,191 @@ export default function OrderClient() {
                 Quote Cart
               </h2>
               {cart.length > 0 && (
-                <button
+                <Button
                   onClick={clearCart}
-                  className="text-sm text-red-600 hover:text-red-700 font-medium"
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
+                  <Trash2 className="size-4" />
                   Clear All
-                </button>
+                </Button>
               )}
             </div>
 
             {cart.length === 0 ? (
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center">
-                <p className="text-slate-600">
-                  Your quote cart is currently empty.
-                </p>
-                <a
-                  href="/catalogue"
-                  className="inline-block mt-4 bg-sky-800 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold"
-                >
-                  Browse Catalogue
-                </a>
-              </div>
+              <Card className="border-slate-100 bg-slate-50 rounded-2xl">
+                <CardContent className="p-8 text-center">
+                  <p className="text-slate-600">
+                    Your quote cart is currently empty.
+                  </p>
+                  <a
+                    href="/catalogue"
+                    className={cn(
+                      buttonVariants({ variant: "default" }),
+                      "mt-4 bg-sky-800 hover:bg-sky-700 text-white rounded-xl"
+                    )}
+                  >
+                    Browse Catalogue
+                  </a>
+                </CardContent>
+              </Card>
             ) : (
               <div className="space-y-3">
                 {cart.map((item) => (
-                  <article
+                  <Card
                     key={`${item.product.id}-${item.selectedSize}`}
-                    className="bg-white border border-slate-100 rounded-2xl p-4 md:p-5 shadow-sm"
+                    className="border-slate-100 rounded-2xl shadow-sm"
                   >
-                    <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-slate-900">
-                          {item.product.commonName}
-                        </h3>
-                        <p className="text-sm italic text-emerald-700">
-                          {item.product.scientificName}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Size: {item.selectedSize}
-                        </p>
-                      </div>
+                    <CardContent className="p-4 md:p-5">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-slate-900">
+                            {item.product.commonName}
+                          </h3>
+                          <p className="text-sm italic text-emerald-700">
+                            {item.product.scientificName}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Size: {item.selectedSize}
+                          </p>
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            updateQuantity(
-                              item.product.id,
-                              item.selectedSize,
-                              item.quantity - 1,
-                            )
-                          }
-                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
-                        >
-                          -
-                        </button>
-                        <span className="w-10 text-center font-semibold text-slate-800">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateQuantity(
-                              item.product.id,
-                              item.selectedSize,
-                              item.quantity + 1,
-                            )
-                          }
-                          className="w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
-                        >
-                          +
-                        </button>
-                      </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() =>
+                              updateQuantity(
+                                item.product.id,
+                                item.selectedSize,
+                                item.quantity - 1,
+                              )
+                            }
+                            variant="outline"
+                            size="icon-sm"
+                            className="border-slate-200"
+                          >
+                            <Minus className="size-4" />
+                          </Button>
+                          <span className="w-10 text-center font-semibold text-slate-800">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            onClick={() =>
+                              updateQuantity(
+                                item.product.id,
+                                item.selectedSize,
+                                item.quantity + 1,
+                              )
+                            }
+                            variant="outline"
+                            size="icon-sm"
+                            className="border-slate-200"
+                          >
+                            <Plus className="size-4" />
+                          </Button>
+                        </div>
 
-                      <button
-                        onClick={() =>
-                          removeFromCart(item.product.id, item.selectedSize)
-                        }
-                        className="text-sm text-red-600 hover:text-red-700 font-medium"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </article>
+                        <Button
+                          onClick={() =>
+                            removeFromCart(item.product.id, item.selectedSize)
+                          }
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
           </div>
 
           <div className="xl:col-span-1">
-            <div className="sticky top-24 bg-white border border-slate-100 rounded-2xl p-5 md:p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-slate-900 mb-2">
-                Order Details
-              </h2>
-              <p className="text-sm text-slate-500 mb-4">
-                Total requested units: {totalItems}
-              </p>
+            <Card className="sticky top-24 border-slate-100 rounded-2xl shadow-sm">
+              <CardContent className="p-5 md:p-6">
+                <h2 className="text-xl font-bold text-slate-900 mb-2">
+                  Order Details
+                </h2>
+                <p className="text-sm text-slate-500 mb-4">
+                  Total requested units: {totalItems}
+                </p>
 
-              {submitted ? (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-                  <h3 className="font-semibold text-emerald-800">
-                    Quote request received
-                  </h3>
-                  <p className="text-sm text-emerald-700 mt-1">
-                    Thank you. Our team will contact you shortly via email or
-                    WhatsApp.
-                  </p>
-                </div>
-              ) : (
-                <form className="space-y-3" onSubmit={handleSubmit}>
-                  <input
-                    required
-                    placeholder="Full Name"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  />
-                  <input
-                    placeholder="Company Name"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  />
-                  <input
-                    required
-                    type="email"
-                    placeholder="Email Address"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  />
-                  <input
-                    required
-                    placeholder="WhatsApp / Phone"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  />
-                  <input
-                    required
-                    placeholder="Country"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  />
-                  <textarea
-                    placeholder="Additional notes (species preference, shipment timeline, special requests)"
-                    rows={4}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  />
+                {submitted ? (
+                  <Card className="bg-emerald-50 border-emerald-200 rounded-xl">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-emerald-800">
+                        Quote request received
+                      </h3>
+                      <p className="text-sm text-emerald-700 mt-1">
+                        Thank you. Our team will contact you shortly via email or
+                        WhatsApp.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <form className="space-y-3" onSubmit={handleSubmit}>
+                    <Input
+                      required
+                      placeholder="Full Name"
+                      className="rounded-xl h-10"
+                    />
+                    <Input
+                      placeholder="Company Name"
+                      className="rounded-xl h-10"
+                    />
+                    <Input
+                      required
+                      type="email"
+                      placeholder="Email Address"
+                      className="rounded-xl h-10"
+                    />
+                    <Input
+                      required
+                      placeholder="WhatsApp / Phone"
+                      className="rounded-xl h-10"
+                    />
+                    <Input
+                      required
+                      placeholder="Country"
+                      className="rounded-xl h-10"
+                    />
+                    <Textarea
+                      placeholder="Additional notes (species preference, shipment timeline, special requests)"
+                      rows={4}
+                      className="rounded-xl"
+                    />
 
-                  <button
-                    type="submit"
-                    disabled={cart.length === 0}
-                    className={`w-full py-3 rounded-xl text-white font-semibold transition-colors ${
-                      cart.length === 0
-                        ? "bg-slate-300 cursor-not-allowed"
-                        : "bg-sky-800 hover:bg-sky-700"
-                    }`}
-                  >
-                    Submit Quote Request
-                  </button>
-                </form>
-              )}
+                    <Button
+                      type="submit"
+                      disabled={cart.length === 0}
+                      className={`w-full rounded-xl h-11 ${
+                        cart.length === 0
+                          ? "bg-slate-300 cursor-not-allowed"
+                          : "bg-sky-800 hover:bg-sky-700 text-white"
+                      }`}
+                    >
+                      Submit Quote Request
+                    </Button>
+                  </form>
+                )}
 
-              <a
-                href="https://wa.me/2348168850307"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 w-full inline-block text-center bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl"
-              >
-                Order via WhatsApp
-              </a>
-            </div>
+                <a
+                  href="https://wa.me/2348168850307"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    buttonVariants({ variant: "default" }),
+                    "mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 gap-2"
+                  )}
+                >
+                  <MessageCircle className="size-4" />
+                  Order via WhatsApp
+                </a>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>

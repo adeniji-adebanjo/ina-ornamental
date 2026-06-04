@@ -1,3 +1,6 @@
+import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle } from "lucide-react";
+
 export const metadata = {
   title: "About | INA Ornamental Fish",
   description:
@@ -33,45 +36,35 @@ export default function AboutPage() {
       </section>
 
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-        <div className="bg-white border border-slate-100 rounded-2xl p-6 md:p-8 shadow-sm">
-          <p className="text-slate-600 leading-relaxed">
-            Our facilities are equipped with modern systems that help us
-            acclimate wild-caught species to aquarium conditions. We specialize
-            in freshwater ornamental fishes, crustaceans, molluscs, amphibians,
-            and other exotic aquatic animals from West Africa. Every shipment
-            goes through careful conditioning, packing, and compliance checks to
-            ensure healthy arrivals in destination countries.
-          </p>
-          <p className="text-slate-600 leading-relaxed mt-4">
-            We build long-term B2B partnerships by focusing on quality,
-            communication, and operational consistency. Our mission is to make
-            your stocking process simple, profitable, and reliable.
-          </p>
-        </div>
+        <Card className="border-slate-100 rounded-2xl shadow-sm">
+          <CardContent className="p-6 md:p-8">
+            <p className="text-slate-600 leading-relaxed">
+              Our facilities are equipped with modern systems that help us
+              acclimate wild-caught species to aquarium conditions. We specialize
+              in freshwater ornamental fishes, crustaceans, molluscs, amphibians,
+              and other exotic aquatic animals from West Africa. Every shipment
+              goes through careful conditioning, packing, and compliance checks to
+              ensure healthy arrivals in destination countries.
+            </p>
+            <p className="text-slate-600 leading-relaxed mt-4">
+              We build long-term B2B partnerships by focusing on quality,
+              communication, and operational consistency. Our mission is to make
+              your stocking process simple, profitable, and reliable.
+            </p>
+          </CardContent>
+        </Card>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {highlights.map((item) => (
-            <div
+            <Card
               key={item}
-              className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-start gap-3"
+              className="border-slate-100 bg-slate-50 rounded-xl"
             >
-              <span className="mt-0.5 text-emerald-600">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </span>
-              <p className="text-sm text-slate-700">{item}</p>
-            </div>
+              <CardContent className="p-4 flex items-start gap-3">
+                <CheckCircle className="size-5 text-emerald-600 mt-0.5 shrink-0" />
+                <p className="text-sm text-slate-700">{item}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>

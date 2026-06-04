@@ -1,5 +1,15 @@
 import Link from "next/link";
 import { fishProducts } from "@/data/products";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const features = [
   {
@@ -29,7 +39,7 @@ export default function Home() {
   return (
     <>
       <section className="relative overflow-hidden bg-linear-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,#10b981_0,transparent_45%),radial-gradient(circle_at_bottom_left,#0ea5e9_0,transparent_40%)]" />
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,#d4a85f_0,transparent_45%),radial-gradient(circle_at_bottom_left,#3b655d_0,transparent_40%)]" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <p className="text-xs uppercase tracking-[0.25em] text-sky-200 font-semibold mb-4">
             INA Ornamental Fish | West African Ornamental Fish Exporter
@@ -45,13 +55,19 @@ export default function Home() {
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
               href="/catalogue"
-              className="inline-flex justify-center items-center bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold px-6 py-3 rounded-xl transition-colors"
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl"
+              )}
             >
               Browse Catalogue
             </Link>
             <Link
               href="/order"
-              className="inline-flex justify-center items-center bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl border border-white/20 transition-colors"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border-white/20"
+              )}
             >
               Start Order Request
             </Link>
@@ -62,17 +78,19 @@ export default function Home() {
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {stats.map((stat) => (
-            <div
+            <Card
               key={stat.label}
-              className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center"
+              className="text-center border-slate-100 bg-slate-50 rounded-2xl"
             >
-              <p className="text-2xl md:text-3xl font-black text-sky-800">
-                {stat.value}
-              </p>
-              <p className="text-xs md:text-sm text-slate-500 mt-1">
-                {stat.label}
-              </p>
-            </div>
+              <CardContent className="p-4">
+                <p className="text-2xl md:text-3xl font-black text-sky-800">
+                  {stat.value}
+                </p>
+                <p className="text-xs md:text-sm text-slate-500 mt-1">
+                  {stat.label}
+                </p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
@@ -84,17 +102,21 @@ export default function Home() {
           </h2>
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             {features.map((feature) => (
-              <article
+              <Card
                 key={feature.title}
-                className="bg-white border border-slate-100 rounded-2xl p-5 md:p-6 shadow-sm"
+                className="border-slate-100 rounded-2xl shadow-sm"
               >
-                <h3 className="font-bold text-slate-900 leading-tight">
-                  {feature.title}
-                </h3>
-                <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-                  {feature.body}
-                </p>
-              </article>
+                <CardHeader>
+                  <CardTitle className="font-bold text-slate-900 leading-tight">
+                    {feature.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-slate-600 leading-relaxed">
+                    {feature.body}
+                  </CardDescription>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -120,29 +142,33 @@ export default function Home() {
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {featured.map((fish) => (
-            <article
+            <Card
               key={fish.id}
-              className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+              className="border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
             >
-              <p className="text-xs uppercase tracking-wider text-emerald-700 font-semibold">
-                {fish.category}
-              </p>
-              <h3 className="text-lg font-bold text-slate-900 mt-1">
-                {fish.commonName}
-              </h3>
-              <p className="text-sm italic text-sky-700">
-                {fish.scientificName}
-              </p>
-              <p className="text-sm text-slate-500 mt-3 line-clamp-2">
-                {fish.description}
-              </p>
-              <Link
-                href="/order"
-                className="mt-4 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-600"
-              >
-                Add to Quote
-              </Link>
-            </article>
+              <CardHeader>
+                <Badge variant="secondary" className="w-fit text-emerald-700 bg-emerald-50 border-0 uppercase tracking-wider text-[10px]">
+                  {fish.category}
+                </Badge>
+                <CardTitle className="text-lg font-bold text-slate-900">
+                  {fish.commonName}
+                </CardTitle>
+                <CardDescription className="italic text-sky-700">
+                  {fish.scientificName}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-500 line-clamp-2">
+                  {fish.description}
+                </p>
+                <Link
+                  href="/order"
+                  className="mt-4 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-600"
+                >
+                  Add to Quote
+                </Link>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
@@ -161,7 +187,10 @@ export default function Home() {
           </div>
           <Link
             href="/catalogue"
-            className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold px-6 py-3 rounded-xl transition-colors"
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl"
+            )}
           >
             Explore Live Catalogue
           </Link>

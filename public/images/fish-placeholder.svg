@@ -1,27 +1,27 @@
 <svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="900" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#E0F2FE"/>
-      <stop offset="1" stop-color="#D1FAE5"/>
+      <stop stop-color="#EFF7F4"/>
+      <stop offset="1" stop-color="#FDF7EE"/>
     </linearGradient>
     <linearGradient id="fish" x1="350" y1="350" x2="850" y2="620" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0C4A6E"/>
-      <stop offset="1" stop-color="#059669"/>
+      <stop stop-color="#3B655D"/>
+      <stop offset="1" stop-color="#D4A85F"/>
     </linearGradient>
   </defs>
 
   <rect width="1200" height="900" fill="url(#bg)"/>
-  <circle cx="190" cy="180" r="70" fill="#BAE6FD" opacity="0.55"/>
-  <circle cx="1050" cy="220" r="90" fill="#A7F3D0" opacity="0.45"/>
-  <circle cx="980" cy="680" r="55" fill="#BAE6FD" opacity="0.45"/>
+  <circle cx="190" cy="180" r="70" fill="#C7E2DC" opacity="0.55"/>
+  <circle cx="1050" cy="220" r="90" fill="#F3E2C2" opacity="0.45"/>
+  <circle cx="980" cy="680" r="55" fill="#C7E2DC" opacity="0.45"/>
 
   <ellipse cx="580" cy="470" rx="260" ry="145" fill="url(#fish)"/>
-  <path d="M860 470L1010 360V580L860 470Z" fill="#0F766E"/>
+  <path d="M860 470L1010 360V580L860 470Z" fill="#4D7D73"/>
   <circle cx="470" cy="430" r="16" fill="#FFFFFF" opacity="0.95"/>
-  <circle cx="470" cy="430" r="8" fill="#082F49"/>
+  <circle cx="470" cy="430" r="8" fill="#243D38"/>
   <path d="M450 520C510 560 640 560 700 520" stroke="#FFFFFF" stroke-opacity="0.65" stroke-width="12" stroke-linecap="round"/>
 
-  <text x="50%" y="85%" text-anchor="middle" fill="#0F172A" fill-opacity="0.55" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" letter-spacing="2">
+  <text x="50%" y="85%" text-anchor="middle" fill="#231E16" fill-opacity="0.55" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" letter-spacing="2">
     INA ORNAMENTAL FISH
   </text>
 </svg>
