@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProductCardProps {
   product: FishProduct;
@@ -28,6 +29,9 @@ export default function ProductCard({ product }: ProductCardProps) {
     if (!selectedSize) return;
     addToCart(product, selectedSize);
     setAdded(true);
+    toast.success(`${product.commonName} added to quote cart`, {
+      description: `Size: ${selectedSize}`,
+    });
     setTimeout(() => setAdded(false), 1200);
   };
 
@@ -79,7 +83,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           <p className="text-sm text-emerald-700 italic mt-0.5">
             {product.scientificName}
           </p>
-          <Badge variant="secondary" className="mt-2 bg-sky-50 text-sky-700 border-0">
+          <Badge
+            variant="secondary"
+            className="mt-2 bg-sky-50 text-sky-700 border-0"
+          >
             {product.category}
           </Badge>
           <p className="text-sm text-slate-500 mt-2 line-clamp-2">

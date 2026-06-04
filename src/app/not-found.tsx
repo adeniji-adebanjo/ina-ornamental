@@ -29,7 +29,7 @@ export default function NotFound() {
               href="/"
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "bg-sky-800 hover:bg-sky-700 text-white rounded-xl gap-2"
+                "bg-sky-800 hover:bg-sky-700 text-white rounded-xl gap-2",
               )}
             >
               <Home className="size-4" />
@@ -39,7 +39,7 @@ export default function NotFound() {
               href="/catalogue"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "rounded-xl border-slate-200 text-slate-700 gap-2"
+                "rounded-xl border-slate-200 text-slate-700 gap-2",
               )}
             >
               <BookOpen className="size-4" />

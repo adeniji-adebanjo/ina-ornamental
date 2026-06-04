@@ -35,7 +35,6 @@ export default function Footer() {
                 height={40}
                 className="w-10 h-10 rounded-full object-cover"
               />
-              
             </div>
             <p className="text-sm text-slate-400 leading-relaxed mb-4">
               Premium quality West African tropical aquarium fishes at best

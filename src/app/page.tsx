@@ -57,7 +57,7 @@ export default function Home() {
               href="/catalogue"
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl"
+                "bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl",
               )}
             >
               Browse Catalogue
@@ -66,7 +66,7 @@ export default function Home() {
               href="/order"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border-white/20"
+                "bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border-white/20",
               )}
             >
               Start Order Request
@@ -147,7 +147,10 @@ export default function Home() {
               className="border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
             >
               <CardHeader>
-                <Badge variant="secondary" className="w-fit text-emerald-700 bg-emerald-50 border-0 uppercase tracking-wider text-[10px]">
+                <Badge
+                  variant="secondary"
+                  className="w-fit text-emerald-700 bg-emerald-50 border-0 uppercase tracking-wider text-[10px]"
+                >
                   {fish.category}
                 </Badge>
                 <CardTitle className="text-lg font-bold text-slate-900">
@@ -189,7 +192,7 @@ export default function Home() {
             href="/catalogue"
             className={cn(
               buttonVariants({ size: "lg" }),
-              "bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl"
+              "bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl",
             )}
           >
             Explore Live Catalogue

@@ -40,11 +40,12 @@ export default function AboutPage() {
           <CardContent className="p-6 md:p-8">
             <p className="text-slate-600 leading-relaxed">
               Our facilities are equipped with modern systems that help us
-              acclimate wild-caught species to aquarium conditions. We specialize
-              in freshwater ornamental fishes, crustaceans, molluscs, amphibians,
-              and other exotic aquatic animals from West Africa. Every shipment
-              goes through careful conditioning, packing, and compliance checks to
-              ensure healthy arrivals in destination countries.
+              acclimate wild-caught species to aquarium conditions. We
+              specialize in freshwater ornamental fishes, crustaceans, molluscs,
+              amphibians, and other exotic aquatic animals from West Africa.
+              Every shipment goes through careful conditioning, packing, and
+              compliance checks to ensure healthy arrivals in destination
+              countries.
             </p>
             <p className="text-slate-600 leading-relaxed mt-4">
               We build long-term B2B partnerships by focusing on quality,

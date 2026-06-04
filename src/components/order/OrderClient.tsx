@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Minus, Plus, Trash2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function OrderClient() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useStore();
@@ -18,6 +19,9 @@ export default function OrderClient() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitted(true);
+    toast.success("Quote request submitted!", {
+      description: "Our team will contact you shortly.",
+    });
   };
 
   return (
@@ -47,7 +51,10 @@ export default function OrderClient() {
               </h2>
               {cart.length > 0 && (
                 <Button
-                  onClick={clearCart}
+                  onClick={() => {
+                    clearCart();
+                    toast.info("Cart cleared");
+                  }}
                   variant="ghost"
                   size="sm"
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -68,7 +75,7 @@ export default function OrderClient() {
                     href="/catalogue"
                     className={cn(
                       buttonVariants({ variant: "default" }),
-                      "mt-4 bg-sky-800 hover:bg-sky-700 text-white rounded-xl"
+                      "mt-4 bg-sky-800 hover:bg-sky-700 text-white rounded-xl",
                     )}
                   >
                     Browse Catalogue
@@ -131,9 +138,10 @@ export default function OrderClient() {
                         </div>
 
                         <Button
-                          onClick={() =>
-                            removeFromCart(item.product.id, item.selectedSize)
-                          }
+                          onClick={() => {
+                            removeFromCart(item.product.id, item.selectedSize);
+                            toast.info(`${item.product.commonName} removed from cart`);
+                          }}
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -165,8 +173,8 @@ export default function OrderClient() {
                         Quote request received
                       </h3>
                       <p className="text-sm text-emerald-700 mt-1">
-                        Thank you. Our team will contact you shortly via email or
-                        WhatsApp.
+                        Thank you. Our team will contact you shortly via email
+                        or WhatsApp.
                       </p>
                     </CardContent>
                   </Card>
@@ -223,7 +231,7 @@ export default function OrderClient() {
                   rel="noopener noreferrer"
                   className={cn(
                     buttonVariants({ variant: "default" }),
-                    "mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 gap-2"
+                    "mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 gap-2",
                   )}
                 >
                   <MessageCircle className="size-4" />

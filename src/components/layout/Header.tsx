@@ -79,7 +79,7 @@ export default function Header() {
               title="Quote Cart"
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
-                "relative"
+                "relative",
               )}
             >
               <ShoppingCart className="size-5" />
@@ -95,7 +95,7 @@ export default function Header() {
               rel="noopener noreferrer"
               className={cn(
                 buttonVariants({ variant: "default", size: "default" }),
-                "rounded-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                "rounded-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2",
               )}
             >
               <MessageCircle className="size-4" />
@@ -110,7 +110,7 @@ export default function Header() {
               title="Quote Cart"
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
-                "relative"
+                "relative",
               )}
             >
               <ShoppingCart className="size-5" />
@@ -123,7 +123,9 @@ export default function Header() {
 
             <Sheet>
               <SheetTrigger
-                render={<Button variant="ghost" size="icon" aria-label="Open menu" />}
+                render={
+                  <Button variant="ghost" size="icon" aria-label="Open menu" />
+                }
               >
                 <Menu className="size-6" />
               </SheetTrigger>
@@ -137,7 +139,10 @@ export default function Header() {
                 <Separator className="my-2" />
                 <nav className="flex flex-col gap-1 px-3 py-2">
                   {navLinks.map((link) => (
-                    <SheetClose key={link.href} render={<Link href={link.href} />}>
+                    <SheetClose
+                      key={link.href}
+                      render={<Link href={link.href} />}
+                    >
                       <span className="block px-3 py-2.5 text-slate-700 hover:bg-sky-50 hover:text-sky-700 rounded-lg font-medium transition-colors">
                         {link.label}
                       </span>
@@ -152,7 +157,7 @@ export default function Header() {
                     rel="noopener noreferrer"
                     className={cn(
                       buttonVariants({ variant: "default" }),
-                      "w-full rounded-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                      "w-full rounded-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2",
                     )}
                   >
                     <MessageCircle className="size-5" />

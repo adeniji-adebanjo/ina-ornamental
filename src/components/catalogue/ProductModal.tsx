@@ -6,6 +6,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function ProductModal() {
   const {
@@ -106,10 +107,11 @@ export default function ProductModal() {
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <Button
               onClick={() => {
-                addToCart(
-                  selectedProduct,
-                  selectedSize || selectedProduct.sizes[0] || "",
-                );
+                const size = selectedSize || selectedProduct.sizes[0] || "";
+                addToCart(selectedProduct, size);
+                toast.success(`${selectedProduct.commonName} added to quote cart`, {
+                  description: `Size: ${size}`,
+                });
                 setSelectedProduct(null);
               }}
               className="flex-1 bg-sky-800 hover:bg-sky-700 text-white rounded-xl h-12"
@@ -122,7 +124,7 @@ export default function ProductModal() {
               rel="noopener noreferrer"
               className={cn(
                 buttonVariants({ variant: "default" }),
-                "flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-12 gap-2"
+                "flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-12 gap-2",
               )}
             >
               <MessageCircle className="size-4" />
