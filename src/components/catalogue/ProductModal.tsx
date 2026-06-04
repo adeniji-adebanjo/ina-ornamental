@@ -109,9 +109,12 @@ export default function ProductModal() {
               onClick={() => {
                 const size = selectedSize || selectedProduct.sizes[0] || "";
                 addToCart(selectedProduct, size);
-                toast.success(`${selectedProduct.commonName} added to quote cart`, {
-                  description: `Size: ${size}`,
-                });
+                toast.success(
+                  `${selectedProduct.commonName} added to quote cart`,
+                  {
+                    description: `Size: ${size}`,
+                  },
+                );
                 setSelectedProduct(null);
               }}
               className="flex-1 bg-sky-800 hover:bg-sky-700 text-white rounded-xl h-12"

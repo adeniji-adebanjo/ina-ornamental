@@ -140,7 +140,9 @@ export default function OrderClient() {
                         <Button
                           onClick={() => {
                             removeFromCart(item.product.id, item.selectedSize);
-                            toast.info(`${item.product.commonName} removed from cart`);
+                            toast.info(
+                              `${item.product.commonName} removed from cart`,
+                            );
                           }}
                           variant="ghost"
                           size="sm"
