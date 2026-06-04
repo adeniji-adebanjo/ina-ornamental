@@ -30,6 +30,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
   const [filterCategory, setFilterCategory] = useState("all");
   const [seeding, setSeeding] = useState(false);
   const router = useRouter();
+  const [confirmProps, showConfirm] = useConfirmDialog();
 
   const filtered = species.filter((s) => {
     const matchSearch =
@@ -41,13 +42,25 @@ export default function SpeciesListClient({ species, categories }: Props) {
     return matchSearch && matchCategory;
   });
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-
-    const res = await fetch(`/api/admin/species/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      router.refresh();
-    }
+  function handleDelete(id: string, name: string) {
+    showConfirm({
+      title: `Delete "${name}"?`,
+      description:
+        "This species will be permanently removed. This action cannot be undone.",
+      confirmLabel: "Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        const res = await fetch(`/api/admin/species/${id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          toast.success(`"${name}" deleted`);
+          router.refresh();
+        } else {
+          toast.error("Failed to delete species");
+        }
+      },
+    });
   }
 
   const availabilityBadge = (status: string) => {
@@ -214,6 +227,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
           ))}
         </div>
       )}
+      <ConfirmDialog {...confirmProps} />
     </div>
   );
 }

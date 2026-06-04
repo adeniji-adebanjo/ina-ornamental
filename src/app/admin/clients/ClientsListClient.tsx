@@ -9,6 +9,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search, User, Building2 } from "lucide-react";
+import {
+  ConfirmDialog,
+  useConfirmDialog,
+} from "@/components/ui/confirm-dialog";
 
 export default function ClientsListClient({
   clients: initial,
@@ -21,6 +25,7 @@ export default function ClientsListClient({
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmProps, showConfirm] = useConfirmDialog();
 
   const filtered = clients.filter(
     (c) =>
@@ -63,18 +68,25 @@ export default function ClientsListClient({
     setSaving(false);
   }
 
-  async function handleDelete(id: string) {
-    if (
-      !confirm("Delete this client? This will also delete their price lists.")
-    )
-      return;
-    const res = await fetch(`/api/admin/clients/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setClients((prev) => prev.filter((c) => c.id !== id));
-      toast.success("Client deleted");
-    } else {
-      toast.error("Failed to delete client");
-    }
+  function handleDelete(id: string) {
+    showConfirm({
+      title: "Delete client?",
+      description:
+        "This will permanently remove the client and all their associated price lists.",
+      confirmLabel: "Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        const res = await fetch(`/api/admin/clients/${id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setClients((prev) => prev.filter((c) => c.id !== id));
+          toast.success("Client deleted");
+        } else {
+          toast.error("Failed to delete client");
+        }
+      },
+    });
   }
 
   return (
@@ -221,6 +233,7 @@ export default function ClientsListClient({
           </p>
         )}
       </div>
+      <ConfirmDialog {...confirmProps} />
     </div>
   );
 }

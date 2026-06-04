@@ -15,6 +15,10 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import {
+  ConfirmDialog,
+  useConfirmDialog,
+} from "@/components/ui/confirm-dialog";
 
 interface Species {
   id: string;
@@ -66,6 +70,7 @@ export default function PricingListClient({
   const [newItems, setNewItems] = useState<
     { species_id: string; custom_price: string }[]
   >([{ species_id: "", custom_price: "" }]);
+  const [confirmProps, showConfirm] = useConfirmDialog();
 
   function addItemRow() {
     setNewItems((prev) => [...prev, { species_id: "", custom_price: "" }]);
@@ -125,15 +130,25 @@ export default function PricingListClient({
     setSaving(false);
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this price list?")) return;
-    const res = await fetch(`/api/admin/pricing/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setPriceLists((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Price list deleted");
-    } else {
-      toast.error("Failed to delete");
-    }
+  function handleDelete(id: string) {
+    showConfirm({
+      title: "Delete price list?",
+      description:
+        "This will permanently remove the price list and all its items.",
+      confirmLabel: "Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        const res = await fetch(`/api/admin/pricing/${id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setPriceLists((prev) => prev.filter((p) => p.id !== id));
+          toast.success("Price list deleted");
+        } else {
+          toast.error("Failed to delete");
+        }
+      },
+    });
   }
 
   function copyLink(pl: PriceList) {
@@ -382,6 +397,7 @@ export default function PricingListClient({
           </p>
         )}
       </div>
+      <ConfirmDialog {...confirmProps} />
     </div>
   );
 }
