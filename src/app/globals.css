@@ -39,6 +39,7 @@
 
   /* ── Semantic aliases ── */
   --color-primary: #3b655d;
+  --color-primary-foreground: #ffffff;
   --color-primary-light: #4d7d73;
   --color-primary-dark: #243d38;
   --color-accent: #d4a85f;
