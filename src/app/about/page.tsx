@@ -2,9 +2,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 
 export const metadata = {
-  title: "About | INA Ornamental Fish",
+  title: "About",
   description:
-    "Learn about INA Ornamental Fish, a leading West African ornamental fish exporter with over 22 years of experience.",
+    "Learn about INA Ornamental Fish, a leading West African ornamental fish exporter with over 22 years of experience in ethically sourcing and exporting premium African aquarium species.",
+  alternates: { canonical: "/about" },
 };
 
 const highlights = [
