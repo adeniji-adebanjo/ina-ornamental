@@ -54,9 +54,7 @@ export async function syncInstagramPosts(): Promise<void> {
   }
 }
 
-export async function getInstagramPosts(
-  limit = 30,
-): Promise<InstagramPost[]> {
+export async function getInstagramPosts(limit = 30): Promise<InstagramPost[]> {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
     .from("instagram_posts")

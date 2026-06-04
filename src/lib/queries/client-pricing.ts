@@ -9,7 +9,8 @@ export async function getClientPriceList(
 
   const { data } = await supabase
     .from("client_price_lists")
-    .select(`
+    .select(
+      `
       *,
       client:clients(*),
       items:client_price_items(
@@ -20,7 +21,8 @@ export async function getClientPriceList(
           images:species_images(*)
         )
       )
-    `)
+    `,
+    )
     .eq("slug", slug)
     .eq("access_token", token)
     .eq("active", true)

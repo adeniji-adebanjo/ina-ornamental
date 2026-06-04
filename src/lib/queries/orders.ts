@@ -16,13 +16,15 @@ export async function getOrders(options?: {
 
   let query = supabase
     .from("orders")
-    .select(`
+    .select(
+      `
       *,
       order_groups(
         *,
         order_items(*)
       )
-    `)
+    `,
+    )
     .order("submitted_at", { ascending: false });
 
   if (options?.status) query = query.eq("status", options.status);
@@ -33,17 +35,21 @@ export async function getOrders(options?: {
   return (data as OrderWithGroups[]) ?? [];
 }
 
-export async function getOrderById(id: string): Promise<OrderWithGroups | null> {
+export async function getOrderById(
+  id: string,
+): Promise<OrderWithGroups | null> {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
     .from("orders")
-    .select(`
+    .select(
+      `
       *,
       order_groups(
         *,
         order_items(*)
       )
-    `)
+    `,
+    )
     .eq("id", id)
     .single();
   return data as OrderWithGroups | null;

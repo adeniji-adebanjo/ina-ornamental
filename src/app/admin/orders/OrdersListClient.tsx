@@ -78,21 +78,19 @@ export default function OrdersListClient({
       <div className="space-y-3">
         {filtered.map((order) => {
           const expanded = expandedId === order.id;
-          const totalItems = order.order_groups?.reduce(
-            (sum, g) =>
-              sum +
-              (g.order_items?.reduce((s, i) => s + i.quantity, 0) ?? 0),
-            0,
-          ) ?? 0;
+          const totalItems =
+            order.order_groups?.reduce(
+              (sum, g) =>
+                sum + (g.order_items?.reduce((s, i) => s + i.quantity, 0) ?? 0),
+              0,
+            ) ?? 0;
 
           return (
             <Card key={order.id} className="rounded-xl">
               <CardContent className="p-4">
                 <div
                   className="flex items-center gap-4 cursor-pointer"
-                  onClick={() =>
-                    setExpandedId(expanded ? null : order.id)
-                  }
+                  onClick={() => setExpandedId(expanded ? null : order.id)}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -111,8 +109,8 @@ export default function OrdersListClient({
                     </p>
                     <p className="text-xs text-slate-400">
                       {new Date(order.submitted_at).toLocaleDateString()} •{" "}
-                      {totalItems} items •{" "}
-                      {order.order_groups?.length ?? 0} groups
+                      {totalItems} items • {order.order_groups?.length ?? 0}{" "}
+                      groups
                     </p>
                   </div>
                   {expanded ? (

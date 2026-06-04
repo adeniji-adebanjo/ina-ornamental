@@ -127,10 +127,7 @@ export default function AdminLayoutClient({
             <Menu className="size-5" />
           </button>
           <div className="flex-1" />
-          <Link
-            href="/"
-            className="text-sm text-slate-500 hover:text-sky-700"
-          >
+          <Link href="/" className="text-sm text-slate-500 hover:text-sky-700">
             View Site →
           </Link>
         </header>

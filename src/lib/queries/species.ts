@@ -26,11 +26,13 @@ export async function getSpecies(options?: {
 
   let query = supabase
     .from("species")
-    .select(`
+    .select(
+      `
       *,
       category:categories(*),
       images:species_images(*)
-    `)
+    `,
+    )
     .order("sort_order")
     .order("sort_order", { referencedTable: "species_images" });
 
@@ -65,11 +67,13 @@ export async function getSpeciesBySlug(
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
     .from("species")
-    .select(`
+    .select(
+      `
       *,
       category:categories(*),
       images:species_images(*)
-    `)
+    `,
+    )
     .eq("slug", slug)
     .order("sort_order", { referencedTable: "species_images" })
     .single();
@@ -82,11 +86,13 @@ export async function getSpeciesById(
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
     .from("species")
-    .select(`
+    .select(
+      `
       *,
       category:categories(*),
       images:species_images(*)
-    `)
+    `,
+    )
     .eq("id", id)
     .order("sort_order", { referencedTable: "species_images" })
     .single();

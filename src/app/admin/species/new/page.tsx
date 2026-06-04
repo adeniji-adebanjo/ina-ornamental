@@ -6,7 +6,9 @@ export default async function NewSpeciesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Add New Species</h1>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">
+        Add New Species
+      </h1>
       <SpeciesFormClient categories={categories} />
     </div>
   );

@@ -113,7 +113,9 @@ export default function SpeciesListClient({ species, categories }: Props) {
                   <p className="font-semibold text-slate-900 truncate">
                     {s.common_name}
                   </p>
-                  {s.featured && <Star className="size-3.5 text-amber-500 fill-amber-500" />}
+                  {s.featured && (
+                    <Star className="size-3.5 text-amber-500 fill-amber-500" />
+                  )}
                 </div>
                 <p className="text-sm italic text-slate-500 truncate">
                   {s.scientific_name}
@@ -121,10 +123,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
               </div>
 
               <div className="hidden sm:flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="text-xs"
-                >
+                <Badge variant="outline" className="text-xs">
                   {s.category?.name ?? "—"}
                 </Badge>
                 <span

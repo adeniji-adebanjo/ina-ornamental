@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { SpeciesWithImages, Category, AvailabilityStatus } from "@/types/database";
+import type {
+  SpeciesWithImages,
+  Category,
+  AvailabilityStatus,
+} from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -152,7 +156,10 @@ export default function SpeciesFormClient({ species, categories }: Props) {
                   <Input
                     value={form.scientific_name}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, scientific_name: e.target.value }))
+                      setForm((f) => ({
+                        ...f,
+                        scientific_name: e.target.value,
+                      }))
                     }
                     className="rounded-xl italic"
                   />
@@ -413,7 +420,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
             disabled={saving}
             className="w-full h-11 rounded-xl bg-sky-800 hover:bg-sky-700 text-white font-semibold"
           >
-            {saving ? "Saving..." : isEdit ? "Update Species" : "Create Species"}
+            {saving
+              ? "Saving..."
+              : isEdit
+                ? "Update Species"
+                : "Create Species"}
           </Button>
         </div>
       </div>

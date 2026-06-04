@@ -29,7 +29,10 @@ export async function POST(request: NextRequest) {
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid email format" },
+      { status: 400 },
+    );
   }
 
   const order_reference = generateOrderReference();
@@ -76,29 +79,34 @@ export async function POST(request: NextRequest) {
     }
 
     if (group.items?.length) {
-      const items = group.items.map((item: {
-        species_id: string;
-        species_name: string;
-        scientific_name?: string;
-        size?: string;
-        quantity: number;
-        unit_price?: number;
-      }) => ({
-        order_group_id: groupData.id,
-        species_id: item.species_id,
-        species_name: item.species_name,
-        scientific_name: item.scientific_name || null,
-        size: item.size || null,
-        quantity: item.quantity,
-        unit_price: item.unit_price || null,
-      }));
+      const items = group.items.map(
+        (item: {
+          species_id: string;
+          species_name: string;
+          scientific_name?: string;
+          size?: string;
+          quantity: number;
+          unit_price?: number;
+        }) => ({
+          order_group_id: groupData.id,
+          species_id: item.species_id,
+          species_name: item.species_name,
+          scientific_name: item.scientific_name || null,
+          size: item.size || null,
+          quantity: item.quantity,
+          unit_price: item.unit_price || null,
+        }),
+      );
 
       const { error: itemsError } = await supabase
         .from("order_items")
         .insert(items);
 
       if (itemsError) {
-        return NextResponse.json({ error: itemsError.message }, { status: 500 });
+        return NextResponse.json(
+          { error: itemsError.message },
+          { status: 500 },
+        );
       }
     }
   }
