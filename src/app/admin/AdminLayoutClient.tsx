@@ -11,7 +11,7 @@ import {
   Users,
   DollarSign,
   LayoutDashboard,
-  Image,
+  Image as ImageIcon,
   LogOut,
   Menu,
   X,
@@ -25,7 +25,7 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: Package },
   { href: "/admin/clients", label: "Clients", icon: Users },
   { href: "/admin/pricing", label: "Custom Pricing", icon: DollarSign },
-  { href: "/admin/gallery", label: "Gallery", icon: Image },
+  { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
 ];
 
 export default function AdminLayoutClient({
