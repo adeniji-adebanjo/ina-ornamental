@@ -1,8 +1,8 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import PricingListClient from "./PricingListClient";
 
 export default async function AdminPricingPage() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createAdminSupabaseClient();
   const [{ data: priceLists }, { data: clients }, { data: species }] =
     await Promise.all([
       supabase
