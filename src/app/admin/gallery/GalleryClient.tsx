@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { RefreshCw, Camera, ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 export default function GalleryClient({
   posts: initial,
@@ -83,7 +84,7 @@ export default function GalleryClient({
                     muted
                   />
                 ) : (
-                  <img
+                  <Image
                     src={post.media_url}
                     alt={post.caption ?? "Instagram post"}
                     className="w-full h-full object-cover"
@@ -109,7 +110,9 @@ export default function GalleryClient({
                     {post.media_type}
                   </Badge>
                   <span className="text-xs text-slate-400">
-                    {new Date(post.posted_at).toLocaleDateString()}
+                    {post.timestamp
+                      ? new Date(post.timestamp).toLocaleDateString()
+                      : "—"}
                   </span>
                 </div>
               </CardContent>
