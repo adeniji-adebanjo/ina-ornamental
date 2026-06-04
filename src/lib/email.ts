@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { buildInvoiceExcel } from "./invoice";
 
 let transporter: nodemailer.Transporter | null = null;
 
@@ -18,7 +19,10 @@ function getTransporter(): nodemailer.Transporter | null {
   return transporter;
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || "orders@inaornamentalfish.com";
+const FROM_EMAIL =
+  process.env.FROM_EMAIL ||
+  process.env.SMTP_USER ||
+  "orders@inaornamentalfish.com";
 const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "inaornamental@gmail.com")
   .split(",")
   .map((e) => e.trim());
@@ -141,6 +145,25 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
     return;
   }
 
+  // Generate Excel invoice attachment
+  let invoiceBuffer: Buffer | null = null;
+  try {
+    invoiceBuffer = await buildInvoiceExcel(data);
+  } catch (err) {
+    console.error("Failed to generate Excel invoice:", err);
+  }
+
+  const attachments = invoiceBuffer
+    ? [
+        {
+          filename: `INA-Invoice-${data.order_reference}.xlsx`,
+          content: invoiceBuffer,
+          contentType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+      ]
+    : [];
+
   const promises: Promise<unknown>[] = [];
 
   // Send confirmation to customer
@@ -151,6 +174,7 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
         to: data.email,
         subject: `Order Confirmed — ${data.order_reference} | iNA Ornamental Fish`,
         html: buildEmailHTML(data, false),
+        attachments,
       }),
     );
   }
@@ -162,6 +186,7 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
       to: ADMIN_EMAILS.join(", "),
       subject: `New Order: ${data.order_reference} from ${data.customer_name}`,
       html: buildEmailHTML(data, true),
+      attachments,
     }),
   );
 

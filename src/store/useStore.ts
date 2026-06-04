@@ -4,9 +4,29 @@ import { CartItem, FishProduct, CategoryFilter } from "@/types";
 interface StoreState {
   // Cart
   cart: CartItem[];
-  addToCart: (product: FishProduct, size: string, quantity?: number) => void;
-  removeFromCart: (productId: number, size: string) => void;
-  updateQuantity: (productId: number, size: string, quantity: number) => void;
+  orderGroups: string[];
+  addToCart: (
+    product: FishProduct,
+    size: string,
+    quantity?: number,
+    group?: string,
+  ) => void;
+  removeFromCart: (productId: number, size: string, group?: string) => void;
+  updateQuantity: (
+    productId: number,
+    size: string,
+    quantity: number,
+    group?: string,
+  ) => void;
+  moveToGroup: (
+    productId: number,
+    size: string,
+    fromGroup: string,
+    toGroup: string,
+  ) => void;
+  addOrderGroup: (name: string) => void;
+  removeOrderGroup: (name: string) => void;
+  renameOrderGroup: (oldName: string, newName: string) => void;
   clearCart: () => void;
   cartTotal: () => number;
 
@@ -30,45 +50,144 @@ interface StoreState {
 export const useStore = create<StoreState>((set, get) => ({
   // Cart state
   cart: [],
-  addToCart: (product, size, quantity = 1) => {
-    const { cart } = get();
+  orderGroups: ["Order A"],
+  addToCart: (product, size, quantity = 1, group = "Order A") => {
+    const { cart, orderGroups } = get();
+    // Ensure the group exists
+    if (!orderGroups.includes(group)) {
+      set({ orderGroups: [...orderGroups, group] });
+    }
     const existing = cart.find(
-      (item) => item.product.id === product.id && item.selectedSize === size,
+      (item) =>
+        item.product.id === product.id &&
+        item.selectedSize === size &&
+        item.group === group,
     );
     if (existing) {
       set({
         cart: cart.map((item) =>
-          item.product.id === product.id && item.selectedSize === size
+          item.product.id === product.id &&
+          item.selectedSize === size &&
+          item.group === group
             ? { ...item, quantity: item.quantity + quantity }
             : item,
         ),
       });
     } else {
-      set({ cart: [...cart, { product, selectedSize: size, quantity }] });
+      set({
+        cart: [...cart, { product, selectedSize: size, quantity, group }],
+      });
     }
   },
-  removeFromCart: (productId, size) => {
+  removeFromCart: (productId, size, group) => {
     set({
       cart: get().cart.filter(
         (item) =>
-          !(item.product.id === productId && item.selectedSize === size),
+          !(
+            item.product.id === productId &&
+            item.selectedSize === size &&
+            (group ? item.group === group : true)
+          ),
       ),
     });
   },
-  updateQuantity: (productId, size, quantity) => {
+  updateQuantity: (productId, size, quantity, group) => {
     if (quantity <= 0) {
-      get().removeFromCart(productId, size);
+      get().removeFromCart(productId, size, group);
       return;
     }
     set({
       cart: get().cart.map((item) =>
-        item.product.id === productId && item.selectedSize === size
+        item.product.id === productId &&
+        item.selectedSize === size &&
+        (group ? item.group === group : true)
           ? { ...item, quantity }
           : item,
       ),
     });
   },
-  clearCart: () => set({ cart: [] }),
+  moveToGroup: (productId, size, fromGroup, toGroup) => {
+    const { cart, orderGroups } = get();
+    if (!orderGroups.includes(toGroup)) {
+      set({ orderGroups: [...orderGroups, toGroup] });
+    }
+    // Check if same product+size exists in target group
+    const targetExisting = cart.find(
+      (item) =>
+        item.product.id === productId &&
+        item.selectedSize === size &&
+        item.group === toGroup,
+    );
+    const source = cart.find(
+      (item) =>
+        item.product.id === productId &&
+        item.selectedSize === size &&
+        item.group === fromGroup,
+    );
+    if (!source) return;
+
+    if (targetExisting) {
+      // Merge quantities
+      set({
+        cart: cart
+          .filter(
+            (item) =>
+              !(
+                item.product.id === productId &&
+                item.selectedSize === size &&
+                item.group === fromGroup
+              ),
+          )
+          .map((item) =>
+            item.product.id === productId &&
+            item.selectedSize === size &&
+            item.group === toGroup
+              ? { ...item, quantity: item.quantity + source.quantity }
+              : item,
+          ),
+      });
+    } else {
+      set({
+        cart: cart.map((item) =>
+          item.product.id === productId &&
+          item.selectedSize === size &&
+          item.group === fromGroup
+            ? { ...item, group: toGroup }
+            : item,
+        ),
+      });
+    }
+  },
+  addOrderGroup: (name) => {
+    const { orderGroups } = get();
+    if (!orderGroups.includes(name)) {
+      set({ orderGroups: [...orderGroups, name] });
+    }
+  },
+  removeOrderGroup: (name) => {
+    const { orderGroups, cart } = get();
+    if (orderGroups.length <= 1) return; // Keep at least one
+    // Move items from this group to the first remaining group
+    const remaining = orderGroups.filter((g) => g !== name);
+    const fallback = remaining[0];
+    set({
+      orderGroups: remaining,
+      cart: cart.map((item) =>
+        item.group === name ? { ...item, group: fallback } : item,
+      ),
+    });
+  },
+  renameOrderGroup: (oldName, newName) => {
+    if (!newName.trim() || oldName === newName) return;
+    const { orderGroups, cart } = get();
+    set({
+      orderGroups: orderGroups.map((g) => (g === oldName ? newName : g)),
+      cart: cart.map((item) =>
+        item.group === oldName ? { ...item, group: newName } : item,
+      ),
+    });
+  },
+  clearCart: () => set({ cart: [], orderGroups: ["Order A"] }),
   cartTotal: () => get().cart.reduce((sum, item) => sum + item.quantity, 0),
 
   // Filter state

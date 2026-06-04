@@ -6,17 +6,59 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Minus, Plus, Trash2, MessageCircle } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  Trash2,
+  MessageCircle,
+  FolderPlus,
+  ArrowRight,
+  Pencil,
+  X,
+  Check,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function OrderClient() {
-  const { cart, updateQuantity, removeFromCart, clearCart } = useStore();
+  const {
+    cart,
+    orderGroups,
+    updateQuantity,
+    removeFromCart,
+    moveToGroup,
+    addOrderGroup,
+    removeOrderGroup,
+    renameOrderGroup,
+    clearCart,
+  } = useStore();
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderRef, setOrderRef] = useState("");
+  const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleAddGroup = () => {
+    const letter = String.fromCharCode(65 + orderGroups.length);
+    const name = `Order ${letter}`;
+    addOrderGroup(name);
+    toast.success(`Added "${name}"`);
+  };
+
+  const handleStartRename = (group: string) => {
+    setEditingGroup(group);
+    setEditValue(group);
+  };
+
+  const handleFinishRename = () => {
+    if (editingGroup && editValue.trim()) {
+      renameOrderGroup(editingGroup, editValue.trim());
+    }
+    setEditingGroup(null);
+    setEditValue("");
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,6 +66,23 @@ export default function OrderClient() {
 
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
+
+    const groups = orderGroups
+      .map((groupName) => {
+        const groupItems = cart.filter((item) => item.group === groupName);
+        if (groupItems.length === 0) return null;
+        return {
+          name: groupName,
+          items: groupItems.map((item) => ({
+            species_id: item.product.slug,
+            species_name: item.product.commonName,
+            scientific_name: item.product.scientificName,
+            size: item.selectedSize,
+            quantity: item.quantity,
+          })),
+        };
+      })
+      .filter(Boolean);
 
     const body = {
       customer_name: formData.get("customer_name") as string,
@@ -33,18 +92,7 @@ export default function OrderClient() {
       country: formData.get("country") as string,
       delivery_address: formData.get("delivery_address") as string,
       notes: formData.get("notes") as string,
-      groups: [
-        {
-          name: "Order A",
-          items: cart.map((item) => ({
-            species_id: item.product.slug, // used as reference
-            species_name: item.product.commonName,
-            scientific_name: item.product.scientificName,
-            size: item.selectedSize,
-            quantity: item.quantity,
-          })),
-        },
-      ],
+      groups,
     };
 
     try {
@@ -83,9 +131,9 @@ export default function OrderClient() {
             Request Order Quote
           </h1>
           <p className="mt-4 max-w-3xl text-sky-100 text-sm md:text-base leading-relaxed">
-            Add species to your quote cart and submit your shipment request. Our
-            export team will provide pricing, packing, documentation, and
-            delivery timeline.
+            Add species to your quote cart, organise them into separate shipment
+            groups if needed, and submit. Our export team will respond with
+            pricing, packing details, and a delivery timeline.
           </p>
         </div>
       </section>
@@ -97,20 +145,33 @@ export default function OrderClient() {
               <h2 className="text-xl md:text-2xl font-bold text-slate-900">
                 Quote Cart
               </h2>
-              {cart.length > 0 && (
-                <Button
-                  onClick={() => {
-                    clearCart();
-                    toast.info("Cart cleared");
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="size-4" />
-                  Clear All
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {cart.length > 0 && (
+                  <Button
+                    onClick={handleAddGroup}
+                    variant="outline"
+                    size="sm"
+                    className="text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                  >
+                    <FolderPlus className="size-4 mr-1" />
+                    Add Group
+                  </Button>
+                )}
+                {cart.length > 0 && (
+                  <Button
+                    onClick={() => {
+                      clearCart();
+                      toast.info("Cart cleared");
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="size-4" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
             </div>
 
             {cart.length === 0 ? (
@@ -131,77 +192,197 @@ export default function OrderClient() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-3">
-                {cart.map((item) => (
-                  <Card
-                    key={`${item.product.id}-${item.selectedSize}`}
-                    className="border-slate-100 rounded-2xl shadow-sm"
-                  >
-                    <CardContent className="p-4 md:p-5">
-                      <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-slate-900">
-                            {item.product.commonName}
-                          </h3>
-                          <p className="text-sm italic text-emerald-700">
-                            {item.product.scientificName}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            Size: {item.selectedSize}
-                          </p>
-                        </div>
+              <div className="space-y-6">
+                {orderGroups.map((groupName) => {
+                  const groupItems = cart.filter(
+                    (item) => item.group === groupName,
+                  );
+                  const otherGroups = orderGroups.filter(
+                    (g) => g !== groupName,
+                  );
 
-                        <div className="flex items-center gap-2">
-                          <Button
-                            onClick={() =>
-                              updateQuantity(
-                                item.product.id,
-                                item.selectedSize,
-                                item.quantity - 1,
-                              )
-                            }
-                            variant="outline"
-                            size="icon-sm"
-                            className="border-slate-200"
-                          >
-                            <Minus className="size-4" />
-                          </Button>
-                          <span className="w-10 text-center font-semibold text-slate-800">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            onClick={() =>
-                              updateQuantity(
-                                item.product.id,
-                                item.selectedSize,
-                                item.quantity + 1,
-                              )
-                            }
-                            variant="outline"
-                            size="icon-sm"
-                            className="border-slate-200"
-                          >
-                            <Plus className="size-4" />
-                          </Button>
-                        </div>
-
-                        <Button
-                          onClick={() => {
-                            removeFromCart(item.product.id, item.selectedSize);
-                            toast.info(
-                              `${item.product.commonName} removed from cart`,
-                            );
-                          }}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          Remove
-                        </Button>
+                  return (
+                    <div key={groupName} className="space-y-3">
+                      {/* Group header */}
+                      <div className="flex items-center gap-2 pb-1 border-b border-slate-200">
+                        {editingGroup === groupName ? (
+                          <div className="flex items-center gap-1 flex-1">
+                            <Input
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleFinishRename();
+                                if (e.key === "Escape") setEditingGroup(null);
+                              }}
+                              className="h-7 text-sm font-semibold w-40"
+                              autoFocus
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={handleFinishRename}
+                              className="text-emerald-600"
+                            >
+                              <Check className="size-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => setEditingGroup(null)}
+                              className="text-slate-400"
+                            >
+                              <X className="size-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <h3 className="font-semibold text-slate-700 text-sm">
+                              {groupName}
+                            </h3>
+                            <span className="text-xs text-slate-400">
+                              ({groupItems.length}{" "}
+                              {groupItems.length === 1 ? "item" : "items"})
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => handleStartRename(groupName)}
+                              className="text-slate-400 hover:text-slate-600"
+                            >
+                              <Pencil className="size-3" />
+                            </Button>
+                            {orderGroups.length > 1 && (
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => {
+                                  removeOrderGroup(groupName);
+                                  toast.info(
+                                    `"${groupName}" removed, items moved`,
+                                  );
+                                }}
+                                className="text-red-400 hover:text-red-600 ml-auto"
+                              >
+                                <Trash2 className="size-3" />
+                              </Button>
+                            )}
+                          </>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+
+                      {groupItems.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic pl-2">
+                          No items in this group yet.
+                        </p>
+                      ) : (
+                        groupItems.map((item) => (
+                          <Card
+                            key={`${item.product.id}-${item.selectedSize}-${groupName}`}
+                            className="border-slate-100 rounded-2xl shadow-sm"
+                          >
+                            <CardContent className="p-4 md:p-5">
+                              <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                                <div className="flex-1">
+                                  <h3 className="font-bold text-slate-900">
+                                    {item.product.commonName}
+                                  </h3>
+                                  <p className="text-sm italic text-emerald-700">
+                                    {item.product.scientificName}
+                                  </p>
+                                  <p className="text-xs text-slate-500 mt-1">
+                                    Size: {item.selectedSize}
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    onClick={() =>
+                                      updateQuantity(
+                                        item.product.id,
+                                        item.selectedSize,
+                                        item.quantity - 1,
+                                        groupName,
+                                      )
+                                    }
+                                    variant="outline"
+                                    size="icon-sm"
+                                    className="border-slate-200"
+                                  >
+                                    <Minus className="size-4" />
+                                  </Button>
+                                  <span className="w-10 text-center font-semibold text-slate-800">
+                                    {item.quantity}
+                                  </span>
+                                  <Button
+                                    onClick={() =>
+                                      updateQuantity(
+                                        item.product.id,
+                                        item.selectedSize,
+                                        item.quantity + 1,
+                                        groupName,
+                                      )
+                                    }
+                                    variant="outline"
+                                    size="icon-sm"
+                                    className="border-slate-200"
+                                  >
+                                    <Plus className="size-4" />
+                                  </Button>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  {otherGroups.length > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      {otherGroups.map((target) => (
+                                        <Button
+                                          key={target}
+                                          onClick={() => {
+                                            moveToGroup(
+                                              item.product.id,
+                                              item.selectedSize,
+                                              groupName,
+                                              target,
+                                            );
+                                            toast.info(`Moved to "${target}"`);
+                                          }}
+                                          variant="ghost"
+                                          size="sm"
+                                          className="text-xs text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 px-2"
+                                          title={`Move to ${target}`}
+                                        >
+                                          <ArrowRight className="size-3 mr-1" />
+                                          {target}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  <Button
+                                    onClick={() => {
+                                      removeFromCart(
+                                        item.product.id,
+                                        item.selectedSize,
+                                        groupName,
+                                      );
+                                      toast.info(
+                                        `${item.product.commonName} removed`,
+                                      );
+                                    }}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    Remove
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -212,9 +393,14 @@ export default function OrderClient() {
                 <h2 className="text-xl font-bold text-slate-900 mb-2">
                   Order Details
                 </h2>
-                <p className="text-sm text-slate-500 mb-4">
+                <p className="text-sm text-slate-500 mb-1">
                   Total requested units: {totalItems}
                 </p>
+                {orderGroups.length > 1 && (
+                  <p className="text-xs text-slate-400 mb-4">
+                    {orderGroups.length} shipment groups
+                  </p>
+                )}
 
                 {submitted ? (
                   <Card className="bg-emerald-50 border-emerald-200 rounded-xl">

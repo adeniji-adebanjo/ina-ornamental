@@ -8,16 +8,16 @@ import {
 
 const features = [
   {
-    title: "Ethically Sourced African Aquarium Fish",
-    body: "Partnering with responsible breeders and collectors while prioritizing sustainable practices and fish well-being.",
+    title: "Ethically Sourced, Quality Guaranteed",
+    body: "Every species is sourced from trusted breeders and collectors, conditioned in our Lagos facility, and health-checked before export.",
   },
   {
-    title: "Customized Logistics, Specialized Exotic Care",
-    body: "Tailored global export operations with careful packing, live arrival focus, and smooth documentation workflows.",
+    title: "End-to-End Export Logistics",
+    body: "Professional packing, CITES compliance, airline coordination, and live-arrival focus — we handle everything from our door to yours.",
   },
   {
-    title: "Invested B2B Partnership",
-    body: "Dedicated account support for wholesalers, retailers, and specialized collectors across global markets.",
+    title: "Dedicated B2B Partnerships",
+    body: "Custom pricing, recurring order support, and a dedicated account manager for wholesalers, retailers, and specialist collectors worldwide.",
   },
 ];
 

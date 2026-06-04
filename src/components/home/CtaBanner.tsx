@@ -8,22 +8,22 @@ export default function CtaBanner() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl md:text-3xl font-black">
-            Need Live Inventory from WordPress?
+            Ready to Stock Premium African Species?
           </h2>
           <p className="mt-2 text-slate-300 max-w-2xl">
-            This app is prepared for headless WordPress integration so your team
-            can manage products, categories, and stock status from a familiar
-            CMS workflow.
+            Browse our live catalogue of 160+ species, build your order with
+            multiple shipment groups, and receive a detailed proforma invoice —
+            all in minutes.
           </p>
         </div>
         <Link
-          href="/catalogue"
+          href="/order"
           className={cn(
             buttonVariants({ size: "lg" }),
             "bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl",
           )}
         >
-          Explore Live Catalogue
+          Start Your Order
         </Link>
       </div>
     </section>

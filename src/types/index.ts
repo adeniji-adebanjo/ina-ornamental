@@ -17,6 +17,7 @@ export interface CartItem {
   product: FishProduct;
   selectedSize: string;
   quantity: number;
+  group: string;
 }
 
 export interface QuoteRequest {

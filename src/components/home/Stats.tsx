@@ -2,9 +2,9 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const stats = [
   { label: "Years of Experience", value: "22+" },
-  { label: "Species Available", value: "120+" },
-  { label: "Countries Reached", value: "30+" },
-  { label: "Clients Served", value: "500+" },
+  { label: "Species Available", value: "160+" },
+  { label: "Countries Served", value: "30+" },
+  { label: "B2B Clients", value: "500+" },
 ];
 
 export default function Stats() {
