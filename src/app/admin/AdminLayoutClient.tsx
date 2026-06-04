@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -51,8 +52,15 @@ export default function AdminLayoutClient({
   const sidebar = (
     <nav className="flex flex-col h-full">
       <div className="p-6 border-b border-slate-200">
-        <Link href="/" className="text-xl font-black text-sky-800">
-          iNA Admin
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/ina-logo.svg"
+            alt="INA Ornamental"
+            width={36}
+            height={36}
+            className="rounded-lg"
+          />
+          <span className="text-lg font-black text-sky-800">Admin</span>
         </Link>
       </div>
 

@@ -7,8 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Star, Eye } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Star,
+  Eye,
+  Fish,
+  Database,
+} from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface Props {
   species: SpeciesWithImages[];
@@ -18,6 +28,7 @@ interface Props {
 export default function SpeciesListClient({ species, categories }: Props) {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [seeding, setSeeding] = useState(false);
   const router = useRouter();
 
   const filtered = species.filter((s) => {
@@ -49,6 +60,26 @@ export default function SpeciesListClient({ species, categories }: Props) {
     };
     return colors[status] || colors.on_request;
   };
+
+  async function handleSeed() {
+    setSeeding(true);
+    try {
+      const res = await fetch("/api/admin/seed", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(
+          `Seeded ${data.species} species in ${data.categories} categories`,
+        );
+        router.refresh();
+      } else {
+        toast.error(data.error || "Failed to seed data");
+      }
+    } catch {
+      toast.error("Failed to seed data");
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   return (
     <div>
@@ -90,67 +121,99 @@ export default function SpeciesListClient({ species, categories }: Props) {
         {filtered.length} species found
       </p>
 
-      <div className="space-y-2">
-        {filtered.map((s) => (
-          <Card key={s.id} className="rounded-xl">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-14 h-14 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                {s.images?.[0] ? (
-                  <img
-                    src={s.images[0].image_url}
-                    alt={s.common_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">
-                    No img
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-slate-900 truncate">
-                    {s.common_name}
-                  </p>
-                  {s.featured && (
-                    <Star className="size-3.5 text-amber-500 fill-amber-500" />
+      {species.length === 0 ? (
+        <Card className="rounded-xl">
+          <CardContent className="py-16 flex flex-col items-center text-center">
+            <Fish className="size-12 text-slate-300 mb-4" />
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">
+              No species yet
+            </h3>
+            <p className="text-sm text-slate-500 mb-6 max-w-sm">
+              Get started by adding species manually or load sample data to
+              explore the admin dashboard.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/admin/species/new">
+                <Button className="rounded-xl">
+                  <Plus className="size-4 mr-2" />
+                  Add Species
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={handleSeed}
+                disabled={seeding}
+              >
+                <Database className="size-4 mr-2" />
+                {seeding ? "Seeding..." : "Load Sample Data"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((s) => (
+            <Card key={s.id} className="rounded-xl">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
+                  {s.images?.[0] ? (
+                    <img
+                      src={s.images[0].image_url}
+                      alt={s.common_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">
+                      No img
+                    </div>
                   )}
                 </div>
-                <p className="text-sm italic text-slate-500 truncate">
-                  {s.scientific_name}
-                </p>
-              </div>
 
-              <div className="hidden sm:flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  {s.category?.name ?? "—"}
-                </Badge>
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${availabilityBadge(s.availability)}`}
-                >
-                  {s.availability.replace("_", " ")}
-                </span>
-              </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-slate-900 truncate">
+                      {s.common_name}
+                    </p>
+                    {s.featured && (
+                      <Star className="size-3.5 text-amber-500 fill-amber-500" />
+                    )}
+                  </div>
+                  <p className="text-sm italic text-slate-500 truncate">
+                    {s.scientific_name}
+                  </p>
+                </div>
 
-              <div className="flex items-center gap-1">
-                <Link href={`/admin/species/${s.id}`}>
-                  <Button variant="ghost" size="icon-sm">
-                    <Pencil className="size-4 text-slate-500" />
+                <div className="hidden sm:flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {s.category?.name ?? "—"}
+                  </Badge>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${availabilityBadge(s.availability)}`}
+                  >
+                    {s.availability.replace("_", " ")}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Link href={`/admin/species/${s.id}`}>
+                    <Button variant="ghost" size="icon-sm">
+                      <Pencil className="size-4 text-slate-500" />
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleDelete(s.id, s.common_name)}
+                  >
+                    <Trash2 className="size-4 text-red-500" />
                   </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => handleDelete(s.id, s.common_name)}
-                >
-                  <Trash2 className="size-4 text-red-500" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -26,9 +26,9 @@ export default function ProductModal() {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-300"
+        className="w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col"
       >
-        <div className="relative aspect-16/8 bg-linear-to-br from-sky-50 to-emerald-50">
+        <div className="relative aspect-16/8 sm:aspect-16/8 shrink-0 bg-linear-to-br from-sky-50 to-emerald-50">
           <Image
             src={selectedProduct.imageUrl}
             alt={selectedProduct.commonName}
@@ -40,21 +40,21 @@ export default function ProductModal() {
             onClick={() => setSelectedProduct(null)}
             variant="ghost"
             size="icon-sm"
-            className="absolute top-4 right-4 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow"
           >
             <X className="size-5" />
           </Button>
         </div>
 
-        <div className="p-5 sm:p-6">
-          <h3 className="text-2xl font-bold text-slate-900">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
             {selectedProduct.commonName}
           </h3>
-          <p className="text-emerald-700 italic mt-1">
+          <p className="text-sm sm:text-base text-emerald-700 italic mt-1">
             {selectedProduct.scientificName}
           </p>
 
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-3 text-sm">
             <Card className="bg-slate-50 border-0 rounded-xl">
               <CardContent className="p-3">
                 <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">
@@ -77,15 +77,15 @@ export default function ProductModal() {
             </Card>
           </div>
 
-          <p className="mt-4 text-slate-600 leading-relaxed">
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-600 leading-relaxed">
             {selectedProduct.description}
           </p>
 
-          <div className="mt-5">
+          <div className="mt-4 sm:mt-5">
             <p className="text-sm font-semibold text-slate-700 mb-2">
               Available Sizes
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {selectedProduct.sizes.map((size) => (
                 <Button
                   key={size}
@@ -104,7 +104,7 @@ export default function ProductModal() {
             </div>
           </div>
 
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button
               onClick={() => {
                 const size = selectedSize || selectedProduct.sizes[0] || "";
@@ -117,7 +117,7 @@ export default function ProductModal() {
                 );
                 setSelectedProduct(null);
               }}
-              className="flex-1 rounded-xl h-12"
+              className="flex-1 rounded-xl h-11 sm:h-12"
             >
               Add to Quote Cart
             </Button>
@@ -127,7 +127,7 @@ export default function ProductModal() {
               rel="noopener noreferrer"
               className={cn(
                 buttonVariants({ variant: "default" }),
-                "flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-12 gap-2",
+                "flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 sm:h-12 gap-2",
               )}
             >
               <MessageCircle className="size-4" />
