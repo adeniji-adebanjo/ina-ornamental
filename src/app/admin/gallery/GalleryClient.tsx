@@ -91,7 +91,7 @@ export default function GalleryClient({
                 )}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <a
-                    href={post.permalink}
+                    href={post.permalink ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-white flex items-center gap-1 text-sm"
