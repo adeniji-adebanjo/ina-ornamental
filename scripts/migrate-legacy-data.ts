@@ -49,7 +49,9 @@ async function fetchLegacyData(url: string): Promise<LegacyFish[]> {
   console.log(`Fetching data from: ${url}`);
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch: ${response.status} ${response.statusText}`,
+    );
   }
   const data = await response.json();
   console.log(`Fetched ${data.length} records`);
@@ -89,7 +91,10 @@ async function ensureCategory(
     .select("id")
     .single();
 
-  if (error) throw new Error(`Failed to create category "${normalized}": ${error.message}`);
+  if (error)
+    throw new Error(
+      `Failed to create category "${normalized}": ${error.message}`,
+    );
   categoryCache.set(normalized, created!.id);
   return created!.id;
 }
@@ -177,7 +182,9 @@ async function migrate() {
         .single();
 
       if (speciesError) {
-        console.error(`Error inserting "${fish.name}": ${speciesError.message}`);
+        console.error(
+          `Error inserting "${fish.name}": ${speciesError.message}`,
+        );
         errors++;
         continue;
       }
@@ -196,7 +203,9 @@ async function migrate() {
           .insert(imageRecords);
 
         if (imgError) {
-          console.error(`Error inserting images for "${fish.name}": ${imgError.message}`);
+          console.error(
+            `Error inserting images for "${fish.name}": ${imgError.message}`,
+          );
         }
       }
 

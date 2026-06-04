@@ -122,10 +122,21 @@ export async function POST(request: NextRequest) {
     country,
     delivery_address,
     notes,
-    groups: groups.map((g: { name: string; items: { species_name: string; scientific_name?: string; size?: string; quantity: number; unit_price?: number }[] }) => ({
-      name: g.name,
-      items: g.items,
-    })),
+    groups: groups.map(
+      (g: {
+        name: string;
+        items: {
+          species_name: string;
+          scientific_name?: string;
+          size?: string;
+          quantity: number;
+          unit_price?: number;
+        }[];
+      }) => ({
+        name: g.name,
+        items: g.items,
+      }),
+    ),
   }).catch(console.error);
 
   return NextResponse.json({

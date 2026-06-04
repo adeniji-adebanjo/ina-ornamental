@@ -88,16 +88,13 @@ export async function GET(
   doc.text(`Email: ${order.email}`, 300);
   if (order.phone) doc.text(`Phone: ${order.phone}`, 300);
   if (order.country) doc.text(`Country: ${order.country}`, 300);
-  if (order.delivery_address) doc.text(`Delivery: ${order.delivery_address}`, 300);
+  if (order.delivery_address)
+    doc.text(`Delivery: ${order.delivery_address}`, 300);
 
   doc.moveDown(2);
 
   // Draw separator
-  doc
-    .moveTo(50, doc.y)
-    .lineTo(545, doc.y)
-    .strokeColor("#3b655d")
-    .stroke();
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#3b655d").stroke();
   doc.moveDown(0.5);
 
   let grandTotal = 0;
@@ -121,11 +118,7 @@ export async function GET(
     doc.fillColor("#000000");
 
     doc.moveDown(0.3);
-    doc
-      .moveTo(50, doc.y)
-      .lineTo(545, doc.y)
-      .strokeColor("#cccccc")
-      .stroke();
+    doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#cccccc").stroke();
 
     let groupTotal = 0;
     let groupQty = 0;
@@ -160,11 +153,7 @@ export async function GET(
     }
 
     // Group subtotal
-    doc
-      .moveTo(50, doc.y)
-      .lineTo(545, doc.y)
-      .strokeColor("#cccccc")
-      .stroke();
+    doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor("#cccccc").stroke();
     doc.moveDown(0.2);
     doc.fontSize(9).fillColor("#3b655d");
     doc.text(`Subtotal: ${groupQty} pcs`, 390, doc.y, {
