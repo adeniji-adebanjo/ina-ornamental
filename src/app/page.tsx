@@ -66,7 +66,7 @@ export default function Home() {
               href="/order"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border-white/20",
+                "bg-white/10 hover:bg-white/25 text-white hover:text-white font-semibold rounded-xl border-white/30",
               )}
             >
               Start Order Request

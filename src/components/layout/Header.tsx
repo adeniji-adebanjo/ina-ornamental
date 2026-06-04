@@ -129,7 +129,7 @@ export default function Header() {
               >
                 <Menu className="size-6" />
               </SheetTrigger>
-              <SheetContent side="right" className="w-72 p-0">
+              <SheetContent side="right" className="w-72 p-0 bg-white">
                 <SheetTitle className="px-5 pt-5 text-lg font-bold text-slate-900">
                   Menu
                 </SheetTitle>
@@ -143,7 +143,7 @@ export default function Header() {
                       key={link.href}
                       render={<Link href={link.href} />}
                     >
-                      <span className="block px-3 py-2.5 text-slate-700 hover:bg-sky-50 hover:text-sky-700 rounded-lg font-medium transition-colors">
+                      <span className="block px-3 py-2.5 text-slate-800 hover:bg-sky-50 hover:text-sky-700 rounded-lg font-semibold text-base transition-colors">
                         {link.label}
                       </span>
                     </SheetClose>
