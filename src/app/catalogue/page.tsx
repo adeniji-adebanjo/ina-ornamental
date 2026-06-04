@@ -1,6 +1,6 @@
 import CatalogueClient from "@/components/catalogue/CatalogueClient";
 import { fishProducts } from "@/data/products";
-import { getSpecies } from "@/lib/queries/species";
+import { getSpecies, getCategories } from "@/lib/queries/species";
 import { speciesToFishProduct } from "@/lib/adapters";
 
 export const metadata = {
@@ -12,8 +12,13 @@ export const metadata = {
 
 export default async function CataloguePage() {
   let products;
+  let categoryNames: string[] = [];
   try {
-    const supabaseSpecies = await getSpecies();
+    const [supabaseSpecies, dbCategories] = await Promise.all([
+      getSpecies(),
+      getCategories(),
+    ]);
+    categoryNames = dbCategories.map((c) => c.name);
     products =
       supabaseSpecies.length > 0
         ? supabaseSpecies.map(speciesToFishProduct)
@@ -22,5 +27,5 @@ export default async function CataloguePage() {
     products = fishProducts;
   }
 
-  return <CatalogueClient products={products} />;
+  return <CatalogueClient products={products} categories={categoryNames} />;
 }

@@ -29,18 +29,7 @@ export interface QuoteRequest {
   message: string;
 }
 
-export type CategoryFilter =
-  | "All Species"
-  | "Monster Fish"
-  | "Tetras"
-  | "Polypterus"
-  | "Puffers"
-  | "Cichlids"
-  | "Crabs"
-  | "Catfish"
-  | "Killifish"
-  | "Lungfish"
-  | "Oddballs";
+export type CategoryFilter = string;
 
 export interface WPProduct {
   id: number;

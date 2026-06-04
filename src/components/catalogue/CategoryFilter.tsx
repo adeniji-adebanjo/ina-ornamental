@@ -1,25 +1,21 @@
 "use client";
 
-import { CategoryFilter as CategoryType } from "@/types";
 import { useStore } from "@/store/useStore";
 import { Button } from "@/components/ui/button";
 
-const categories: CategoryType[] = [
-  "All Species",
-  "Monster Fish",
-  "Tetras",
-  "Polypterus",
-  "Puffers",
-  "Cichlids",
-  "Crabs",
-  "Catfish",
-  "Killifish",
-  "Lungfish",
-  "Oddballs",
-];
+interface CategoryFilterProps {
+  categories?: string[];
+}
 
-export default function CategoryFilter() {
+export default function CategoryFilter({
+  categories: propCategories,
+}: CategoryFilterProps) {
   const { activeCategory, setActiveCategory } = useStore();
+
+  const categories =
+    propCategories && propCategories.length > 0
+      ? ["All Species", ...propCategories]
+      : ["All Species"];
 
   return (
     <div className="overflow-x-auto pb-2 -mx-1">

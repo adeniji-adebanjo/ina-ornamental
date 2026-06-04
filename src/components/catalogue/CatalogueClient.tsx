@@ -12,9 +12,13 @@ import { Badge } from "@/components/ui/badge";
 
 interface CatalogueClientProps {
   products: FishProduct[];
+  categories?: string[];
 }
 
-export default function CatalogueClient({ products }: CatalogueClientProps) {
+export default function CatalogueClient({
+  products,
+  categories,
+}: CatalogueClientProps) {
   const { activeCategory, searchQuery } = useStore();
 
   const filteredProducts = useMemo(() => {
@@ -86,7 +90,7 @@ export default function CatalogueClient({ products }: CatalogueClientProps) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         <div className="space-y-4">
           <SearchBar />
-          <CategoryFilter />
+          <CategoryFilter categories={categories} />
         </div>
 
         <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
