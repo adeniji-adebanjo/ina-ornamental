@@ -186,6 +186,18 @@ export default function ClientOrderClient({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (totalPieces === 0) return;
+
+    // Validate phone length
+    if (phoneNumber) {
+      const digits = phoneNumber.replace(/\D/g, "");
+      if (digits.length < selectedCountry.minDigits) {
+        toast.error(
+          `Phone number must be at least ${selectedCountry.minDigits} digits for ${selectedCountry.name}`,
+        );
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
@@ -633,13 +645,15 @@ export default function ClientOrderClient({
                           <input
                             type="tel"
                             name="phone"
-                            placeholder="Phone number"
+                            placeholder={`Phone (${selectedCountry.minDigits}-${selectedCountry.maxDigits} digits)`}
                             value={phoneNumber}
-                            onChange={(e) =>
-                              setPhoneNumber(
-                                e.target.value.replace(/[^\d\s\-()]/g, ""),
-                              )
-                            }
+                            maxLength={selectedCountry.maxDigits}
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\D/g, "");
+                              if (digits.length <= selectedCountry.maxDigits) {
+                                setPhoneNumber(digits);
+                              }
+                            }}
                             className="flex-1 px-3 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
                           />
                         </div>

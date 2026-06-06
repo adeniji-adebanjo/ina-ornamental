@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Client } from "@/types/database";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, User, Building2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  User,
+  Building2,
+  ChevronDown,
+} from "lucide-react";
 import {
   ConfirmDialog,
   useConfirmDialog,
 } from "@/components/ui/confirm-dialog";
+import { COUNTRIES } from "@/data/countries";
 
 export default function ClientsListClient({
   clients: initial,
@@ -28,6 +37,51 @@ export default function ClientsListClient({
   const [saving, setSaving] = useState(false);
   const [confirmProps, showConfirm] = useConfirmDialog();
   const [prefill, setPrefill] = useState<Record<string, string>>({});
+
+  // Phone & Country state
+  const [selectedCountry, setSelectedCountry] = useState(
+    COUNTRIES.find((c) => c.code === "NG")!,
+  );
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [countrySearch, setCountrySearch] = useState("");
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
+  const countryRef = useRef<HTMLDivElement>(null);
+  const phoneCodeRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        countryRef.current &&
+        !countryRef.current.contains(e.target as Node)
+      ) {
+        setCountryDropdownOpen(false);
+      }
+      if (
+        phoneCodeRef.current &&
+        !phoneCodeRef.current.contains(e.target as Node)
+      ) {
+        setPhoneCodeOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  // Reset phone/country state when editing changes
+  useEffect(() => {
+    if (editing) {
+      const match = COUNTRIES.find((c) => c.name === editing.country);
+      if (match) setSelectedCountry(match);
+      setPhoneNumber(editing.phone?.replace(/^\+\d+\s?/, "") ?? "");
+    } else {
+      const prefillMatch = COUNTRIES.find((c) => c.name === prefill.country);
+      if (prefillMatch) setSelectedCountry(prefillMatch);
+      else setSelectedCountry(COUNTRIES.find((c) => c.code === "NG")!);
+      setPhoneNumber("");
+    }
+  }, [editing, prefill]);
 
   // Auto-open form when redirected from admin orders with ?new=1
   useEffect(() => {
@@ -51,14 +105,26 @@ export default function ClientsListClient({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // Validate phone length
+    if (phoneNumber) {
+      const digits = phoneNumber.replace(/\D/g, "");
+      if (digits.length < selectedCountry.minDigits) {
+        toast.error(
+          `Phone number must be at least ${selectedCountry.minDigits} digits for ${selectedCountry.name}`,
+        );
+        return;
+      }
+    }
+
     setSaving(true);
     const fd = new FormData(e.currentTarget);
     const body = {
       name: fd.get("name"),
       company: fd.get("company") || null,
       email: fd.get("email") || null,
-      phone: fd.get("phone") || null,
-      country: fd.get("country") || null,
+      phone: phoneNumber ? `${selectedCountry.dialCode} ${phoneNumber}` : null,
+      country: selectedCountry.name,
     };
 
     const url = editing
@@ -152,18 +218,121 @@ export default function ClientsListClient({
                 defaultValue={editing?.email ?? prefill.email ?? ""}
                 className="rounded-xl"
               />
-              <Input
-                name="phone"
-                placeholder="Phone"
-                defaultValue={editing?.phone ?? ""}
-                className="rounded-xl"
-              />
-              <Input
-                name="country"
-                placeholder="Country"
-                defaultValue={editing?.country ?? prefill.country ?? ""}
-                className="rounded-xl"
-              />
+              {/* Phone with country code */}
+              <div className="relative" ref={phoneCodeRef}>
+                <div className="flex h-10 rounded-xl border border-input overflow-hidden focus-within:ring-2 focus-within:ring-ring">
+                  <button
+                    type="button"
+                    onClick={() => setPhoneCodeOpen(!phoneCodeOpen)}
+                    className="flex items-center gap-1 px-2.5 bg-slate-50 border-r border-input text-sm font-medium text-slate-700 hover:bg-slate-100 shrink-0"
+                  >
+                    {selectedCountry.dialCode}
+                    <ChevronDown className="size-3 text-slate-400" />
+                  </button>
+                  <input
+                    type="tel"
+                    placeholder={`Phone (${selectedCountry.minDigits}-${selectedCountry.maxDigits} digits)`}
+                    value={phoneNumber}
+                    maxLength={selectedCountry.maxDigits}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      if (digits.length <= selectedCountry.maxDigits) {
+                        setPhoneNumber(digits);
+                      }
+                    }}
+                    className="flex-1 px-3 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                {phoneCodeOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-64 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50">
+                    <div className="sticky top-0 bg-white p-2 border-b border-slate-100">
+                      <div className="flex items-center gap-2 px-2 h-8 rounded-lg bg-slate-50 border border-slate-200">
+                        <Search className="size-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search country..."
+                          className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    {COUNTRIES.filter(
+                      (c) =>
+                        c.name
+                          .toLowerCase()
+                          .includes(countrySearch.toLowerCase()) ||
+                        c.dialCode.includes(countrySearch),
+                    ).map((c) => (
+                      <button
+                        key={c.code + c.dialCode}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCountry(c);
+                          setPhoneCodeOpen(false);
+                          setCountrySearch("");
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between"
+                      >
+                        <span>{c.name}</span>
+                        <span className="text-slate-400 text-xs font-mono">
+                          {c.dialCode}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Country searchable dropdown */}
+              <div className="relative" ref={countryRef}>
+                <button
+                  type="button"
+                  onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
+                  className="flex items-center justify-between w-full h-10 px-3 rounded-xl border border-input bg-transparent text-sm hover:bg-slate-50"
+                >
+                  <span className="text-slate-900">{selectedCountry.name}</span>
+                  <ChevronDown className="size-4 text-slate-400" />
+                </button>
+                {countryDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50">
+                    <div className="sticky top-0 bg-white p-2 border-b border-slate-100">
+                      <div className="flex items-center gap-2 px-2 h-8 rounded-lg bg-slate-50 border border-slate-200">
+                        <Search className="size-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search country..."
+                          className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    {COUNTRIES.filter((c) =>
+                      c.name
+                        .toLowerCase()
+                        .includes(countrySearch.toLowerCase()),
+                    ).map((c) => (
+                      <button
+                        key={c.code}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCountry(c);
+                          setCountryDropdownOpen(false);
+                          setCountrySearch("");
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 ${
+                          c.code === selectedCountry.code
+                            ? "bg-sky-50 text-sky-800 font-medium"
+                            : ""
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2 sm:col-span-2">
                 <Button type="submit" disabled={saving} className="rounded-xl">
                   {saving ? "Saving..." : editing ? "Update" : "Create"}
