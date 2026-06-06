@@ -39,11 +39,11 @@ export async function POST(request: NextRequest) {
     .insert({
       client_id,
       slug,
-      token,
+      access_token: token,
       title,
       valid_from: valid_from || null,
       valid_until: valid_until || null,
-      is_active: true,
+      active: true,
     })
     .select()
     .single();

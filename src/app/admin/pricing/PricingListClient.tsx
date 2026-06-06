@@ -46,11 +46,11 @@ interface PriceList {
   id: string;
   client_id: string;
   slug: string;
-  token: string;
+  access_token: string;
   title: string;
   valid_from: string | null;
   valid_until: string | null;
-  is_active: boolean;
+  active: boolean;
   created_at: string;
   client: Client | null;
   items: PriceItem[];
@@ -240,7 +240,7 @@ export default function PricingListClient({
   }
 
   function copyLink(pl: PriceList) {
-    const url = `${window.location.origin}/orders/${pl.slug}?token=${pl.token}`;
+    const url = `${window.location.origin}/orders/${pl.slug}?token=${pl.access_token}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copied to clipboard");
   }
@@ -450,10 +450,10 @@ export default function PricingListClient({
                       {pl.title}
                     </h3>
                     <Badge
-                      variant={pl.is_active ? "default" : "secondary"}
+                      variant={pl.active ? "default" : "secondary"}
                       className="text-xs"
                     >
-                      {pl.is_active ? "Active" : "Inactive"}
+                      {pl.active ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                   <p className="text-xs sm:text-sm text-slate-500">
@@ -476,7 +476,7 @@ export default function PricingListClient({
                     <Copy className="size-4" />
                   </Button>
                   <a
-                    href={`/orders/${pl.slug}?token=${pl.token}`}
+                    href={`/orders/${pl.slug}?token=${pl.access_token}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -538,8 +538,8 @@ export default function PricingListClient({
                       <strong>Order Link:</strong>{" "}
                       <code className="bg-white px-2 py-1 rounded text-xs break-all">
                         {typeof window !== "undefined"
-                          ? `${window.location.origin}/orders/${pl.slug}?token=${pl.token}`
-                          : `/orders/${pl.slug}?token=${pl.token}`}
+                          ? `${window.location.origin}/orders/${pl.slug}?token=${pl.access_token}`
+                          : `/orders/${pl.slug}?token=${pl.access_token}`}
                       </code>
                     </p>
                   </div>

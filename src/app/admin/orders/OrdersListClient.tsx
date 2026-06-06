@@ -174,7 +174,7 @@ export default function OrdersListClient({
                                 x{item.quantity}
                                 {item.unit_price != null && (
                                   <span className="text-slate-500 ml-2">
-                                    ${item.unit_price}
+                                    ${Number(item.unit_price).toFixed(2)}
                                   </span>
                                 )}
                               </span>
