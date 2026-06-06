@@ -509,7 +509,7 @@ export default function PricingListClient({
 
               {expanded === pl.id && (
                 <div className="mt-4 border-t pt-4 overflow-x-auto">
-                  <table className="w-full text-sm min-w-[400px]">
+                  <table className="w-full text-sm sm:min-w-[400px]">
                     <thead>
                       <tr className="text-left text-slate-500">
                         <th className="pb-2">Species</th>

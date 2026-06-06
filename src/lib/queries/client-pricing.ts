@@ -30,10 +30,9 @@ export async function getClientPriceList(
 
   if (!data) return null;
 
-  // Check validity period
+  // Check if the price list has expired
   const now = new Date();
   if (data.valid_until && new Date(data.valid_until) < now) return null;
-  if (data.valid_from && new Date(data.valid_from) > now) return null;
 
   return data as ClientPriceListWithItems;
 }
