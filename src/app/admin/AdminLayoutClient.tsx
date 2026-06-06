@@ -15,6 +15,8 @@ import {
   LogOut,
   Menu,
   X,
+  Settings,
+  Upload,
 } from "lucide-react";
 import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -25,7 +27,9 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: Package },
   { href: "/admin/clients", label: "Clients", icon: Users },
   { href: "/admin/pricing", label: "Custom Pricing", icon: DollarSign },
+  { href: "/admin/location-pricing", label: "Location Pricing", icon: Upload },
   { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminLayoutClient({

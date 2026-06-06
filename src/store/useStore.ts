@@ -5,6 +5,7 @@ interface StoreState {
   // Cart
   cart: CartItem[];
   orderGroups: string[];
+  activeOrderGroup: string;
   addToCart: (
     product: FishProduct,
     size: string,
@@ -27,6 +28,7 @@ interface StoreState {
   addOrderGroup: (name: string) => void;
   removeOrderGroup: (name: string) => void;
   renameOrderGroup: (oldName: string, newName: string) => void;
+  setActiveOrderGroup: (group: string) => void;
   clearCart: () => void;
   cartTotal: () => number;
 
@@ -51,31 +53,33 @@ export const useStore = create<StoreState>((set, get) => ({
   // Cart state
   cart: [],
   orderGroups: ["Order A"],
-  addToCart: (product, size, quantity = 1, group = "Order A") => {
-    const { cart, orderGroups } = get();
+  activeOrderGroup: "Order A",
+  addToCart: (product, size, quantity = 1, group) => {
+    const { cart, orderGroups, activeOrderGroup } = get();
+    const targetGroup = group || activeOrderGroup;
     // Ensure the group exists
-    if (!orderGroups.includes(group)) {
-      set({ orderGroups: [...orderGroups, group] });
+    if (!orderGroups.includes(targetGroup)) {
+      set({ orderGroups: [...orderGroups, targetGroup] });
     }
     const existing = cart.find(
       (item) =>
         item.product.id === product.id &&
         item.selectedSize === size &&
-        item.group === group,
+        item.group === targetGroup,
     );
     if (existing) {
       set({
         cart: cart.map((item) =>
           item.product.id === product.id &&
           item.selectedSize === size &&
-          item.group === group
+          item.group === targetGroup
             ? { ...item, quantity: item.quantity + quantity }
             : item,
         ),
       });
     } else {
       set({
-        cart: [...cart, { product, selectedSize: size, quantity, group }],
+        cart: [...cart, { product, selectedSize: size, quantity, group: targetGroup }],
       });
     }
   },
@@ -161,17 +165,18 @@ export const useStore = create<StoreState>((set, get) => ({
   addOrderGroup: (name) => {
     const { orderGroups } = get();
     if (!orderGroups.includes(name)) {
-      set({ orderGroups: [...orderGroups, name] });
+      set({ orderGroups: [...orderGroups, name], activeOrderGroup: name });
     }
   },
   removeOrderGroup: (name) => {
-    const { orderGroups, cart } = get();
+    const { orderGroups, cart, activeOrderGroup } = get();
     if (orderGroups.length <= 1) return; // Keep at least one
     // Move items from this group to the first remaining group
     const remaining = orderGroups.filter((g) => g !== name);
     const fallback = remaining[0];
     set({
       orderGroups: remaining,
+      activeOrderGroup: activeOrderGroup === name ? fallback : activeOrderGroup,
       cart: cart.map((item) =>
         item.group === name ? { ...item, group: fallback } : item,
       ),
@@ -179,15 +184,17 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   renameOrderGroup: (oldName, newName) => {
     if (!newName.trim() || oldName === newName) return;
-    const { orderGroups, cart } = get();
+    const { orderGroups, cart, activeOrderGroup } = get();
     set({
       orderGroups: orderGroups.map((g) => (g === oldName ? newName : g)),
       cart: cart.map((item) =>
         item.group === oldName ? { ...item, group: newName } : item,
       ),
+      activeOrderGroup: activeOrderGroup === oldName ? newName : activeOrderGroup,
     });
   },
-  clearCart: () => set({ cart: [], orderGroups: ["Order A"] }),
+  setActiveOrderGroup: (group) => set({ activeOrderGroup: group }),
+  clearCart: () => set({ cart: [], orderGroups: ["Order A"], activeOrderGroup: "Order A" }),
   cartTotal: () => get().cart.reduce((sum, item) => sum + item.quantity, 0),
 
   // Filter state

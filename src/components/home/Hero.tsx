@@ -10,7 +10,7 @@ export default function Hero() {
         <p className="text-xs uppercase tracking-[0.25em] text-sky-200 font-semibold mb-4">
           West Africa&apos;s Leading Ornamental Fish Exporter
         </p>
-        <h1 className="text-4xl md:text-6xl font-black leading-[1.06] max-w-4xl">
+        <h1 className="text-2xl sm:text-4xl md:text-6xl font-black leading-[1.06] max-w-4xl">
           Premium African Species, Delivered Worldwide
         </h1>
         <p className="mt-6 max-w-3xl text-sky-100 text-base md:text-lg leading-relaxed">

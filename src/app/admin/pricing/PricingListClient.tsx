@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,9 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Upload,
+  Download,
+  Globe,
 } from "lucide-react";
 import {
   ConfirmDialog,
@@ -57,20 +60,24 @@ export default function PricingListClient({
   priceLists: initial,
   clients,
   species,
+  locations = [],
 }: {
   priceLists: PriceList[];
   clients: Client[];
   species: Species[];
+  locations?: string[];
 }) {
   const router = useRouter();
   const [priceLists, setPriceLists] = useState(initial);
   const [showForm, setShowForm] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const [newItems, setNewItems] = useState<
     { species_id: string; custom_price: string }[]
   >([{ species_id: "", custom_price: "" }]);
   const [confirmProps, showConfirm] = useConfirmDialog();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function addItemRow() {
     setNewItems((prev) => [...prev, { species_id: "", custom_price: "" }]);
@@ -84,6 +91,87 @@ export default function PricingListClient({
     setNewItems((prev) =>
       prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)),
     );
+  }
+
+  async function handleAutoFillFromLocation(location: string) {
+    if (!location) return;
+    setLoadingLocation(true);
+    try {
+      const res = await fetch(
+        `/api/admin/location-pricing/by-location?location=${encodeURIComponent(location)}`,
+      );
+      if (res.ok) {
+        const data: {
+          species_id: string;
+          size: string | null;
+          price: number;
+        }[] = await res.json();
+        if (data.length === 0) {
+          toast.info("No pricing data found for this location");
+          setLoadingLocation(false);
+          return;
+        }
+        // Group by species (take the first/generic price per species)
+        const priceMap = new Map<string, number>();
+        for (const row of data) {
+          if (!priceMap.has(row.species_id)) {
+            priceMap.set(row.species_id, row.price);
+          }
+        }
+        const items = Array.from(priceMap.entries()).map(
+          ([species_id, price]) => ({
+            species_id,
+            custom_price: price.toFixed(2),
+          }),
+        );
+        setNewItems(items);
+        toast.success(`Auto-filled ${items.length} species from "${location}"`);
+      } else {
+        toast.error("Failed to fetch location pricing");
+      }
+    } catch {
+      toast.error("Network error");
+    }
+    setLoadingLocation(false);
+  }
+
+  async function handleBulkUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Parse the Excel file client-side to extract species + prices
+    // We'll use a simple approach: read as FormData and send to a parse endpoint
+    // For now, use the same format as location pricing but for a single list
+    toast.info("Processing file...");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/pricing/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNewItems(
+          data.items.map((i: { species_id: string; price: number }) => ({
+            species_id: i.species_id,
+            custom_price: i.price.toFixed(2),
+          })),
+        );
+        toast.success(`Loaded ${data.items.length} species from file`);
+        if (data.errors?.length) {
+          toast.warning(`${data.errors.length} rows had issues`);
+        }
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to parse file");
+      }
+    } catch {
+      toast.error("Upload failed");
+    }
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -159,16 +247,21 @@ export default function PricingListClient({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Custom Pricing</h1>
-        <Button onClick={() => setShowForm(!showForm)} className="rounded-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+          Custom Pricing
+        </h1>
+        <Button
+          onClick={() => setShowForm(!showForm)}
+          className="rounded-xl w-full sm:w-auto"
+        >
           <Plus className="size-4 mr-2" /> New Price List
         </Button>
       </div>
 
       {showForm && (
         <Card className="mb-6 rounded-xl border-sky-200">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <h2 className="font-semibold text-lg mb-4">Create Price List</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -213,15 +306,75 @@ export default function PricingListClient({
                 <label className="text-sm font-medium text-slate-700 mb-2 block">
                   Species & Custom Prices
                 </label>
-                <div className="space-y-2">
+
+                {/* Auto-fill and upload options */}
+                <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  {locations.length > 0 && (
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <Globe className="size-4 text-sky-700 shrink-0" />
+                      <select
+                        onChange={(e) =>
+                          handleAutoFillFromLocation(e.target.value)
+                        }
+                        disabled={loadingLocation}
+                        className="rounded-lg border border-slate-200 h-8 px-2 text-sm flex-1 sm:flex-initial"
+                        defaultValue=""
+                      >
+                        <option value="" disabled>
+                          Auto-fill from location...
+                        </option>
+                        {locations.map((loc) => (
+                          <option key={loc} value={loc}>
+                            {loc}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleBulkUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileRef.current?.click()}
+                      className="rounded-lg h-8"
+                    >
+                      <Upload className="size-3 mr-1" />
+                      Upload Excel
+                    </Button>
+                  </div>
+                  <a
+                    href="/api/admin/location-pricing/template"
+                    className="inline-flex"
+                  >
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-lg h-8 text-slate-500"
+                    >
+                      <Download className="size-3 mr-1" />
+                      Template
+                    </Button>
+                  </a>
+                </div>
+
+                <div className="space-y-2 max-h-80 overflow-y-auto">
                   {newItems.map((item, idx) => (
-                    <div key={idx} className="flex gap-2">
+                    <div key={idx} className="flex flex-col sm:flex-row gap-2">
                       <select
                         value={item.species_id}
                         onChange={(e) =>
                           updateItem(idx, "species_id", e.target.value)
                         }
-                        className="flex-1 rounded-xl border border-slate-200 h-10 px-3 text-sm"
+                        className="flex-1 rounded-xl border border-slate-200 h-10 px-3 text-sm min-w-0"
                       >
                         <option value="">Select species...</option>
                         {species.map((s) => (
@@ -239,7 +392,7 @@ export default function PricingListClient({
                           updateItem(idx, "custom_price", e.target.value)
                         }
                         placeholder="Price"
-                        className="w-28 rounded-xl"
+                        className="w-full sm:w-28 rounded-xl"
                       />
                       {newItems.length > 1 && (
                         <Button
@@ -286,14 +439,16 @@ export default function PricingListClient({
       <div className="space-y-4">
         {priceLists.map((pl) => (
           <Card key={pl.id} className="rounded-xl">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
+            <CardContent className="p-3 sm:p-5">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div
-                  className="flex-1 cursor-pointer"
+                  className="flex-1 cursor-pointer min-w-0"
                   onClick={() => setExpanded(expanded === pl.id ? null : pl.id)}
                 >
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-slate-900">{pl.title}</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 truncate">
+                      {pl.title}
+                    </h3>
                     <Badge
                       variant={pl.is_active ? "default" : "secondary"}
                       className="text-xs"
@@ -301,7 +456,7 @@ export default function PricingListClient({
                       {pl.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </div>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-xs sm:text-sm text-slate-500">
                     Client: {pl.client?.name ?? "Unknown"} • {pl.items.length}{" "}
                     species
                   </p>
@@ -353,12 +508,14 @@ export default function PricingListClient({
               </div>
 
               {expanded === pl.id && (
-                <div className="mt-4 border-t pt-4">
-                  <table className="w-full text-sm">
+                <div className="mt-4 border-t pt-4 overflow-x-auto">
+                  <table className="w-full text-sm min-w-[400px]">
                     <thead>
                       <tr className="text-left text-slate-500">
                         <th className="pb-2">Species</th>
-                        <th className="pb-2">Scientific Name</th>
+                        <th className="pb-2 hidden sm:table-cell">
+                          Scientific Name
+                        </th>
                         <th className="pb-2 text-right">Price</th>
                       </tr>
                     </thead>
@@ -366,7 +523,7 @@ export default function PricingListClient({
                       {pl.items.map((item) => (
                         <tr key={item.id} className="border-t border-slate-50">
                           <td className="py-2">{item.species?.common_name}</td>
-                          <td className="py-2 italic text-slate-500">
+                          <td className="py-2 italic text-slate-500 hidden sm:table-cell">
                             {item.species?.scientific_name}
                           </td>
                           <td className="py-2 text-right font-medium">

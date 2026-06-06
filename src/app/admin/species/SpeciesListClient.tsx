@@ -100,10 +100,12 @@ export default function SpeciesListClient({ species, categories }: Props) {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Species</h1>
-        <Link href="/admin/species/new">
-          <Button className="rounded-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+          Species
+        </h1>
+        <Link href="/admin/species/new" className="w-full sm:w-auto">
+          <Button className="rounded-xl w-full sm:w-auto">
             <Plus className="size-4 mr-2" />
             Add Species
           </Button>
@@ -123,7 +125,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-slate-200 text-sm"
+          className="w-full sm:w-auto px-3 py-2 rounded-xl border border-slate-200 text-sm"
         >
           <option value="all">All Categories</option>
           {categories.map((c) => (
@@ -172,8 +174,8 @@ export default function SpeciesListClient({ species, categories }: Props) {
         <div className="space-y-2">
           {filtered.map((s) => (
             <Card key={s.id} className="rounded-xl">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
+              <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-4">
+                <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
                   {s.images?.[0] ? (
                     <img
                       src={s.images[0].image_url}
@@ -188,15 +190,15 @@ export default function SpeciesListClient({ species, categories }: Props) {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-slate-900 truncate">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <p className="font-semibold text-sm sm:text-base text-slate-900 truncate">
                       {s.common_name}
                     </p>
                     {s.featured && (
                       <Star className="size-3.5 text-amber-500 fill-amber-500" />
                     )}
                   </div>
-                  <p className="text-sm italic text-slate-500 truncate">
+                  <p className="text-xs sm:text-sm italic text-slate-500 truncate">
                     {s.scientific_name}
                   </p>
                 </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fishProducts } from "@/data/products";
-import { getSpecies } from "@/lib/queries/species";
+import { getSpecies, getCategories } from "@/lib/queries/species";
+import { getSetting } from "@/lib/queries/settings";
 import { speciesToFishProduct } from "@/lib/adapters";
 import {
   Card,
@@ -13,8 +14,27 @@ import { Badge } from "@/components/ui/badge";
 
 export default async function FeaturedSpecies() {
   let featured;
+  let categoryName = "Best Sellers";
+
   try {
-    const supabaseSpecies = await getSpecies({ featured: true, limit: 6 });
+    // Check if admin has selected a specific featured category
+    const featuredCategoryId = await getSetting("featured_category_id");
+    const categories = await getCategories();
+
+    let supabaseSpecies;
+    if (featuredCategoryId && featuredCategoryId !== "null") {
+      // Fetch species from the admin-selected category
+      const category = categories.find((c) => c.id === featuredCategoryId);
+      if (category) categoryName = category.name;
+      supabaseSpecies = await getSpecies({
+        categorySlug: category?.slug,
+        limit: 6,
+      });
+    } else {
+      // Fall back to featured flag
+      supabaseSpecies = await getSpecies({ featured: true, limit: 6 });
+    }
+
     featured =
       supabaseSpecies.length > 0
         ? supabaseSpecies.map(speciesToFishProduct)
@@ -28,7 +48,7 @@ export default async function FeaturedSpecies() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-sky-700 font-semibold">
-            Best Sellers
+            {categoryName}
           </p>
           <h2 className="text-2xl md:text-3xl font-black text-slate-900 mt-1">
             Featured Species

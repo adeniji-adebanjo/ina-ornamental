@@ -11,6 +11,13 @@ export interface FishProduct {
   tags: string[];
   inStock: boolean;
   featured: boolean;
+  availability:
+    | "available"
+    | "limited_stock"
+    | "out_of_stock"
+    | "seasonal"
+    | "on_request";
+  qtyPerBox: number;
 }
 
 export interface CartItem {
@@ -47,6 +54,7 @@ export interface WPProduct {
     tags?: string;
     in_stock?: boolean;
     featured?: boolean;
+    qty_per_box?: number;
   };
   _embedded?: {
     "wp:featuredmedia"?: Array<{

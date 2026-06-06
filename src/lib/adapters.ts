@@ -19,6 +19,8 @@ export function speciesToFishProduct(s: SpeciesWithImages): FishProduct {
     tags: s.tags ?? [],
     inStock: s.availability !== "out_of_stock",
     featured: s.featured,
+    availability: s.availability,
+    qtyPerBox: s.qty_per_box ?? 1,
   };
 }
 

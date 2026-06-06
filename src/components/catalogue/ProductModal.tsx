@@ -109,8 +109,9 @@ export default function ProductModal() {
               onClick={() => {
                 const size = selectedSize || selectedProduct.sizes[0] || "";
                 addToCart(selectedProduct, size);
+                const { activeOrderGroup } = useStore.getState();
                 toast.success(
-                  `${selectedProduct.commonName} added to quote cart`,
+                  `${selectedProduct.commonName} added to ${activeOrderGroup}`,
                   {
                     description: `Size: ${size}`,
                   },

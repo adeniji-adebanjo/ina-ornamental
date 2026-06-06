@@ -16,6 +16,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium", "Large"],
     tags: ["Monster Fish", "Puffers", "Aggressive"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -31,6 +33,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Medium", "Big", "Extra Large", "Jumbo", "Extra Jumbo"],
     tags: ["Monster Fish", "Polypterus", "Aggressive"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -46,6 +50,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium", "Big"],
     tags: ["Oddballs", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -61,6 +67,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Cichlids", "Aggressive"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -76,6 +84,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium", "Big"],
     tags: ["Crabs"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -91,6 +101,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium", "Big", "Large"],
     tags: ["Monster Fish", "Oddballs"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -106,6 +118,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Medium", "Large"],
     tags: ["Polypterus", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -121,6 +135,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium/Big"],
     tags: ["Oddballs", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -136,6 +152,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Tetras", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -151,6 +169,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Polypterus", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -166,6 +186,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium", "Big"],
     tags: ["Monster Fish", "Catfish", "Aggressive"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -181,6 +203,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Cichlids", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -196,6 +220,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Large", "Extra Large"],
     tags: ["Monster Fish", "Oddballs"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -211,6 +237,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium", "Big"],
     tags: ["Monster Fish", "Tetras", "Aggressive"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
   {
@@ -226,6 +254,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium", "Big", "Jumbo"],
     tags: ["Gentle", "Oddballs"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -241,6 +271,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Polypterus", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -256,6 +288,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Catfish", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -271,6 +305,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Crabs"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -286,6 +322,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Puffers", "Aggressive"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -301,6 +339,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Oddballs", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -316,6 +356,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Large", "Extra Large"],
     tags: ["Monster Fish", "Oddballs", "Aggressive"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -331,6 +373,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small"],
     tags: ["Killifish", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -346,6 +390,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Small", "Medium"],
     tags: ["Cichlids", "Gentle"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: false,
   },
   {
@@ -361,6 +407,8 @@ export const fishProducts: FishProduct[] = [
     sizes: ["Medium", "Large", "Extra Large"],
     tags: ["Monster Fish", "Polypterus"],
     inStock: true,
+    availability: "available" as const,
+    qtyPerBox: 1,
     featured: true,
   },
 ];

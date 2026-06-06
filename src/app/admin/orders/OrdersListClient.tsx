@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -87,14 +87,14 @@ export default function OrdersListClient({
 
           return (
             <Card key={order.id} className="rounded-xl">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div
-                  className="flex items-center gap-4 cursor-pointer"
+                  className="flex items-center gap-2 sm:gap-4 cursor-pointer"
                   onClick={() => setExpandedId(expanded ? null : order.id)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-sm text-slate-900 font-mono">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <p className="font-semibold text-xs sm:text-sm text-slate-900 font-mono truncate">
                         {order.order_reference}
                       </p>
                       <span
@@ -122,7 +122,7 @@ export default function OrdersListClient({
 
                 {expanded && (
                   <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
                       <div>
                         <p className="text-xs text-slate-500">Email</p>
                         <p className="font-medium">{order.email}</p>
@@ -200,6 +200,33 @@ export default function OrdersListClient({
                           {s}
                         </Button>
                       ))}
+                    </div>
+
+                    {/* Create client + price list action */}
+                    <div className="pt-3 border-t border-slate-100">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 rounded-lg text-xs gap-1.5"
+                        onClick={() => {
+                          const params = new URLSearchParams({
+                            name: order.customer_name,
+                            email: order.email,
+                            company: order.company_name || "",
+                            country: order.country || "",
+                          });
+                          router.push(
+                            `/admin/clients?new=1&${params.toString()}`,
+                          );
+                        }}
+                      >
+                        <UserPlus className="size-3.5" />
+                        Create Client & Price List
+                      </Button>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Creates a client profile and lets you set up custom
+                        pricing, then send their private order link.
+                      </p>
                     </div>
                   </div>
                 )}

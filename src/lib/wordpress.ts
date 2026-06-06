@@ -23,6 +23,8 @@ function mapWPProductToFish(wp: WPProduct): FishProduct {
     tags: acf.tags ? acf.tags.split(",").map((t: string) => t.trim()) : [],
     inStock: acf.in_stock !== false,
     featured: acf.featured === true,
+    availability: "available" as const,
+    qtyPerBox: acf.qty_per_box ? Number(acf.qty_per_box) : 1,
   };
 }
 

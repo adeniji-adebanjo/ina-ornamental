@@ -14,6 +14,37 @@ interface ProductCardProps {
   product: FishProduct;
 }
 
+const AVAILABILITY_CONFIG: Record<
+  string,
+  { label: string; color: string; dotColor: string }
+> = {
+  available: {
+    label: "In Stock",
+    color: "bg-emerald-50 text-emerald-700",
+    dotColor: "bg-emerald-500",
+  },
+  limited_stock: {
+    label: "Limited",
+    color: "bg-amber-50 text-amber-700",
+    dotColor: "bg-amber-500",
+  },
+  out_of_stock: {
+    label: "Unavailable",
+    color: "bg-red-50 text-red-700",
+    dotColor: "bg-red-500",
+  },
+  seasonal: {
+    label: "Seasonal",
+    color: "bg-sky-50 text-sky-700",
+    dotColor: "bg-sky-500",
+  },
+  on_request: {
+    label: "On Request",
+    color: "bg-slate-50 text-slate-600",
+    dotColor: "bg-slate-400",
+  },
+};
+
 export default function ProductCard({ product }: ProductCardProps) {
   const {
     addToCart,
@@ -24,12 +55,16 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [imgError, setImgError] = useState(false);
   const [added, setAdded] = useState(false);
 
+  const availConfig =
+    AVAILABILITY_CONFIG[product.availability] || AVAILABILITY_CONFIG.on_request;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!selectedSize) return;
     addToCart(product, selectedSize);
     setAdded(true);
-    toast.success(`${product.commonName} added to quote cart`, {
+    const { activeOrderGroup } = useStore.getState();
+    toast.success(`${product.commonName} added to ${activeOrderGroup}`, {
       description: `Size: ${selectedSize}`,
     });
     setTimeout(() => setAdded(false), 1200);
@@ -68,9 +103,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             </Badge>
           )}
           <Badge
-            className={`border-0 text-[10px] uppercase text-white ${product.inStock ? "bg-emerald-500" : "bg-red-500"}`}
+            className={`border-0 text-[10px] uppercase ${availConfig.color}`}
           >
-            {product.inStock ? "In Stock" : "Sold Out"}
+            <span
+              className={`inline-block size-1.5 rounded-full mr-1 ${availConfig.dotColor}`}
+            />
+            {availConfig.label}
           </Badge>
         </div>
       </div>
@@ -83,12 +121,22 @@ export default function ProductCard({ product }: ProductCardProps) {
           <p className="text-sm text-emerald-700 italic mt-0.5">
             {product.scientificName}
           </p>
-          <Badge
-            variant="secondary"
-            className="mt-2 bg-sky-50 text-sky-700 border-0"
-          >
-            {product.category}
-          </Badge>
+          <div className="flex items-center gap-2 mt-2">
+            <Badge
+              variant="secondary"
+              className="bg-sky-50 text-sky-700 border-0"
+            >
+              {product.category}
+            </Badge>
+            {product.qtyPerBox > 1 && (
+              <Badge
+                variant="secondary"
+                className="bg-slate-50 text-slate-600 border-0"
+              >
+                {product.qtyPerBox} pcs/box
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-slate-500 mt-2 line-clamp-2">
             {product.description}
           </p>
@@ -117,13 +165,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
           <Button
             onClick={handleAddToCart}
-            disabled={!product.inStock}
+            disabled={product.availability === "out_of_stock"}
             className={`w-full rounded-xl ${
               added
                 ? "bg-emerald-600 text-white"
-                : product.inStock
-                  ? ""
-                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                : product.availability === "out_of_stock"
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                  : ""
             }`}
           >
             {added ? "Added" : "Add to Quote"}

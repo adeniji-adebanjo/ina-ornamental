@@ -24,7 +24,7 @@ export default function AboutPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-sky-200 font-semibold mb-3">
             About INA Ornamental Fish
           </p>
-          <h1 className="text-3xl md:text-5xl font-black leading-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-black leading-tight">
             Trusted West African Ornamental Fish Export Specialists
           </h1>
           <p className="mt-5 text-sky-100 max-w-3xl leading-relaxed">

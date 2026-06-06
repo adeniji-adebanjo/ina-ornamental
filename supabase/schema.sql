@@ -136,6 +136,30 @@ create table order_items (
   created_at timestamptz default now()
 );
 
+-- ─── SITE SETTINGS ──────────────────────────────────────────────────────────
+create table site_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz default now()
+);
+
+-- Default: featured_category = null (show all featured species)
+insert into site_settings (key, value) values
+  ('featured_category_id', 'null'::jsonb);
+
+-- ─── LOCATION PRICING (MASTER SHEET) ───────────────────────────────────────
+create table location_pricing (
+  id uuid primary key default uuid_generate_v4(),
+  species_id uuid not null references species(id) on delete cascade,
+  location text not null, -- e.g. 'Europe', 'Asia', 'USA'
+  size text, -- nullable; if null = applies to all sizes
+  price decimal(10,2) not null,
+  created_at timestamptz default now(),
+  unique(species_id, location, size)
+);
+
+create index idx_location_pricing_location on location_pricing(location);
+
 -- ─── INSTAGRAM CACHE ────────────────────────────────────────────────────────
 create table instagram_posts (
   id text primary key, -- Instagram media ID
@@ -163,6 +187,7 @@ create trigger trg_species_updated before update on species for each row execute
 create trigger trg_clients_updated before update on clients for each row execute function update_updated_at();
 create trigger trg_client_price_lists_updated before update on client_price_lists for each row execute function update_updated_at();
 create trigger trg_orders_updated before update on orders for each row execute function update_updated_at();
+create trigger trg_site_settings_updated before update on site_settings for each row execute function update_updated_at();
 
 -- ─── ROW LEVEL SECURITY ─────────────────────────────────────────────────────
 alter table categories enable row level security;
@@ -175,12 +200,15 @@ alter table orders enable row level security;
 alter table order_groups enable row level security;
 alter table order_items enable row level security;
 alter table instagram_posts enable row level security;
+alter table site_settings enable row level security;
+alter table location_pricing enable row level security;
 
 -- Public read access for catalogue
 create policy "Public read categories" on categories for select using (true);
 create policy "Public read species" on species for select using (true);
 create policy "Public read species_images" on species_images for select using (true);
 create policy "Public read instagram" on instagram_posts for select using (true);
+create policy "Public read site_settings" on site_settings for select using (true);
 
 -- Admin full access (authenticated users)
 create policy "Admin all categories" on categories for all using (auth.role() = 'authenticated');
@@ -193,6 +221,8 @@ create policy "Admin all orders" on orders for all using (auth.role() = 'authent
 create policy "Admin all order_groups" on order_groups for all using (auth.role() = 'authenticated');
 create policy "Admin all order_items" on order_items for all using (auth.role() = 'authenticated');
 create policy "Admin all instagram" on instagram_posts for all using (auth.role() = 'authenticated');
+create policy "Admin all site_settings" on site_settings for all using (auth.role() = 'authenticated');
+create policy "Admin all location_pricing" on location_pricing for all using (auth.role() = 'authenticated');
 
 -- Public insert for orders (customers submitting)
 create policy "Public insert orders" on orders for insert with check (true);

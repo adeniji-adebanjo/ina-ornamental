@@ -134,7 +134,7 @@ export default function SpeciesFormClient({ species, categories }: Props) {
         {/* Main info */}
         <div className="lg:col-span-2 space-y-4">
           <Card className="rounded-xl">
-            <CardContent className="p-5 space-y-4">
+            <CardContent className="p-4 sm:p-5 space-y-4">
               <h2 className="font-semibold text-slate-900">Basic Info</h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -275,15 +275,15 @@ export default function SpeciesFormClient({ species, categories }: Props) {
 
           {/* Images */}
           <Card className="rounded-xl">
-            <CardContent className="p-5 space-y-4">
+            <CardContent className="p-4 sm:p-5 space-y-4">
               <h2 className="font-semibold text-slate-900">Images</h2>
 
               {imageUrls.map((url, i) => (
-                <div key={i} className="flex items-center gap-3">
+                <div key={i} className="flex items-center gap-2 sm:gap-3">
                   <img
                     src={url}
                     alt=""
-                    className="w-16 h-16 rounded-lg object-cover border"
+                    className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg object-cover border shrink-0"
                   />
                   <Input
                     value={url}
@@ -292,7 +292,7 @@ export default function SpeciesFormClient({ species, categories }: Props) {
                       updated[i] = e.target.value;
                       setImageUrls(updated);
                     }}
-                    className="flex-1 rounded-xl text-sm"
+                    className="flex-1 min-w-0 rounded-xl text-sm"
                   />
                   <Button
                     type="button"

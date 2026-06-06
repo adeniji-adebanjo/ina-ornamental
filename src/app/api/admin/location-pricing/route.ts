@@ -1,0 +1,197 @@
+import { NextRequest, NextResponse } from "next/server";
+import {
+  createServerSupabaseClient,
+  createAdminSupabaseClient,
+} from "@/lib/supabase/server";
+import ExcelJS from "exceljs";
+
+// GET: Fetch all location pricing data (or filter by location)
+export async function GET(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const location = request.nextUrl.searchParams.get("location");
+
+  const admin = await createAdminSupabaseClient();
+  let query = admin
+    .from("location_pricing")
+    .select("*, species:species(id, common_name, scientific_name, slug, sizes)")
+    .order("location")
+    .order("species_id");
+
+  if (location) {
+    query = query.eq("location", location);
+  }
+
+  const { data, error } = await query;
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json(data);
+}
+
+// POST: Upload bulk pricing from parsed Excel data
+export async function POST(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const contentType = request.headers.get("content-type") || "";
+  const admin = await createAdminSupabaseClient();
+
+  if (contentType.includes("multipart/form-data")) {
+    // Handle Excel file upload
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    const arrayBuf = await file.arrayBuffer();
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(Buffer.from(arrayBuf) as never);
+
+    // Get all species for name-to-id mapping
+    const { data: allSpecies } = await admin
+      .from("species")
+      .select("id, common_name, slug");
+    const speciesMap = new Map<string, string>();
+    for (const s of allSpecies ?? []) {
+      speciesMap.set(s.common_name.toLowerCase(), s.id);
+      speciesMap.set(s.slug.toLowerCase(), s.id);
+    }
+
+    const pricingRows: {
+      species_id: string;
+      location: string;
+      size: string | null;
+      price: number;
+    }[] = [];
+    const errors: string[] = [];
+
+    const ws = workbook.worksheets[0];
+    if (!ws) {
+      return NextResponse.json(
+        { error: "No worksheet found in file" },
+        { status: 400 },
+      );
+    }
+
+    // Expected format: Row 1 = headers: "Species", then location columns
+    // e.g. "Species | Size | Europe | Asia | USA | South America"
+    const headerRow = ws.getRow(1);
+    const locationColumns: { col: number; location: string }[] = [];
+
+    headerRow.eachCell((cell, colNumber) => {
+      const val = String(cell.value || "").trim();
+      if (colNumber > 2 && val) {
+        locationColumns.push({ col: colNumber, location: val });
+      }
+    });
+
+    if (locationColumns.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid format. Headers should be: Species | Size | Location1 | Location2 | ...",
+        },
+        { status: 400 },
+      );
+    }
+
+    // Parse data rows
+    ws.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // Skip header
+      const speciesName = String(row.getCell(1).value || "").trim();
+      const size = String(row.getCell(2).value || "").trim() || null;
+
+      if (!speciesName) return;
+
+      const speciesId = speciesMap.get(speciesName.toLowerCase());
+      if (!speciesId) {
+        errors.push(`Row ${rowNumber}: Unknown species "${speciesName}"`);
+        return;
+      }
+
+      for (const { col, location } of locationColumns) {
+        const priceVal = row.getCell(col).value;
+        const price = Number(priceVal);
+        if (priceVal && !isNaN(price) && price > 0) {
+          pricingRows.push({ species_id: speciesId, location, size, price });
+        }
+      }
+    });
+
+    if (pricingRows.length === 0) {
+      return NextResponse.json(
+        { error: "No valid pricing data found", errors },
+        { status: 400 },
+      );
+    }
+
+    // Upsert: delete existing for these locations, then insert
+    const locations = [...new Set(pricingRows.map((r) => r.location))];
+    await admin.from("location_pricing").delete().in("location", locations);
+
+    const { error: insertError } = await admin
+      .from("location_pricing")
+      .insert(pricingRows);
+
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      inserted: pricingRows.length,
+      locations,
+      errors: errors.length > 0 ? errors : undefined,
+    });
+  }
+
+  // JSON body: manual entries
+  const body = await request.json();
+  const { items } = body;
+  if (!items?.length) {
+    return NextResponse.json(
+      { error: "No pricing items provided" },
+      { status: 400 },
+    );
+  }
+
+  const { error } = await admin.from("location_pricing").upsert(items, {
+    onConflict: "species_id,location,size",
+  });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ inserted: items.length });
+}
+
+// DELETE: Clear all pricing for a given location
+export async function DELETE(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const location = request.nextUrl.searchParams.get("location");
+  if (!location) {
+    return NextResponse.json({ error: "Location required" }, { status: 400 });
+  }
+
+  const admin = await createAdminSupabaseClient();
+  await admin.from("location_pricing").delete().eq("location", location);
+
+  return NextResponse.json({ success: true });
+}

@@ -17,11 +17,13 @@ export default function GalleryPageClient({
   return (
     <main className="min-h-screen bg-white">
       {/* Hero */}
-      <section className="bg-gradient-to-br from-sky-900 via-sky-800 to-emerald-800 text-white py-20">
+      <section className="bg-gradient-to-br from-sky-900 via-sky-800 to-emerald-800 text-white py-12 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Camera className="size-8" />
-            <h1 className="text-3xl md:text-4xl font-bold">Our Gallery</h1>
+            <Camera className="size-6 sm:size-8" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+              Our Gallery
+            </h1>
           </div>
           <p className="text-sky-200 max-w-lg mx-auto">
             Explore our collection of premium ornamental fish, straight from
@@ -43,7 +45,7 @@ export default function GalleryPageClient({
             </p>
           </div>
         ) : (
-          <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
+          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4">
             {posts.map((post, idx) => (
               <motion.div
                 key={post.id}

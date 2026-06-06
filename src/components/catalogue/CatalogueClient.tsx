@@ -7,6 +7,7 @@ import SearchBar from "@/components/catalogue/SearchBar";
 import CategoryFilter from "@/components/catalogue/CategoryFilter";
 import ProductCard from "@/components/catalogue/ProductCard";
 import ProductModal from "@/components/catalogue/ProductModal";
+import OrderGroupSelector from "@/components/catalogue/OrderGroupSelector";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -50,7 +51,7 @@ export default function CatalogueClient({
           <p className="text-xs font-semibold tracking-[0.18em] text-sky-700 uppercase mb-3">
             B2B GLOBAL EXPORT • LAGOS, NIGERIA
           </p>
-          <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight max-w-3xl">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-900 leading-tight max-w-3xl">
             Premium West African Ornamental Fish
           </h1>
           <p className="mt-4 text-slate-600 max-w-3xl text-sm md:text-base leading-relaxed">
@@ -58,7 +59,7 @@ export default function CatalogueClient({
             a live arrival guarantee. Explore our current inventory and request
             a custom B2B quote.
           </p>
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+          <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3 text-center">
             <Card className="rounded-xl border-slate-100 shadow-sm">
               <CardContent className="p-4">
                 <p className="text-2xl font-black text-sky-800">22+</p>
@@ -91,6 +92,7 @@ export default function CatalogueClient({
         <div className="space-y-4">
           <SearchBar />
           <CategoryFilter categories={categories} />
+          <OrderGroupSelector />
         </div>
 
         <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

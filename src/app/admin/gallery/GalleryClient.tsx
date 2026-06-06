@@ -38,9 +38,9 @@ export default function GalleryClient({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
             Instagram Gallery
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -50,7 +50,7 @@ export default function GalleryClient({
         <Button
           onClick={handleSync}
           disabled={syncing}
-          className="rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400"
+          className="rounded-xl w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400"
         >
           <RefreshCw
             className={`size-4 mr-2 ${syncing ? "animate-spin" : ""}`}
@@ -73,7 +73,7 @@ export default function GalleryClient({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {posts.map((post) => (
             <Card key={post.id} className="rounded-xl overflow-hidden group">
               <div className="aspect-square bg-slate-100 overflow-hidden relative">

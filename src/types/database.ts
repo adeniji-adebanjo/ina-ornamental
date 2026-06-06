@@ -144,6 +144,25 @@ export interface InstagramPost {
   cached_at: string;
 }
 
+export interface SiteSetting {
+  key: string;
+  value: unknown;
+  updated_at: string;
+}
+
+export interface LocationPricing {
+  id: string;
+  species_id: string;
+  location: string;
+  size: string | null;
+  price: number;
+  created_at: string;
+}
+
+export interface LocationPricingWithSpecies extends LocationPricing {
+  species: Species;
+}
+
 // ─── Joined / Extended Types ────────────────────────────────────────────────
 
 export interface SpeciesWithImages extends Species {

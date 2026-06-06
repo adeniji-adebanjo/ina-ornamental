@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Client } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,27 @@ export default function ClientsListClient({
   clients: Client[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [clients, setClients] = useState(initial);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmProps, showConfirm] = useConfirmDialog();
+  const [prefill, setPrefill] = useState<Record<string, string>>({});
+
+  // Auto-open form when redirected from admin orders with ?new=1
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setPrefill({
+        name: searchParams.get("name") || "",
+        email: searchParams.get("email") || "",
+        company: searchParams.get("company") || "",
+        country: searchParams.get("country") || "",
+      });
+      setShowForm(true);
+    }
+  }, [searchParams]);
 
   const filtered = clients.filter(
     (c) =>
@@ -91,14 +106,16 @@ export default function ClientsListClient({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Clients</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+          Clients
+        </h1>
         <Button
           onClick={() => {
             setEditing(null);
             setShowForm(true);
           }}
-          className="rounded-xl"
+          className="rounded-xl w-full sm:w-auto"
         >
           <Plus className="size-4 mr-2" /> Add Client
         </Button>
@@ -107,7 +124,7 @@ export default function ClientsListClient({
       {/* Form Modal */}
       {showForm && (
         <Card className="mb-6 rounded-xl border-sky-200">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <h2 className="font-semibold text-lg mb-4">
               {editing ? "Edit Client" : "New Client"}
             </h2>
@@ -119,20 +136,20 @@ export default function ClientsListClient({
                 required
                 name="name"
                 placeholder="Client Name"
-                defaultValue={editing?.name ?? ""}
+                defaultValue={editing?.name ?? prefill.name ?? ""}
                 className="rounded-xl"
               />
               <Input
                 name="company"
                 placeholder="Company"
-                defaultValue={editing?.company ?? ""}
+                defaultValue={editing?.company ?? prefill.company ?? ""}
                 className="rounded-xl"
               />
               <Input
                 name="email"
                 type="email"
                 placeholder="Email"
-                defaultValue={editing?.email ?? ""}
+                defaultValue={editing?.email ?? prefill.email ?? ""}
                 className="rounded-xl"
               />
               <Input
@@ -144,7 +161,7 @@ export default function ClientsListClient({
               <Input
                 name="country"
                 placeholder="Country"
-                defaultValue={editing?.country ?? ""}
+                defaultValue={editing?.country ?? prefill.country ?? ""}
                 className="rounded-xl"
               />
               <div className="flex gap-2 sm:col-span-2">
@@ -178,10 +195,10 @@ export default function ClientsListClient({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filtered.map((c) => (
           <Card key={c.id} className="rounded-xl">
-            <CardContent className="p-5">
+            <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center">

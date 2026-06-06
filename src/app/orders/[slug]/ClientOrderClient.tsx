@@ -189,12 +189,12 @@ export default function ClientOrderClient({
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-sky-800">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-bold text-sky-800 truncate">
               iNA Ornamental Fish
             </h1>
-            <p className="text-xs text-slate-500">{priceList.title}</p>
+            <p className="text-xs text-slate-500 truncate">{priceList.title}</p>
           </div>
           <Badge variant="outline" className="text-emerald-700">
             {totalItems} items selected
@@ -203,8 +203,8 @@ export default function ClientOrderClient({
       </header>
 
       {/* Order Group Tabs */}
-      <div className="bg-white border-b border-slate-200 sticky top-[65px] z-30">
-        <div className="max-w-7xl mx-auto px-4 flex items-center gap-2 overflow-x-auto py-2">
+      <div className="bg-white border-b border-slate-200 sticky top-[57px] sm:top-[65px] z-30">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 flex items-center gap-2 overflow-x-auto py-2">
           {groups.map((g) => (
             <button
               key={g.id}
@@ -240,8 +240,8 @@ export default function ClientOrderClient({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Species Grid */}
           <div className="lg:col-span-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -261,8 +261,8 @@ export default function ClientOrderClient({
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-slate-900">
+                    <CardContent className="p-3 sm:p-4">
+                      <h3 className="font-semibold text-slate-900 text-sm sm:text-base">
                         {sp.common_name}
                       </h3>
                       <p className="text-sm italic text-slate-500">
