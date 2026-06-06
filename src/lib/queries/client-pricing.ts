@@ -1,11 +1,11 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import type { ClientPriceListWithItems } from "@/types/database";
 
 export async function getClientPriceList(
   slug: string,
   token: string,
 ): Promise<ClientPriceListWithItems | null> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createAdminSupabaseClient();
 
   const { data } = await supabase
     .from("client_price_lists")

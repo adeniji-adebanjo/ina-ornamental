@@ -2,6 +2,8 @@ import { getClientPriceList } from "@/lib/queries/client-pricing";
 import { notFound } from "next/navigation";
 import ClientOrderClient from "./ClientOrderClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ClientOrderPage({
   params,
   searchParams,
