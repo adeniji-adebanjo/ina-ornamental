@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { OrderWithGroups, OrderStatus } from "@/types/database";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronDown, ChevronUp, UserPlus } from "lucide-react";
+import { ConfirmDialog, useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Search, ChevronDown, ChevronUp, UserPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -36,6 +36,7 @@ export default function OrdersListClient({
 }) {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [confirmProps, showConfirm] = useConfirmDialog();
   const router = useRouter();
 
   const filtered = orders.filter(
@@ -57,6 +58,28 @@ export default function OrdersListClient({
     } else {
       toast.error("Failed to update status");
     }
+  }
+
+  function handleDelete(orderId: string, orderReference: string) {
+    showConfirm({
+      title: `Delete order ${orderReference}?`,
+      description:
+        "This action cannot be undone. The order and its line items will be permanently removed.",
+      confirmLabel: "Delete",
+      variant: "danger",
+      onConfirm: async () => {
+        const res = await fetch(`/api/admin/orders/${orderId}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          toast.success(`Order ${orderReference} deleted`);
+          router.refresh();
+        } else {
+          const error = await res.json().catch(() => ({}));
+          toast.error(error.error || "Failed to delete order");
+        }
+      },
+    });
   }
 
   return (
@@ -184,22 +207,36 @@ export default function OrdersListClient({
                       </div>
                     ))}
 
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <p className="text-xs font-medium text-slate-500 mr-2 self-center">
-                        Update Status:
-                      </p>
-                      {ALL_STATUSES.map((s) => (
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-slate-100">
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <p className="text-xs font-medium text-slate-500 mr-2 self-center">
+                          Update Status:
+                        </p>
+                        {ALL_STATUSES.map((s) => (
+                          <Button
+                            key={s}
+                            variant={order.status === s ? "default" : "outline"}
+                            size="sm"
+                            className="rounded-lg text-xs capitalize"
+                            onClick={() => updateStatus(order.id, s)}
+                            disabled={order.status === s}
+                          >
+                            {s}
+                          </Button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-2">
                         <Button
-                          key={s}
-                          variant={order.status === s ? "default" : "outline"}
+                          variant="destructive"
                           size="sm"
-                          className="rounded-lg text-xs capitalize"
-                          onClick={() => updateStatus(order.id, s)}
-                          disabled={order.status === s}
+                          className="rounded-lg text-xs gap-2"
+                          onClick={() => handleDelete(order.id, order.order_reference)}
                         >
-                          {s}
+                          <Trash2 className="size-3.5" />
+                          Delete order
                         </Button>
-                      ))}
+                      </div>
                     </div>
 
                     {/* Create client + price list action */}
@@ -235,6 +272,8 @@ export default function OrdersListClient({
           );
         })}
       </div>
+      <ConfirmDialog {...confirmProps} />
     </div>
   );
 }
+

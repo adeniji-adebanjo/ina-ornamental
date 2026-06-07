@@ -16,7 +16,7 @@ export async function GET() {
   const admin = await createAdminSupabaseClient();
   const { data: species } = await admin
     .from("species")
-    .select("common_name, scientific_name, sizes")
+    .select("common_name, class_order, scientific_name, sizes, availability")
     .order("common_name");
 
   // Get existing locations
@@ -40,7 +40,14 @@ export async function GET() {
   });
 
   // Headers
-  const headers = ["Species", "Size", ...sampleLocations];
+  const headers = [
+    "Name",
+    "Class",
+    "Scientific Name",
+    "Size",
+    "Availability",
+    ...sampleLocations,
+  ];
   const headerRow = ws.addRow(headers);
   headerRow.eachCell((cell) => {
     cell.font = { bold: true, size: 11, color: { argb: "FFFFFF" } };
@@ -67,13 +74,19 @@ export async function GET() {
     for (const size of sizes) {
       const row = ws.addRow([
         sp.common_name,
+        sp.class_order ?? "",
+        sp.scientific_name ?? "",
         size,
+        sp.availability ?? "",
         ...sampleLocations.map(() => ""),
       ]);
       row.getCell(1).font = { size: 10 };
-      row.getCell(2).font = { size: 10, italic: true };
+      row.getCell(2).font = { size: 10 };
+      row.getCell(3).font = { size: 10, italic: true };
+      row.getCell(4).font = { size: 10, italic: true };
+      row.getCell(5).font = { size: 10 };
       // Format price columns as number
-      for (let i = 3; i <= headers.length; i++) {
+      for (let i = 6; i <= headers.length; i++) {
         row.getCell(i).numFmt = "$#,##0.00";
       }
     }
@@ -88,17 +101,18 @@ export async function GET() {
     "HOW TO USE THIS TEMPLATE:",
     "1. Go to the 'Pricing Template' sheet",
     "2. Each row is a species + size combination",
-    "3. Location columns (Europe, Asia, etc.) represent destination regions",
-    "4. Enter the price (USD) for each species/size at each location",
-    "5. Leave blank if a species is not available for that location",
-    "6. You can add more location columns — just add a new column header",
-    "7. You can rename location columns to match your regions",
-    "8. Save and upload this file in the Admin → Location Pricing page",
+    "3. Name, Class, Scientific Name, Size, and Availability are pre-filled for reference",
+    "4. Location columns (Europe, Asia, etc.) represent destination regions",
+    "5. Enter the price (USD) for each species/size at each location",
+    "6. Leave blank if a species is not available for that location",
+    "7. You can add more location columns — just add a new column header",
+    "8. You can rename location columns to match your regions",
+    "9. Save and upload this file in the Admin → Location Pricing page",
     "",
     "NOTES:",
     "- Species names must match exactly (they are pre-filled for you)",
     "- Prices should be in USD",
-    "- Do not modify the Species or Size columns",
+    "- Do not modify the Name, Class, Scientific Name, Size, or Availability columns",
     "- You can delete rows for species you don't want to price",
   ];
   instructions.forEach((line, i) => {

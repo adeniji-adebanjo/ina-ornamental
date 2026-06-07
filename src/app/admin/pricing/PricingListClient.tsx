@@ -17,6 +17,7 @@ import {
   Upload,
   Download,
   Globe,
+  Info,
 } from "lucide-react";
 import {
   ConfirmDialog,
@@ -288,18 +289,48 @@ export default function PricingListClient({
                   placeholder="Price List Title"
                   className="rounded-xl mt-auto"
                 />
-                <Input
-                  name="valid_from"
-                  type="date"
-                  className="rounded-xl"
-                  placeholder="Valid From"
-                />
-                <Input
-                  name="valid_until"
-                  type="date"
-                  className="rounded-xl"
-                  placeholder="Valid Until"
-                />
+                <div>
+                  <label
+                    htmlFor="valid_from"
+                    className="text-sm font-medium text-slate-700 mb-1 block"
+                  >
+                    Valid from
+                    <Info
+                      className="inline-block size-4 ml-1 text-slate-400"
+                      title="Date when this custom price list becomes active."
+                    />
+                  </label>
+                  <Input
+                    id="valid_from"
+                    name="valid_from"
+                    type="date"
+                    className="rounded-xl"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Optional start date for this pricing.
+                  </p>
+                </div>
+                <div>
+                  <label
+                    htmlFor="valid_until"
+                    className="text-sm font-medium text-slate-700 mb-1 block"
+                  >
+                    Valid until
+                    <Info
+                      className="inline-block size-4 ml-1 text-slate-400"
+                      title="Date when this custom price list expires. Leave empty to keep it active indefinitely."
+                    />
+                  </label>
+                  <Input
+                    id="valid_until"
+                    name="valid_until"
+                    type="date"
+                    className="rounded-xl"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Optional expiration date. Leave empty for no expiry.
+                  </p>
+                </div>
               </div>
 
               <div>
