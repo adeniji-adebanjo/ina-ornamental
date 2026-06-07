@@ -61,8 +61,9 @@ export async function GET() {
 }
 
 export async function POST() {
-  const unauthorized = await requireAdmin(request);
+  const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
   const result = await verifySmtpConnection();
   return NextResponse.json(result.body, { status: result.status });
 }
+
