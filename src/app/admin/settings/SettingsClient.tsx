@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Settings, Save } from "lucide-react";
+import { Settings, Save, Wifi } from "lucide-react";
 import type { Category } from "@/types/database";
 
 interface Props {
@@ -20,6 +20,7 @@ export default function SettingsClient({
     currentFeaturedCategoryId || "",
   );
   const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   async function handleSave() {
     setSaving(true);
@@ -41,6 +42,26 @@ export default function SettingsClient({
       toast.error("Network error");
     }
     setSaving(false);
+  }
+
+  async function handleVerifySmtp() {
+    setVerifying(true);
+    try {
+      const res = await fetch("/api/admin/debug/smtp", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || "SMTP connection verified");
+      } else if (data?.error) {
+        toast.error(
+          data.details ? `${data.error}: ${data.details}` : data.error,
+        );
+      } else {
+        toast.error("SMTP verification failed");
+      }
+    } catch {
+      toast.error("Network error while verifying SMTP");
+    }
+    setVerifying(false);
   }
 
   return (
@@ -78,14 +99,25 @@ export default function SettingsClient({
             </select>
           </div>
 
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-xl"
-          >
-            <Save className="size-4 mr-2" />
-            {saving ? "Saving..." : "Save Settings"}
-          </Button>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded-xl"
+            >
+              <Save className="size-4 mr-2" />
+              {saving ? "Saving..." : "Save Settings"}
+            </Button>
+            <Button
+              onClick={handleVerifySmtp}
+              disabled={verifying}
+              variant="outline"
+              className="rounded-xl"
+            >
+              <Wifi className="size-4 mr-2" />
+              {verifying ? "Verifying..." : "Verify SMTP"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
