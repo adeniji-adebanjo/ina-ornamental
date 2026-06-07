@@ -61,11 +61,13 @@ export async function POST(request: NextRequest) {
     // Get all species for name-to-id mapping
     const { data: allSpecies } = await admin
       .from("species")
-      .select("id, common_name, slug");
+      .select("id, common_name, slug, scientific_name");
     const speciesMap = new Map<string, string>();
     for (const s of allSpecies ?? []) {
-      speciesMap.set(s.common_name.toLowerCase(), s.id);
-      speciesMap.set(s.slug.toLowerCase(), s.id);
+      if (s.common_name) speciesMap.set(s.common_name.toLowerCase(), s.id);
+      if (s.slug) speciesMap.set(s.slug.toLowerCase(), s.id);
+      if (s.scientific_name)
+        speciesMap.set(s.scientific_name.toLowerCase(), s.id);
     }
 
     const pricingRows: {
@@ -84,14 +86,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Expected format: Row 1 = headers: "Species", then location columns
-    // e.g. "Species | Size | Europe | Asia | USA | South America"
     const headerRow = ws.getRow(1);
-    const locationColumns: { col: number; location: string }[] = [];
+    const knownHeaders = new Map<string, number>();
+    headerRow.eachCell((cell, colNumber) => {
+      const val = String(cell.value || "")
+        .trim()
+        .toLowerCase();
+      if (!val) return;
+      knownHeaders.set(val, colNumber);
+    });
 
+    const nameCol =
+      knownHeaders.get("name") || knownHeaders.get("species") || 1;
+    const sizeCol = knownHeaders.get("size") || 2;
+    const classCol = knownHeaders.get("class");
+    const scientificNameCol = knownHeaders.get("scientific name");
+    const availabilityCol = knownHeaders.get("availability");
+
+    const recognizedCols = new Set<number>(
+      [nameCol, sizeCol, classCol, scientificNameCol, availabilityCol].filter(
+        Boolean,
+      ) as number[],
+    );
+
+    const locationColumns: { col: number; location: string }[] = [];
     headerRow.eachCell((cell, colNumber) => {
       const val = String(cell.value || "").trim();
-      if (colNumber > 2 && val) {
+      if (!val) return;
+      if (!recognizedCols.has(colNumber)) {
         locationColumns.push({ col: colNumber, location: val });
       }
     });
@@ -100,7 +122,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Invalid format. Headers should be: Species | Size | Location1 | Location2 | ...",
+            "Invalid format. Headers should include Name/Species, Size, and one or more location columns.",
         },
         { status: 400 },
       );
@@ -109,14 +131,24 @@ export async function POST(request: NextRequest) {
     // Parse data rows
     ws.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return; // Skip header
-      const speciesName = String(row.getCell(1).value || "").trim();
-      const size = String(row.getCell(2).value || "").trim() || null;
+      const speciesName = String(row.getCell(nameCol).value || "").trim();
+      const scientificName = scientificNameCol
+        ? String(row.getCell(scientificNameCol).value || "").trim()
+        : "";
+      const size = String(row.getCell(sizeCol).value || "").trim() || null;
 
-      if (!speciesName) return;
+      if (!speciesName && !scientificName) return;
 
-      const speciesId = speciesMap.get(speciesName.toLowerCase());
+      let speciesId = speciesName
+        ? speciesMap.get(speciesName.toLowerCase())
+        : undefined;
+      if (!speciesId && scientificName) {
+        speciesId = speciesMap.get(scientificName.toLowerCase());
+      }
+
       if (!speciesId) {
-        errors.push(`Row ${rowNumber}: Unknown species "${speciesName}"`);
+        const unknownValue = speciesName || scientificName;
+        errors.push(`Row ${rowNumber}: Unknown species "${unknownValue}"`);
         return;
       }
 
