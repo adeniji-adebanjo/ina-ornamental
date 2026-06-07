@@ -557,7 +557,9 @@ export default function OrderClient() {
                                   type="text"
                                   placeholder="Search country..."
                                   className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
-                                  onChange={(e) => setCountrySearch(e.target.value)}
+                                  onChange={(e) =>
+                                    setCountrySearch(e.target.value)
+                                  }
                                   value={countrySearch}
                                   autoFocus
                                 />
@@ -565,7 +567,9 @@ export default function OrderClient() {
                             </div>
                             {COUNTRIES.filter(
                               (c) =>
-                                c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+                                c.name
+                                  .toLowerCase()
+                                  .includes(countrySearch.toLowerCase()) ||
                                 c.dialCode.includes(countrySearch),
                             ).map((c) => (
                               <button
@@ -589,13 +593,21 @@ export default function OrderClient() {
                       </div>
 
                       <div className="relative" ref={countryRef}>
-                        <input type="hidden" name="country" value={selectedCountry.name} />
+                        <input
+                          type="hidden"
+                          name="country"
+                          value={selectedCountry.name}
+                        />
                         <button
                           type="button"
-                          onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
+                          onClick={() =>
+                            setCountryDropdownOpen(!countryDropdownOpen)
+                          }
                           className="flex items-center justify-between w-full h-10 px-3 rounded-xl border border-input bg-transparent text-sm hover:bg-slate-50"
                         >
-                          <span className="text-slate-900">{selectedCountry.name}</span>
+                          <span className="text-slate-900">
+                            {selectedCountry.name}
+                          </span>
                           <ChevronDown className="size-4 text-slate-400" />
                         </button>
                         {countryDropdownOpen && (
@@ -607,14 +619,18 @@ export default function OrderClient() {
                                   type="text"
                                   placeholder="Search country..."
                                   className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
-                                  onChange={(e) => setCountrySearch(e.target.value)}
+                                  onChange={(e) =>
+                                    setCountrySearch(e.target.value)
+                                  }
                                   value={countrySearch}
                                   autoFocus
                                 />
                               </div>
                             </div>
                             {COUNTRIES.filter((c) =>
-                              c.name.toLowerCase().includes(countrySearch.toLowerCase()),
+                              c.name
+                                .toLowerCase()
+                                .includes(countrySearch.toLowerCase()),
                             ).map((c) => (
                               <button
                                 key={c.code}
