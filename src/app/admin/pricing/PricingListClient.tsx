@@ -295,10 +295,9 @@ export default function PricingListClient({
                     className="text-sm font-medium text-slate-700 mb-1 block"
                   >
                     Valid from
-                    <Info
-                      className="inline-block size-4 ml-1 text-slate-400"
-                      title="Date when this custom price list becomes active."
-                    />
+                    <span title="Date when this custom price list becomes active.">
+                      <Info className="inline-block size-4 ml-1 text-slate-400" />
+                    </span>
                   </label>
                   <Input
                     id="valid_from"
@@ -316,10 +315,9 @@ export default function PricingListClient({
                     className="text-sm font-medium text-slate-700 mb-1 block"
                   >
                     Valid until
-                    <Info
-                      className="inline-block size-4 ml-1 text-slate-400"
-                      title="Date when this custom price list expires. Leave empty to keep it active indefinitely."
-                    />
+                    <span title="Date when this custom price list expires. Leave empty to keep it active indefinitely.">
+                      <Info className="inline-block size-4 ml-1 text-slate-400" />
+                    </span>
                   </label>
                   <Input
                     id="valid_until"
