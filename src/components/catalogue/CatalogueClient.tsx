@@ -9,7 +9,6 @@ import ProductCard from "@/components/catalogue/ProductCard";
 import ProductModal from "@/components/catalogue/ProductModal";
 import OrderGroupSelector from "@/components/catalogue/OrderGroupSelector";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 interface CatalogueClientProps {
   products: FishProduct[];
@@ -89,10 +88,12 @@ export default function CatalogueClient({
       </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-        <div className="space-y-4">
-          <SearchBar />
-          <CategoryFilter categories={categories} />
-          <OrderGroupSelector />
+        <div className="sticky top-20 z-30 bg-white/95 backdrop-blur-xl p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <div className="space-y-4">
+            <SearchBar />
+            <CategoryFilter categories={categories} />
+            <OrderGroupSelector />
+          </div>
         </div>
 
         <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
