@@ -20,8 +20,6 @@ import {
   Search,
   ChevronDown,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { COUNTRIES } from "@/data/countries";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
