@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import nodemailer from "nodemailer";
 
@@ -42,7 +42,7 @@ async function verifySmtpConnection() {
   }
 }
 
-async function requireAdmin(request: NextRequest) {
+async function requireAdmin() {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -53,14 +53,14 @@ async function requireAdmin(request: NextRequest) {
   return null;
 }
 
-export async function GET(request: NextRequest) {
-  const unauthorized = await requireAdmin(request);
+export async function GET() {
+  const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
   const result = await verifySmtpConnection();
   return NextResponse.json(result.body, { status: result.status });
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
   const result = await verifySmtpConnection();
