@@ -167,9 +167,7 @@ export default function ClientOrderClient({
     groupsWithItems.forEach((group) => {
       lines.push(`${group.name}:`);
       Object.entries(group.items).forEach(([speciesId, { pieces, boxes }]) => {
-        const item = priceList.items.find(
-          (pi) => pi.species_id === speciesId,
-        );
+        const item = priceList.items.find((pi) => pi.species_id === speciesId);
         const name = item?.species?.common_name ?? speciesId;
         const price = item?.custom_price
           ? ` @ $${item.custom_price.toFixed(2)}`
@@ -646,7 +644,7 @@ export default function ClientOrderClient({
               <h2 className="font-bold text-slate-900 text-lg mb-2">
                 Order Summary
               </h2>
-              <div className="flex gap-4 text-sm mb-4">
+<div className="flex flex-wrap gap-3 text-sm mb-4">
                 <span className="text-slate-600">
                   <strong className="text-sky-800">{totalPieces}</strong> pieces
                 </span>
@@ -699,7 +697,7 @@ export default function ClientOrderClient({
                   </div>
 
                   {/* Grand total */}
-                  <div className="flex justify-between items-center py-2 border-t border-slate-200 mb-4">
+                  <div className="flex flex-wrap justify-between items-center gap-3 py-2 border-t border-slate-200 mb-4">
                     <span className="font-bold text-slate-900">Total</span>
                     <span className="font-black text-lg text-sky-800">
                       $
@@ -774,7 +772,7 @@ export default function ClientOrderClient({
                         />
                       </div>
                       {phoneCodeOpen && (
-                        <div className="absolute top-full left-0 mt-1 w-64 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50">
+                        <div className="absolute top-full left-0 mt-1 w-full max-w-[90vw] max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-50">
                           <div className="sticky top-0 bg-white p-2 border-b border-slate-100">
                             <div className="flex items-center gap-2 px-2 h-8 rounded-lg bg-slate-50 border border-slate-200">
                               <Search className="size-3.5 text-slate-400" />
