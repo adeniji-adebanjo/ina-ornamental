@@ -379,10 +379,7 @@ export default function PricingListClient({
                       Upload Excel
                     </Button>
                   </div>
-                  <a
-                    href="/api/admin/location-pricing/template"
-                    className="inline-flex"
-                  >
+                  <a href="/api/admin/pricing/template" className="inline-flex">
                     <Button
                       type="button"
                       variant="ghost"
@@ -390,7 +387,7 @@ export default function PricingListClient({
                       className="rounded-lg h-8 text-slate-500"
                     >
                       <Download className="size-3 mr-1" />
-                      Template
+                      Custom Pricing Template
                     </Button>
                   </a>
                 </div>

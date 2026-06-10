@@ -385,36 +385,38 @@ export default function ClientOrderClient({
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2">
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs text-slate-600">Availability</label>
-              <select
-                value={availabilityFilter}
-                onChange={(e) => setAvailabilityFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 h-9 px-2 text-sm"
-              >
-                <option value="all">All</option>
-                <option value="available">Available</option>
-                <option value="limited_stock">Scarce</option>
-                <option value="seasonal">Out of Season</option>
-                <option value="out_of_stock">Unavailable</option>
-                <option value="on_request">On Request</option>
-              </select>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs text-slate-600">Class</label>
-              <select
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-                className="rounded-xl border border-slate-200 h-9 px-2 text-sm"
-              >
-                <option value="all">All</option>
-                {classOptions.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+          <div className="mb-4 sticky top-[115px] z-30 bg-white border-b border-slate-200 py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="text-xs text-slate-600">Availability</label>
+                <select
+                  value={availabilityFilter}
+                  onChange={(e) => setAvailabilityFilter(e.target.value)}
+                  className="rounded-xl border border-slate-200 h-9 px-2 text-sm"
+                >
+                  <option value="all">All</option>
+                  <option value="available">Available</option>
+                  <option value="limited_stock">Scarce</option>
+                  <option value="seasonal">Out of Season</option>
+                  <option value="out_of_stock">Unavailable</option>
+                  <option value="on_request">On Request</option>
+                </select>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="text-xs text-slate-600">Class</label>
+                <select
+                  value={classFilter}
+                  onChange={(e) => setClassFilter(e.target.value)}
+                  className="rounded-xl border border-slate-200 h-9 px-2 text-sm"
+                >
+                  <option value="all">All</option>
+                  {classOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 

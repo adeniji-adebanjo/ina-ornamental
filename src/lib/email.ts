@@ -19,7 +19,8 @@ function getTransporter(): nodemailer.Transporter | null {
   return transporter;
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || "inaornamental@gmail.com";
+const FROM_EMAIL =
+  process.env.FROM_EMAIL || process.env.SMTP_USER || "inaornamental@gmail.com";
 const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "alfred@inaornamentalfish.com")
   .split(",")
   .map((e) => e.trim());
@@ -131,7 +132,7 @@ function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
 
       <hr style="border:none;border-top:1px solid #e2d8c8;margin:24px 0;">
       <p style="margin:0;font-size:12px;color:#8e8270;text-align:center;">
-        ${isAdmin ? `<a href="${process.env.NEXT_PUBLIC_SITE_URL || ""}/admin/orders" style="color:#3b655d;">View in Admin Panel →</a>` : "Our team will reach out shortly with shipping details and a proforma invoice."}
+        ${isAdmin ? `<a href="${process.env.NEXT_PUBLIC_SITE_URL || ""}/admin/orders" style="color:#3b655d;">View in Admin Panel →</a>` : "Our team will reach out shortly with shipping details and a performa invoice."}
       </p>
     </div>
 
