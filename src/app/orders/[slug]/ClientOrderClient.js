@@ -660,7 +660,4 @@ function ClientOrderClient(_a) {
           </div>
         </div>
       </div>);
-    div >
-    ;
-    ;
 }

@@ -79,6 +79,15 @@ export default function ClientOrderClient({
   const [phoneNumber, setPhoneNumber] = useState(
     priceList.client?.phone?.replace(/^\+\d+\s?/, "") ?? "",
   );
+  const [customerName, setCustomerName] = useState(
+    priceList.client?.name ?? "",
+  );
+  const [customerEmail, setCustomerEmail] = useState(
+    priceList.client?.email ?? "",
+  );
+  const [companyName, setCompanyName] = useState(
+    priceList.client?.company ?? "",
+  );
   const [countrySearch, setCountrySearch] = useState("");
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
@@ -107,6 +116,16 @@ export default function ClientOrderClient({
 
   const activeGroup = groups.find((g) => g.id === activeGroupId)!;
 
+  const totalPieces = groups.reduce(
+    (sum, g) => sum + Object.values(g.items).reduce((s, i) => s + i.pieces, 0),
+    0,
+  );
+
+  const totalBoxes = groups.reduce(
+    (sum, g) => sum + Object.values(g.items).reduce((s, i) => s + i.boxes, 0),
+    0,
+  );
+
   // Filters
   const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
   const [classFilter, setClassFilter] = useState<string>("all");
@@ -122,6 +141,57 @@ export default function ClientOrderClient({
     }
     return Array.from(setOpts);
   }, [priceList.items]);
+
+  const whatsappNumber =
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "2348168850307";
+
+  const whatsappMessage = useMemo(() => {
+    const groupsWithItems = groups.filter(
+      (g) => Object.keys(g.items).length > 0,
+    );
+
+    const lines: string[] = [
+      "Hello iNA Ornamental Fish,",
+      "",
+      `Customer: ${customerName || "N/A"}`,
+      `Email: ${customerEmail || "N/A"}`,
+      `Country/Region: ${selectedCountry?.name ?? "N/A"}`,
+      ...(companyName ? [`Company: ${companyName}`] : []),
+      "",
+      groupsWithItems.length
+        ? "I would like to place the following order:"
+        : "I would like to enquire about an order.",
+      "",
+    ];
+
+    groupsWithItems.forEach((group) => {
+      lines.push(`${group.name}:`);
+      Object.entries(group.items).forEach(([speciesId, { pieces, boxes }]) => {
+        const item = priceList.items.find(
+          (pi) => pi.species_id === speciesId,
+        );
+        const name = item?.species?.common_name ?? speciesId;
+        const price = item?.custom_price
+          ? ` @ $${item.custom_price.toFixed(2)}`
+          : "";
+        lines.push(`- ${name}: ${pieces} pcs / ${boxes.toFixed(2)} bx${price}`);
+      });
+      lines.push("");
+    });
+
+    if (groupsWithItems.length) {
+      lines.push(`Total pieces: ${totalPieces}`);
+      lines.push(`Total boxes: ${totalBoxes.toFixed(2)}`);
+      lines.push("");
+      lines.push("Please respond with availability and next steps.");
+    }
+
+    return lines.join("\n");
+  }, [groups, priceList.items, totalPieces, totalBoxes]);
+
+  const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    whatsappMessage,
+  )}`;
 
   const filteredItems = useMemo(() => {
     return priceList.items.filter((item) => {
@@ -200,16 +270,6 @@ export default function ClientOrderClient({
       setActiveGroupId(groups.find((g) => g.id !== id)!.id);
     }
   }
-
-  const totalPieces = groups.reduce(
-    (sum, g) => sum + Object.values(g.items).reduce((s, i) => s + i.pieces, 0),
-    0,
-  );
-
-  const totalBoxes = groups.reduce(
-    (sum, g) => sum + Object.values(g.items).reduce((s, i) => s + i.boxes, 0),
-    0,
-  );
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -666,22 +726,25 @@ export default function ClientOrderClient({
                     <Input
                       required
                       name="customer_name"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Full Name"
-                      defaultValue={priceList.client?.name ?? ""}
                       className="rounded-xl h-10"
                     />
                     <Input
                       name="company_name"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="Company Name"
-                      defaultValue={priceList.client?.company ?? ""}
                       className="rounded-xl h-10"
                     />
                     <Input
                       required
                       name="email"
                       type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="Email Address"
-                      defaultValue={priceList.client?.email ?? ""}
                       className="rounded-xl h-10"
                     />
                     {/* Phone with country code */}
@@ -837,7 +900,7 @@ export default function ClientOrderClient({
               )}
 
               <a
-                href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "2348168850307"}`}
+                href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 text-sm font-semibold transition-colors"
