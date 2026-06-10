@@ -151,8 +151,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Send email notifications (non-blocking) including shipment/consignee
-  sendOrderConfirmation({
+  // Send email notifications including shipment/consignee info.
+  // Await in serverless environments so the lambda does not exit before delivery.
+  await sendOrderConfirmation({
     order_reference,
     customer_name,
     company_name,
@@ -180,7 +181,9 @@ export async function POST(request: NextRequest) {
         items: g.items,
       }),
     ),
-  }).catch(console.error);
+  }).catch((err) => {
+    console.error("Order email failed:", err);
+  });
 
   return NextResponse.json({
     success: true,
