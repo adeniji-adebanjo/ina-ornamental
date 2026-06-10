@@ -11,6 +11,28 @@ A full-stack web application for INA Ornamental Fish — an ornamental fish expo
 - **Email Notifications** — Automated order confirmations and status updates via Resend
 - **Authentication** — Supabase Auth with middleware-protected admin routes
 
+## App Flow
+
+1. Public user flow:
+   - Visit the homepage and explore featured species.
+   - Open the catalogue to search, filter, and view species details.
+   - Use the order page to build a grouped order, select quantities, and submit.
+   - Receive order confirmation and status updates via email.
+
+2. Client-specific price list flow:
+   - Access a unique client link under `/orders/[slug]`.
+   - View custom pricing and place orders with client-specific rates.
+
+3. Admin flow:
+   - Log in through the protected admin area.
+   - Manage species, client profiles, pricing rules, gallery assets, and orders.
+   - Review submitted orders, update status, and send notifications.
+
+4. Data and communication flow:
+   - Supabase stores species, clients, orders, pricing, and gallery data.
+   - Middleware protects admin routes and API access.
+   - Resend handles transactional email delivery for order confirmations and updates.
+
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router, Server Components)
