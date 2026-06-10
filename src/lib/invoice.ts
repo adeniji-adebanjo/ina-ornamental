@@ -186,26 +186,6 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     g.items.some((i) => i.unit_price),
   );
 
-  // Summary sheet
-  const summarySheet = workbook.addWorksheet("Performa Invoice", {
-    pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true },
-  });
-  setupColumns(summarySheet);
-  addInfoSection(summarySheet, data);
-
-  for (const group of data.groups) {
-    const titleRow = summarySheet.addRow([group.name]);
-    titleRow.getCell(1).font = {
-      size: 14,
-      bold: true,
-      color: { argb: BRAND_GREEN },
-    };
-    summarySheet.mergeCells(titleRow.number, 1, titleRow.number, 7);
-    summarySheet.addRow([]);
-    addItemsTable(summarySheet, group.items, hasAnyPrice);
-    summarySheet.addRow([]);
-  }
-
   // --- Create a sheet per order group ---
   for (const group of data.groups) {
     const sheetName = group.name.slice(0, 31); // Excel max 31 chars
@@ -216,7 +196,6 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
 
     addInfoSection(ws, data);
 
-    // Group title
     const groupTitle = ws.addRow([group.name]);
     groupTitle.getCell(1).font = {
       size: 14,
@@ -228,7 +207,6 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
 
     addItemsTable(ws, group.items, hasAnyPrice);
 
-    // Group totals
     ws.addRow([]);
     const groupQty = group.items.reduce((s, i) => s + i.quantity, 0);
     const totRow = ws.addRow(["", "", "", "Total Qty:", groupQty]);
@@ -256,6 +234,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
         size: 12,
         color: { argb: BRAND_GREEN },
       };
+      totRow.getCell(7).alignment = { horizontal: "right" };
     }
 
     if (data.notes) {
@@ -272,7 +251,6 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
       notesRow.getCell(1).alignment = { wrapText: true };
     }
 
-    // Footer
     ws.addRow([]);
     const footerRow = ws.addRow([
       "iNA Ornamental Fish • Lagos, Nigeria • inaornamentalfish.com",
@@ -286,14 +264,13 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     footerRow.getCell(1).alignment = { horizontal: "center" };
   }
 
-  // --- Summary Sheet ---
+  // --- Performa Invoice summary sheet ---
   const summaryWs = workbook.addWorksheet("Performa Invoice", {
     pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true },
   });
   setupColumns(summaryWs);
   addInfoSection(summaryWs, data);
 
-  // Summary title
   const sumTitle = summaryWs.addRow(["ORDER SUMMARY"]);
   sumTitle.getCell(1).font = {
     size: 14,
@@ -303,7 +280,6 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
   summaryWs.mergeCells(sumTitle.number, 1, sumTitle.number, 7);
   summaryWs.addRow([]);
 
-  // All items from all groups
   let rowNum = 1;
   for (const group of data.groups) {
     if (data.groups.length > 1) {
@@ -314,12 +290,12 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
         color: { argb: BRAND_GOLD },
       };
       summaryWs.mergeCells(gRow.number, 1, gRow.number, 7);
+      summaryWs.addRow([]);
     }
     rowNum = addItemsTable(summaryWs, group.items, hasAnyPrice, rowNum);
     summaryWs.addRow([]);
   }
 
-  // Grand totals
   const totalItems = data.groups.reduce(
     (sum, g) => sum + g.items.reduce((s, i) => s + i.quantity, 0),
     0,
@@ -361,7 +337,6 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     grandRow.getCell(7).alignment = { horizontal: "right" };
   }
 
-  // Notes
   if (data.notes) {
     summaryWs.addRow([]);
     const notesLabel = summaryWs.addRow(["Notes"]);
@@ -376,7 +351,6 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     notesRow.getCell(1).alignment = { wrapText: true };
   }
 
-  // Footer
   summaryWs.addRow([]);
   const footerRow = summaryWs.addRow([
     "iNA Ornamental Fish • Lagos, Nigeria • inaornamentalfish.com",
@@ -386,7 +360,6 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     italic: true,
     color: { argb: "B0A48E" },
   };
-  summaryWs.mergeCells(footerRow.number, 1, footerRow.number, 7);
   footerRow.getCell(1).alignment = { horizontal: "center" };
 
   const buffer = await workbook.xlsx.writeBuffer();
