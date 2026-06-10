@@ -86,7 +86,7 @@ export default function OrdersListClient({
     <div>
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Orders</h1>
 
-      <div className="relative mb-6">
+      <div className="relative mb-6 flex items-center gap-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
         <Input
           placeholder="Search by reference, name, or company..."
@@ -94,6 +94,28 @@ export default function OrdersListClient({
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 rounded-xl"
         />
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-lg text-xs"
+            onClick={async () => {
+              const res = await fetch("/api/admin/orders/export");
+              if (!res.ok) return toast.error("Failed to export orders");
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `ina-orders-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <p className="text-sm text-slate-500 mb-4">{filtered.length} orders</p>

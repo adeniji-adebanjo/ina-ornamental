@@ -9,6 +9,10 @@ interface InvoiceData {
   country?: string;
   delivery_address?: string;
   notes?: string;
+  proposed_shipment_date?: string | null;
+  consignee_name?: string | null;
+  consignee_phone?: string | null;
+  consignee_address?: string | null;
   groups: {
     name: string;
     items: {
@@ -64,6 +68,13 @@ function addInfoSection(ws: ExcelJS.Worksheet, data: InvoiceData) {
   if (data.country) infoFields.push(["Country", data.country]);
   if (data.delivery_address)
     infoFields.push(["Delivery Address", data.delivery_address]);
+  if (data.proposed_shipment_date)
+    infoFields.push(["Proposed Shipment", data.proposed_shipment_date]);
+  if (data.consignee_name) infoFields.push(["Consignee", data.consignee_name]);
+  if (data.consignee_phone)
+    infoFields.push(["Consignee Phone", data.consignee_phone]);
+  if (data.consignee_address)
+    infoFields.push(["Consignee Address", data.consignee_address]);
 
   for (const [label, value] of infoFields) {
     const row = ws.addRow([label, value]);
@@ -175,6 +186,26 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     g.items.some((i) => i.unit_price),
   );
 
+  // Summary sheet
+  const summarySheet = workbook.addWorksheet("Performa Invoice", {
+    pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true },
+  });
+  setupColumns(summarySheet);
+  addInfoSection(summarySheet, data);
+
+  for (const group of data.groups) {
+    const titleRow = summarySheet.addRow([group.name]);
+    titleRow.getCell(1).font = {
+      size: 14,
+      bold: true,
+      color: { argb: BRAND_GREEN },
+    };
+    summarySheet.mergeCells(titleRow.number, 1, titleRow.number, 7);
+    summarySheet.addRow([]);
+    addItemsTable(summarySheet, group.items, hasAnyPrice);
+    summarySheet.addRow([]);
+  }
+
   // --- Create a sheet per order group ---
   for (const group of data.groups) {
     const sheetName = group.name.slice(0, 31); // Excel max 31 chars
@@ -256,7 +287,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
   }
 
   // --- Summary Sheet ---
-  const summaryWs = workbook.addWorksheet("Summary", {
+  const summaryWs = workbook.addWorksheet("Performa Invoice", {
     pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true },
   });
   setupColumns(summaryWs);

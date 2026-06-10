@@ -15,6 +15,10 @@ export async function POST(request: NextRequest) {
     country,
     delivery_address,
     notes,
+    proposed_shipment_date,
+    consignee_name,
+    consignee_phone,
+    consignee_address,
     groups,
     price_list_id,
     client_id,
@@ -39,6 +43,14 @@ export async function POST(request: NextRequest) {
   const order_reference = generateOrderReference();
 
   // Insert order
+  // Append shipment/consignee info to notes for storage
+  let storedNotes = notes || "";
+  if (proposed_shipment_date)
+    storedNotes += `\n\nProposed Shipment: ${proposed_shipment_date}`;
+  if (consignee_name) storedNotes += `\nConsignee: ${consignee_name}`;
+  if (consignee_phone) storedNotes += `\nConsignee Phone: ${consignee_phone}`;
+  if (consignee_address) storedNotes += `\nConsignee Address: ${consignee_address}`;
+
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert({
@@ -49,7 +61,7 @@ export async function POST(request: NextRequest) {
       phone: phone || null,
       country: country || null,
       delivery_address: delivery_address || null,
-      notes: notes || null,
+      notes: storedNotes || null,
       status: "submitted",
       client_id: client_id || null,
       price_list_id: price_list_id || null,
@@ -139,7 +151,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Send email notifications (non-blocking)
+  // Send email notifications (non-blocking) including shipment/consignee
   sendOrderConfirmation({
     order_reference,
     customer_name,
@@ -149,6 +161,10 @@ export async function POST(request: NextRequest) {
     country,
     delivery_address,
     notes,
+    proposed_shipment_date: proposed_shipment_date || null,
+    consignee_name: consignee_name || null,
+    consignee_phone: consignee_phone || null,
+    consignee_address: consignee_address || null,
     groups: groups.map(
       (g: {
         name: string;

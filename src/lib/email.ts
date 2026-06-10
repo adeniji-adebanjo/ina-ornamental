@@ -19,11 +19,8 @@ function getTransporter(): nodemailer.Transporter | null {
   return transporter;
 }
 
-const FROM_EMAIL =
-  process.env.FROM_EMAIL ||
-  process.env.SMTP_USER ||
-  "orders@inaornamentalfish.com";
-const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "inaornamental@gmail.com")
+const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || "inaornamental@gmail.com";
+const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "alfred@inaornamentalfish.com")
   .split(",")
   .map((e) => e.trim());
 
@@ -36,6 +33,10 @@ interface OrderEmailData {
   country?: string;
   delivery_address?: string;
   notes?: string;
+  proposed_shipment_date?: string | null;
+  consignee_name?: string | null;
+  consignee_phone?: string | null;
+  consignee_address?: string | null;
   groups: {
     name: string;
     items: {
@@ -116,6 +117,10 @@ function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
           ${data.phone ? `<tr><td style="padding:4px 0;color:#8e8270;">Phone</td><td style="padding:4px 0;">${data.phone}</td></tr>` : ""}
           ${data.country ? `<tr><td style="padding:4px 0;color:#8e8270;">Country</td><td style="padding:4px 0;">${data.country}</td></tr>` : ""}
           ${data.delivery_address ? `<tr><td style="padding:4px 0;color:#8e8270;">Address</td><td style="padding:4px 0;">${data.delivery_address}</td></tr>` : ""}
+          ${data.proposed_shipment_date ? `<tr><td style="padding:4px 0;color:#8e8270;">Proposed Shipment</td><td style="padding:4px 0;">${data.proposed_shipment_date}</td></tr>` : ""}
+          ${data.consignee_name ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee</td><td style="padding:4px 0;">${data.consignee_name}</td></tr>` : ""}
+          ${data.consignee_phone ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee Phone</td><td style="padding:4px 0;">${data.consignee_phone}</td></tr>` : ""}
+          ${data.consignee_address ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee Address</td><td style="padding:4px 0;">${data.consignee_address}</td></tr>` : ""}
           <tr><td style="padding:4px 0;color:#8e8270;">Total Items</td><td style="padding:4px 0;font-weight:bold;">${totalItems}</td></tr>
         </table>
       </div>
