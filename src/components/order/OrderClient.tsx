@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/store/useStore";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,9 @@ export default function OrderClient() {
     COUNTRIES.find((c) => c.code === "NG") ?? COUNTRIES[0],
   );
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [countrySearch, setCountrySearch] = useState("");
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
@@ -73,6 +76,57 @@ export default function OrderClient() {
   }, []);
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const whatsappNumber =
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "2348168850307";
+
+  const whatsappMessage = useMemo(() => {
+    const groups = orderGroups.reduce(
+      (acc: Array<{ name: string; items: typeof cart }>, groupName) => {
+        const groupItems = cart.filter((item) => item.group === groupName);
+        if (groupItems.length > 0) {
+          acc.push({ name: groupName, items: groupItems });
+        }
+        return acc;
+      },
+      [],
+    );
+
+    const lines: string[] = [
+      "Hello iNA Ornamental Fish,",
+      "",
+      `Customer: ${customerName || "N/A"}`,
+      `Email: ${customerEmail || "N/A"}`,
+      `Country/Region: ${selectedCountry?.name ?? "N/A"}`,
+      companyName ? `Company: ${companyName}` : "",
+      "",
+      groups.length
+        ? "I would like to place the following order:"
+        : "I would like to enquire about an order.",
+      "",
+    ].filter(Boolean) as string[];
+
+    groups.forEach((group) => {
+      lines.push(`${group.name}:`);
+      group.items.forEach((item) => {
+        const sizeLabel = item.selectedSize ? ` (${item.selectedSize})` : "";
+        lines.push(
+          `- ${item.product.commonName}${sizeLabel}: ${item.quantity} pcs`,
+        );
+      });
+      lines.push("");
+    });
+
+    if (groups.length) {
+      lines.push(`Total items: ${totalItems}`);
+      lines.push("");
+      lines.push("Please respond with availability and shipping details.");
+    }
+
+    return encodeURIComponent(lines.join("\n"));
+  }, [cart, orderGroups, customerName, customerEmail, companyName, selectedCountry, totalItems]);
+
+  const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
   const handleAddGroup = () => {
     const letter = String.fromCharCode(65 + orderGroups.length);
@@ -505,11 +559,15 @@ export default function OrderClient() {
                     <Input
                       required
                       name="customer_name"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Full Name"
                       className="rounded-xl h-10"
                     />
                     <Input
                       name="company_name"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="Company Name"
                       className="rounded-xl h-10"
                     />
@@ -517,6 +575,8 @@ export default function OrderClient() {
                       required
                       name="email"
                       type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="Email Address"
                       className="rounded-xl h-10"
                     />
