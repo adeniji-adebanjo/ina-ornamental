@@ -18,6 +18,7 @@ import {
   Search,
 } from "lucide-react";
 import { COUNTRIES } from "@/data/countries";
+import Image from "next/image";
 
 const AVAILABILITY_CONFIG: Record<
   string,
@@ -134,8 +135,8 @@ export default function ClientOrderClient({
     const setOpts = new Set<string>();
     for (const it of priceList.items) {
       const cls =
-        (it.species as any)?.class ||
-        (it.species as any)?.category?.name ||
+        it.species?.class_order ||
+        it.species?.category?.name ||
         "Unspecified";
       setOpts.add(cls);
     }
@@ -185,7 +186,16 @@ export default function ClientOrderClient({
     }
 
     return lines.join("\n");
-  }, [groups, priceList.items, totalPieces, totalBoxes]);
+  }, [
+    groups,
+    priceList.items,
+    totalPieces,
+    totalBoxes,
+    customerName,
+    customerEmail,
+    companyName,
+    selectedCountry,
+  ]);
 
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     whatsappMessage,
@@ -193,9 +203,9 @@ export default function ClientOrderClient({
 
   const filteredItems = useMemo(() => {
     return priceList.items.filter((item) => {
-      const sp: any = item.species || {};
-      const avail = sp.availability || "on_request";
-      const cls = sp.class || sp.category?.name || "Unspecified";
+      const sp = item.species;
+      const avail = sp?.availability || "on_request";
+      const cls = sp?.class_order || sp?.category?.name || "Unspecified";
       if (availabilityFilter !== "all" && availabilityFilter !== avail)
         return false;
       if (classFilter !== "all" && classFilter !== cls) return false;
@@ -208,7 +218,8 @@ export default function ClientOrderClient({
       prev.map((g) => {
         if (g.id !== activeGroupId) return g;
         if (pieces <= 0) {
-          const { [speciesId]: _, ...rest } = g.items;
+          const rest = { ...g.items };
+          delete rest[speciesId];
           return { ...g, items: rest };
         }
         return {
@@ -231,7 +242,8 @@ export default function ClientOrderClient({
         if (g.id !== activeGroupId) return g;
         const pieces = Math.round(boxes * qtyPerBox);
         if (pieces <= 0) {
-          const { [speciesId]: _, ...rest } = g.items;
+          const rest = { ...g.items };
+          delete rest[speciesId];
           return { ...g, items: rest };
         }
         return {
@@ -361,7 +373,8 @@ export default function ClientOrderClient({
               Reference: <strong className="font-mono">{orderRef}</strong>
             </p>
             <p className="text-sm text-slate-500 mt-2">
-              Thanks for trusting us; we're currently verifying your order and
+              Thanks for trusting us; we&apos;re currently verifying your order
+              and
               prepping for a safe journey to ensure your new arrivals reach you
               in peak condition.
             </p>
@@ -494,10 +507,13 @@ export default function ClientOrderClient({
               return (
                 <Card key={item.id} className="rounded-xl overflow-hidden">
                   <div className="relative h-32 sm:h-40 bg-slate-100 overflow-hidden">
-                    <img
+                    <Image
                       src={mainImg}
                       alt={sp.common_name}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 50vw, 320px"
+                      unoptimized
+                      className="object-cover"
                     />
                     {/* Availability badge */}
                     <span

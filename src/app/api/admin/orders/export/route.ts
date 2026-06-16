@@ -1,7 +1,23 @@
 import { NextResponse } from "next/server";
-import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import {
+  createAdminSupabaseClient,
+  createServerSupabaseClient,
+} from "@/lib/supabase/server";
+import type {
+  OrderWithGroups,
+  OrderGroup,
+  OrderItem,
+} from "@/types/database";
 
-export async function GET(request: Request) {
+export async function GET() {
+  // Require an authenticated admin — this endpoint uses the service-role key.
+  const auth = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await auth.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const supabase = await createAdminSupabaseClient();
 
   // Fetch orders with groups and items
@@ -27,17 +43,19 @@ export async function GET(request: Request) {
   ];
   rows.push(headers.join(","));
 
-  for (const o of orders ?? []) {
-    const groups = (o.order_groups || []).map((g: any) => ({
-      group_name: g.group_name,
-      items: (g.order_items || []).map((it: any) => ({
-        species_name: it.species_name,
-        scientific_name: it.scientific_name,
-        size: it.size,
-        quantity: it.quantity,
-        unit_price: it.unit_price,
-      })),
-    }));
+  for (const o of (orders ?? []) as OrderWithGroups[]) {
+    const groups = (o.order_groups || []).map(
+      (g: OrderGroup & { order_items: OrderItem[] }) => ({
+        group_name: g.group_name,
+        items: (g.order_items || []).map((it: OrderItem) => ({
+          species_name: it.species_name,
+          scientific_name: it.scientific_name,
+          size: it.size,
+          quantity: it.quantity,
+          unit_price: it.unit_price,
+        })),
+      }),
+    );
 
     const row = [
       o.order_reference,

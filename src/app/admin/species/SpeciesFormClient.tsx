@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Trash2, Plus, ArrowLeft } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 interface Props {
@@ -280,11 +281,18 @@ export default function SpeciesFormClient({ species, categories }: Props) {
 
               {imageUrls.map((url, i) => (
                 <div key={i} className="flex items-center gap-2 sm:gap-3">
-                  <img
-                    src={url}
-                    alt=""
-                    className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg object-cover border shrink-0"
-                  />
+                  <div className="relative w-10 h-10 sm:w-16 sm:h-16 rounded-lg overflow-hidden border shrink-0">
+                    {url ? (
+                      <Image
+                        src={url}
+                        alt=""
+                        fill
+                        sizes="64px"
+                        unoptimized
+                        className="object-cover"
+                      />
+                    ) : null}
+                  </div>
                   <Input
                     value={url}
                     onChange={(e) => {

@@ -1,4 +1,7 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createServerSupabaseClient,
+  createAdminSupabaseClient,
+} from "@/lib/supabase/server";
 import { generateOrderReference } from "@/lib/queries/orders";
 import { sendOrderConfirmation } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
@@ -74,6 +77,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: orderError.message }, { status: 500 });
   }
 
+  // Supabase has no client-side transactions, so if any group/item insert
+  // fails we roll back the partially-created order. The admin client is used
+  // for cleanup so row-level security can't block the deletion.
+  async function rollbackOrder() {
+    const admin = await createAdminSupabaseClient();
+    const { data: createdGroups } = await admin
+      .from("order_groups")
+      .select("id")
+      .eq("order_id", order.id);
+    const groupIds = (createdGroups ?? []).map((g) => g.id);
+    if (groupIds.length) {
+      await admin.from("order_items").delete().in("order_group_id", groupIds);
+    }
+    await admin.from("order_groups").delete().eq("order_id", order.id);
+    await admin.from("orders").delete().eq("id", order.id);
+  }
+
   // Insert groups and items
   for (let i = 0; i < groups.length; i++) {
     const group = groups[i];
@@ -88,6 +108,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (groupError) {
+      await rollbackOrder();
       return NextResponse.json({ error: groupError.message }, { status: 500 });
     }
 
@@ -143,6 +164,7 @@ export async function POST(request: NextRequest) {
         .insert(items);
 
       if (itemsError) {
+        await rollbackOrder();
         return NextResponse.json(
           { error: itemsError.message },
           { status: 500 },

@@ -379,7 +379,12 @@ export default function PricingListClient({
                       Upload Excel
                     </Button>
                   </div>
-                  <a href="/api/admin/pricing/template" className="inline-flex">
+                  {/* File-download endpoint (Route Handler), not a page — <a download> is correct here. */}
+                  <a
+                    href="/api/admin/pricing/template"
+                    download
+                    className="inline-flex"
+                  >
                     <Button
                       type="button"
                       variant="ghost"

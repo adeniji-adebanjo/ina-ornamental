@@ -14,7 +14,7 @@ export default function GalleryClient({
 }: {
   posts: InstagramPost[];
 }) {
-  const [posts, setPosts] = useState(initial);
+  const [posts] = useState(initial);
   const [syncing, setSyncing] = useState(false);
 
   async function handleSync() {

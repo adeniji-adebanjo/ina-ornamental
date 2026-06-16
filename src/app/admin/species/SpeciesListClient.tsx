@@ -13,11 +13,11 @@ import {
   Pencil,
   Trash2,
   Star,
-  Eye,
   Fish,
   Database,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import {
   ConfirmDialog,
@@ -175,12 +175,15 @@ export default function SpeciesListClient({ species, categories }: Props) {
           {filtered.map((s) => (
             <Card key={s.id} className="rounded-xl">
               <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-4">
-                <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
+                <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
                   {s.images?.[0] ? (
-                    <img
+                    <Image
                       src={s.images[0].image_url}
                       alt={s.common_name}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="56px"
+                      unoptimized
+                      className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">

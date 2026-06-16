@@ -32,11 +32,23 @@ export default function ClientsListClient({
   const searchParams = useSearchParams();
   const [clients, setClients] = useState(initial);
   const [search, setSearch] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  // Auto-open the form when redirected from admin orders with ?new=1,
+  // seeding the prefill values from the query string (read once on mount).
+  const [showForm, setShowForm] = useState(
+    () => searchParams.get("new") === "1",
+  );
   const [editing, setEditing] = useState<Client | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmProps, showConfirm] = useConfirmDialog();
-  const [prefill, setPrefill] = useState<Record<string, string>>({});
+  const [prefill] = useState<Record<string, string>>(() => {
+    if (searchParams.get("new") !== "1") return {};
+    return {
+      name: searchParams.get("name") || "",
+      email: searchParams.get("email") || "",
+      company: searchParams.get("company") || "",
+      country: searchParams.get("country") || "",
+    };
+  });
 
   // Phone & Country state
   const [selectedCountry, setSelectedCountry] = useState(
@@ -69,32 +81,27 @@ export default function ClientsListClient({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Reset phone/country state when editing changes
-  useEffect(() => {
+  // Reset the phone/country inputs when the edit target (or prefill) changes.
+  // Adjusting state during render is React's recommended alternative to a
+  // setState-in-effect, and avoids the extra render an effect would cause.
+  const [synced, setSynced] = useState<{
+    editing: Client | null;
+    prefill: Record<string, string>;
+  } | null>(null);
+  if (!synced || synced.editing !== editing || synced.prefill !== prefill) {
+    setSynced({ editing, prefill });
     if (editing) {
       const match = COUNTRIES.find((c) => c.name === editing.country);
       if (match) setSelectedCountry(match);
       setPhoneNumber(editing.phone?.replace(/^\+\d+\s?/, "") ?? "");
     } else {
       const prefillMatch = COUNTRIES.find((c) => c.name === prefill.country);
-      if (prefillMatch) setSelectedCountry(prefillMatch);
-      else setSelectedCountry(COUNTRIES.find((c) => c.code === "NG")!);
+      setSelectedCountry(
+        prefillMatch ?? COUNTRIES.find((c) => c.code === "NG")!,
+      );
       setPhoneNumber("");
     }
-  }, [editing, prefill]);
-
-  // Auto-open form when redirected from admin orders with ?new=1
-  useEffect(() => {
-    if (searchParams.get("new") === "1") {
-      setPrefill({
-        name: searchParams.get("name") || "",
-        email: searchParams.get("email") || "",
-        company: searchParams.get("company") || "",
-        country: searchParams.get("country") || "",
-      });
-      setShowForm(true);
-    }
-  }, [searchParams]);
+  }
 
   const filtered = clients.filter(
     (c) =>
