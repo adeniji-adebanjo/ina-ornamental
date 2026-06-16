@@ -40,7 +40,10 @@ export default function ClientsListClient({
   const [editing, setEditing] = useState<Client | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmProps, showConfirm] = useConfirmDialog();
-  const [prefill] = useState<Record<string, string>>(() => {
+  const [prefill] = useState<Record<string, string>>((): Record<
+    string,
+    string
+  > => {
     if (searchParams.get("new") !== "1") return {};
     return {
       name: searchParams.get("name") || "",

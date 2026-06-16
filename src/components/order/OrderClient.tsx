@@ -738,7 +738,7 @@ export default function OrderClient() {
                 )}
 
                 <a
-                  href="https://wa.me/2348168850307"
+                  href={whatsappLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(

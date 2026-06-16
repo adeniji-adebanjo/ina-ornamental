@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,15 +16,20 @@ interface LocationGroup {
   count: number;
 }
 
-export default function LocationPricingClient() {
-  const [locations, setLocations] = useState<LocationGroup[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function LocationPricingClient({
+  initialLocations,
+}: {
+  initialLocations: LocationGroup[];
+}) {
+  const [locations, setLocations] = useState<LocationGroup[]>(initialLocations);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmProps, showConfirm] = useConfirmDialog();
 
-  // Core fetch — no synchronous setState so it is safe to run from an effect.
-  const loadLocations = useCallback(async () => {
+  // Refetch the grouped locations (e.g. after an upload/delete).
+  const fetchLocations = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/admin/location-pricing");
       if (res.ok) {
@@ -47,17 +52,6 @@ export default function LocationPricingClient() {
       setLoading(false);
     }
   }, []);
-
-  // Manual refetch (e.g. after an upload/delete) shows the loading spinner.
-  const fetchLocations = useCallback(async () => {
-    setLoading(true);
-    await loadLocations();
-  }, [loadLocations]);
-
-  // Fetch locations on mount (initial `loading` state is already true).
-  useEffect(() => {
-    loadLocations();
-  }, [loadLocations]);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
