@@ -129,8 +129,9 @@ export default function AdminLayoutClient({
         </div>
       )}
 
-      {/* Main content */}
-      <main className="flex-1 lg:ml-64">
+      {/* Main content — min-w-0 lets this flex child shrink instead of being
+          stretched horizontally by wide content (e.g. the species list rows). */}
+      <main className="flex-1 lg:ml-64 min-w-0">
         <header className="bg-white border-b border-slate-200 px-4 lg:px-8 py-4 flex items-center gap-4 sticky top-0 z-30">
           <button
             onClick={() => setSidebarOpen(true)}
