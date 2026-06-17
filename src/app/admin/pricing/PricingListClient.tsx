@@ -60,7 +60,7 @@ interface PriceList {
 }
 
 export default function PricingListClient({
-  priceLists: initial,
+  priceLists,
   clients,
   species,
   locations = [],
@@ -71,7 +71,6 @@ export default function PricingListClient({
   locations?: string[];
 }) {
   const router = useRouter();
-  const [priceLists, setPriceLists] = useState(initial);
   const [showForm, setShowForm] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -233,8 +232,8 @@ export default function PricingListClient({
           method: "DELETE",
         });
         if (res.ok) {
-          setPriceLists((prev) => prev.filter((p) => p.id !== id));
           toast.success("Price list deleted");
+          router.refresh();
         } else {
           toast.error("Failed to delete");
         }

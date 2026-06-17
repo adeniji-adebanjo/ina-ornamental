@@ -25,13 +25,12 @@ import { FormModal } from "@/components/ui/form-modal";
 import { COUNTRIES } from "@/data/countries";
 
 export default function ClientsListClient({
-  clients: initial,
+  clients,
 }: {
   clients: Client[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [clients, setClients] = useState(initial);
   const [search, setSearch] = useState("");
   // Auto-open the form when redirected from admin orders with ?new=1,
   // seeding the prefill values from the query string (read once on mount).
@@ -172,8 +171,8 @@ export default function ClientsListClient({
           method: "DELETE",
         });
         if (res.ok) {
-          setClients((prev) => prev.filter((c) => c.id !== id));
           toast.success("Client deleted");
+          router.refresh();
         } else {
           toast.error("Failed to delete client");
         }
