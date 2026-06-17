@@ -24,20 +24,27 @@ export async function getSpecies(options?: {
 }): Promise<SpeciesWithImages[]> {
   const supabase = await createServerSupabaseClient();
 
+  const categorySlug =
+    options?.categorySlug && options.categorySlug !== "all"
+      ? options.categorySlug
+      : null;
+
+  // Use an inner join (`!inner`) on the category when filtering by its slug —
+  // otherwise PostgREST filters the embedded category but returns ALL species.
   let query = supabase
     .from("species")
     .select(
       `
       *,
-      category:categories(*),
+      category:categories${categorySlug ? "!inner" : ""}(*),
       images:species_images(*)
     `,
     )
     .order("sort_order")
     .order("sort_order", { referencedTable: "species_images" });
 
-  if (options?.categorySlug && options.categorySlug !== "all") {
-    query = query.eq("category.slug", options.categorySlug);
+  if (categorySlug) {
+    query = query.eq("category.slug", categorySlug);
   }
   if (options?.search) {
     query = query.or(
