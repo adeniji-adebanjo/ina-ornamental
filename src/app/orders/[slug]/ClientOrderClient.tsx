@@ -201,6 +201,15 @@ export default function ClientOrderClient({
     whatsappMessage,
   )}`;
 
+  // Require the important customer details before allowing WhatsApp contact.
+  const customerEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail);
+  const whatsappBlockReason = !customerName.trim()
+    ? "Enter your name before contacting via WhatsApp."
+    : !customerEmailValid
+      ? "Enter a valid email before contacting via WhatsApp."
+      : "";
+  const canContactViaWhatsApp = whatsappBlockReason === "";
+
   const filteredItems = useMemo(() => {
     return priceList.items.filter((item) => {
       const sp = item.species;
@@ -913,15 +922,27 @@ export default function ClientOrderClient({
                 </>
               )}
 
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 text-sm font-semibold transition-colors"
-              >
-                <MessageCircle className="size-4" />
-                Contact via WhatsApp
-              </a>
+              {canContactViaWhatsApp ? (
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 text-sm font-semibold transition-colors"
+                >
+                  <MessageCircle className="size-4" />
+                  Contact via WhatsApp
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  aria-disabled="true"
+                  onClick={() => toast.error(whatsappBlockReason)}
+                  className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-xl h-11 text-sm font-semibold opacity-50 cursor-not-allowed"
+                >
+                  <MessageCircle className="size-4" />
+                  Contact via WhatsApp
+                </button>
+              )}
             </CardContent>
           </Card>
         </div>

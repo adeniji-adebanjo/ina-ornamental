@@ -128,6 +128,18 @@ export default function OrderClient() {
 
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
+  // Require the important customer details before allowing a WhatsApp order.
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail);
+  const whatsappBlockReason =
+    cart.length === 0
+      ? "Add at least one item to your cart first."
+      : !customerName.trim()
+        ? "Enter your name before ordering via WhatsApp."
+        : !emailValid
+          ? "Enter a valid email before ordering via WhatsApp."
+          : "";
+  const canOrderViaWhatsApp = whatsappBlockReason === "";
+
   const handleAddGroup = () => {
     const letter = String.fromCharCode(65 + orderGroups.length);
     const name = `Order ${letter}`;
@@ -737,18 +749,33 @@ export default function OrderClient() {
                   </form>
                 )}
 
-                <a
-                  href={whatsappLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    buttonVariants({ variant: "default" }),
-                    "mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 gap-2",
-                  )}
-                >
-                  <MessageCircle className="size-4" />
-                  Order via WhatsApp
-                </a>
+                {canOrderViaWhatsApp ? (
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      buttonVariants({ variant: "default" }),
+                      "mt-4 w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-11 gap-2",
+                    )}
+                  >
+                    <MessageCircle className="size-4" />
+                    Order via WhatsApp
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    aria-disabled="true"
+                    onClick={() => toast.error(whatsappBlockReason)}
+                    className={cn(
+                      buttonVariants({ variant: "default" }),
+                      "mt-4 w-full cursor-not-allowed gap-2 rounded-xl h-11 bg-emerald-600 text-white opacity-50 hover:bg-emerald-600",
+                    )}
+                  >
+                    <MessageCircle className="size-4" />
+                    Order via WhatsApp
+                  </button>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -204,6 +204,19 @@ export default function SpeciesListClient({ species, categories }: Props) {
                   <p className="text-xs sm:text-sm italic text-slate-500 truncate">
                     {s.scientific_name}
                   </p>
+                  {/* Status — surfaced here on mobile (shown inline on sm+) */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1 sm:hidden">
+                    {s.category?.name && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {s.category.name}
+                      </Badge>
+                    )}
+                    <span
+                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${availabilityBadge(s.availability)}`}
+                    >
+                      {s.availability.replace("_", " ")}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="hidden sm:flex items-center gap-2">
@@ -217,7 +230,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <Link href={`/admin/species/${s.id}`}>
                     <Button variant="ghost" size="icon-sm">
                       <Pencil className="size-4 text-slate-500" />
