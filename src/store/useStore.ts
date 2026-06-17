@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { CartItem, FishProduct, CategoryFilter } from "@/types";
 
 interface StoreState {
@@ -49,7 +50,9 @@ interface StoreState {
   setSelectedSize: (size: string) => void;
 }
 
-export const useStore = create<StoreState>((set, get) => ({
+export const useStore = create<StoreState>()(
+  persist(
+    (set, get) => ({
   // Cart state
   cart: [],
   orderGroups: ["Order A"],
@@ -212,4 +215,26 @@ export const useStore = create<StoreState>((set, get) => ({
   selectedSize: "",
   setSelectedProduct: (product) => set({ selectedProduct: product }),
   setSelectedSize: (size) => set({ selectedSize: size }),
-}));
+    }),
+    {
+      name: "ina-ornamental-cart",
+      version: 1,
+      storage: createJSONStorage(() => {
+        if (typeof window === "undefined") {
+          // No-op storage during SSR; the real cart is loaded on rehydrate.
+          return { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+        }
+        return window.localStorage;
+      }),
+      // Persist only the order data — never UI/filter/selection state.
+      partialize: (state) => ({
+        cart: state.cart,
+        orderGroups: state.orderGroups,
+        activeOrderGroup: state.activeOrderGroup,
+      }),
+      // Rehydrate manually after mount (see Providers) to avoid an SSR/client
+      // markup mismatch on the cart badge.
+      skipHydration: true,
+    },
+  ),
+);

@@ -24,6 +24,7 @@ import {
   useConfirmDialog,
 } from "@/components/ui/confirm-dialog";
 import { FormModal } from "@/components/ui/form-modal";
+import { DatePicker, formatDateDisplay } from "@/components/ui/date-picker";
 
 interface Species {
   id: string;
@@ -301,11 +302,10 @@ export default function PricingListClient({
                       <Info className="inline-block size-4 ml-1 text-slate-400" />
                     </span>
                   </label>
-                  <Input
+                  <DatePicker
                     id="valid_from"
                     name="valid_from"
-                    type="date"
-                    className="rounded-xl"
+                    placeholder="Select start date"
                   />
                   <p className="text-xs text-slate-500 mt-1">
                     Optional start date for this pricing.
@@ -321,11 +321,10 @@ export default function PricingListClient({
                       <Info className="inline-block size-4 ml-1 text-slate-400" />
                     </span>
                   </label>
-                  <Input
+                  <DatePicker
                     id="valid_until"
                     name="valid_until"
-                    type="date"
-                    className="rounded-xl"
+                    placeholder="No expiry"
                   />
                   <p className="text-xs text-slate-500 mt-1">
                     Optional expiration date. Leave empty for no expiry.
@@ -493,7 +492,8 @@ export default function PricingListClient({
                   </p>
                   {pl.valid_from && (
                     <p className="text-xs text-slate-400 mt-1">
-                      {pl.valid_from} → {pl.valid_until ?? "No expiry"}
+                      {formatDateDisplay(pl.valid_from)} →{" "}
+                      {pl.valid_until ? formatDateDisplay(pl.valid_until) : "No expiry"}
                     </p>
                   )}
                 </div>
