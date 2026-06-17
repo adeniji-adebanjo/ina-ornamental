@@ -21,6 +21,7 @@ import {
   ConfirmDialog,
   useConfirmDialog,
 } from "@/components/ui/confirm-dialog";
+import { FormModal } from "@/components/ui/form-modal";
 import { COUNTRIES } from "@/data/countries";
 
 export default function ClientsListClient({
@@ -197,17 +198,19 @@ export default function ClientsListClient({
         </Button>
       </div>
 
-      {/* Form Modal */}
-      {showForm && (
-        <Card className="mb-6 rounded-xl border-sky-200">
-          <CardContent className="p-4 sm:p-6">
-            <h2 className="font-semibold text-lg mb-4">
-              {editing ? "Edit Client" : "New Client"}
-            </h2>
-            <form
-              onSubmit={handleSubmit}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-            >
+      {/* Create / edit form modal */}
+      <FormModal
+        open={showForm}
+        onClose={() => {
+          setShowForm(false);
+          setEditing(null);
+        }}
+        title={editing ? "Edit Client" : "New Client"}
+      >
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+        >
               <Input
                 required
                 name="name"
@@ -359,10 +362,8 @@ export default function ClientsListClient({
                   Cancel
                 </Button>
               </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+        </form>
+      </FormModal>
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />

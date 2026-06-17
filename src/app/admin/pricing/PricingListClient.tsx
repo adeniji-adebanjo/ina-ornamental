@@ -23,6 +23,7 @@ import {
   ConfirmDialog,
   useConfirmDialog,
 } from "@/components/ui/confirm-dialog";
+import { FormModal } from "@/components/ui/form-modal";
 
 interface Species {
   id: string;
@@ -260,11 +261,12 @@ export default function PricingListClient({
         </Button>
       </div>
 
-      {showForm && (
-        <Card className="mb-6 rounded-xl border-sky-200">
-          <CardContent className="p-4 sm:p-6">
-            <h2 className="font-semibold text-lg mb-4">Create Price List</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
+      <FormModal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title="Create Price List"
+      >
+        <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-slate-700 mb-1 block">
@@ -462,10 +464,8 @@ export default function PricingListClient({
                   Cancel
                 </Button>
               </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+        </form>
+      </FormModal>
 
       <div className="space-y-4">
         {priceLists.map((pl) => (

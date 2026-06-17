@@ -66,7 +66,11 @@ export default function GalleryPageClient({
                   <Image
                     src={post.media_url}
                     alt={post.caption ?? "Gallery image"}
-                    className="w-full rounded-xl"
+                    width={500}
+                    height={500}
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    unoptimized
+                    className="w-full h-auto rounded-xl"
                     loading="lazy"
                   />
                 )}
@@ -113,7 +117,11 @@ export default function GalleryPageClient({
                   <Image
                     src={selected.media_url}
                     alt={selected.caption ?? ""}
-                    className="w-full max-h-[70vh] object-contain bg-black"
+                    width={1080}
+                    height={1080}
+                    sizes="(max-width: 768px) 100vw, 768px"
+                    unoptimized
+                    className="w-full h-auto max-h-[70vh] object-contain bg-black"
                   />
                 )}
                 <button
