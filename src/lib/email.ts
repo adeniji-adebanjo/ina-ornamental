@@ -25,6 +25,22 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "alfred@inaornamentalfish.com")
   .split(",")
   .map((e) => e.trim());
 
+// Shared <head> for all emails. The viewport meta stops mobile clients from
+// rendering at desktop width (which made the order table overflow); the media
+// query is honoured by Apple Mail, iOS Mail and the Gmail app, and ignored
+// gracefully elsewhere (inline styles remain the baseline).
+const EMAIL_HEAD = `<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <style>
+    @media only screen and (max-width: 600px) {
+      .ina-container { padding: 12px !important; }
+      .ina-card { padding: 16px !important; }
+      .ina-items th, .ina-items td { padding: 6px 5px !important; font-size: 12px !important; }
+      .ina-sci { font-size: 11px !important; }
+    }
+  </style>`;
+
 interface OrderEmailData {
   order_reference: string;
   customer_name: string;
@@ -52,16 +68,23 @@ interface OrderEmailData {
 
 function buildOrderItemsHTML(data: OrderEmailData) {
   return data.groups
-    .map(
-      (g) => `
+    .map((g) => {
+      const hasPrice = g.items.some((i) => i.unit_price);
+      // Fixed layout + colgroup keeps the table within the email width on
+      // mobile instead of stretching to fit the content.
+      const colgroup = hasPrice
+        ? `<colgroup><col style="width:46%"><col style="width:20%"><col style="width:14%"><col style="width:20%"></colgroup>`
+        : `<colgroup><col style="width:56%"><col style="width:26%"><col style="width:18%"></colgroup>`;
+      return `
       <h3 style="margin:16px 0 8px;color:#3b655d;font-size:16px;">${g.name}</h3>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <table class="ina-items" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px;">
+        ${colgroup}
         <thead>
           <tr style="background:#f5f3ee;">
             <th style="text-align:left;padding:8px;border-bottom:1px solid #e2d8c8;">Species</th>
             <th style="text-align:left;padding:8px;border-bottom:1px solid #e2d8c8;">Size</th>
             <th style="text-align:center;padding:8px;border-bottom:1px solid #e2d8c8;">Qty</th>
-            ${g.items.some((i) => i.unit_price) ? '<th style="text-align:right;padding:8px;border-bottom:1px solid #e2d8c8;">Price</th>' : ""}
+            ${hasPrice ? '<th style="text-align:right;padding:8px;border-bottom:1px solid #e2d8c8;">Price</th>' : ""}
           </tr>
         </thead>
         <tbody>
@@ -69,19 +92,19 @@ function buildOrderItemsHTML(data: OrderEmailData) {
             .map(
               (item) => `
             <tr>
-              <td style="padding:8px;border-bottom:1px solid #f0ece4;">
+              <td style="padding:8px;border-bottom:1px solid #f0ece4;word-break:break-word;">
                 <strong>${item.species_name}</strong>
-                ${item.scientific_name ? `<br><em style="color:#8e8270;font-size:12px;">${item.scientific_name}</em>` : ""}
+                ${item.scientific_name ? `<br><em class="ina-sci" style="color:#8e8270;font-size:12px;">${item.scientific_name}</em>` : ""}
               </td>
-              <td style="padding:8px;border-bottom:1px solid #f0ece4;">${item.size || "-"}</td>
+              <td style="padding:8px;border-bottom:1px solid #f0ece4;word-break:break-word;">${item.size || "-"}</td>
               <td style="text-align:center;padding:8px;border-bottom:1px solid #f0ece4;">${item.quantity}</td>
-              ${item.unit_price ? `<td style="text-align:right;padding:8px;border-bottom:1px solid #f0ece4;">$${Number(item.unit_price).toFixed(2)}</td>` : ""}
+              ${hasPrice ? `<td style="text-align:right;padding:8px;border-bottom:1px solid #f0ece4;">${item.unit_price ? `$${Number(item.unit_price).toFixed(2)}` : "-"}</td>` : ""}
             </tr>`,
             )
             .join("")}
         </tbody>
-      </table>`,
-    )
+      </table>`;
+    })
     .join("");
 }
 
@@ -94,17 +117,17 @@ function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
   return `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
+<head>${EMAIL_HEAD}</head>
 <body style="margin:0;padding:0;background:#faf7f2;font-family:Arial,sans-serif;">
-  <div style="max-width:600px;margin:0 auto;padding:24px;">
+  <div class="ina-container" style="max-width:600px;margin:0 auto;padding:24px;">
     <div style="background:#3b655d;padding:24px;border-radius:12px 12px 0 0;">
       <h1 style="color:white;margin:0;font-size:22px;">iNA Ornamental Fish</h1>
       <p style="color:#c7e2dc;margin:4px 0 0;font-size:13px;">
         ${isAdmin ? "New Order Received" : "Order Confirmation"}
       </p>
     </div>
-    
-    <div style="background:white;padding:24px;border:1px solid #e2d8c8;border-top:none;border-radius:0 0 12px 12px;">
+
+    <div class="ina-card" style="background:white;padding:24px;border:1px solid #e2d8c8;border-top:none;border-radius:0 0 12px 12px;">
       <p style="margin:0 0 16px;font-size:15px;color:#38322a;">
         ${isAdmin ? `A new order has been submitted by <strong>${data.customer_name}</strong>.` : `Dear ${data.customer_name}, thank you for your order! Here are your order details.`}
       </p>
@@ -112,16 +135,16 @@ function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
       <div style="background:#faf7f2;padding:16px;border-radius:8px;margin-bottom:20px;">
         <table style="width:100%;font-size:14px;">
           <tr><td style="padding:4px 0;color:#8e8270;">Reference</td><td style="padding:4px 0;font-weight:bold;color:#3b655d;">${data.order_reference}</td></tr>
-          <tr><td style="padding:4px 0;color:#8e8270;">Name</td><td style="padding:4px 0;">${data.customer_name}</td></tr>
-          ${data.company_name ? `<tr><td style="padding:4px 0;color:#8e8270;">Company</td><td style="padding:4px 0;">${data.company_name}</td></tr>` : ""}
-          <tr><td style="padding:4px 0;color:#8e8270;">Email</td><td style="padding:4px 0;">${data.email}</td></tr>
-          ${data.phone ? `<tr><td style="padding:4px 0;color:#8e8270;">Phone</td><td style="padding:4px 0;">${data.phone}</td></tr>` : ""}
-          ${data.country ? `<tr><td style="padding:4px 0;color:#8e8270;">Country</td><td style="padding:4px 0;">${data.country}</td></tr>` : ""}
-          ${data.delivery_address ? `<tr><td style="padding:4px 0;color:#8e8270;">Address</td><td style="padding:4px 0;">${data.delivery_address}</td></tr>` : ""}
-          ${data.proposed_shipment_date ? `<tr><td style="padding:4px 0;color:#8e8270;">Proposed Shipment</td><td style="padding:4px 0;">${data.proposed_shipment_date}</td></tr>` : ""}
-          ${data.consignee_name ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee</td><td style="padding:4px 0;">${data.consignee_name}</td></tr>` : ""}
-          ${data.consignee_phone ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee Phone</td><td style="padding:4px 0;">${data.consignee_phone}</td></tr>` : ""}
-          ${data.consignee_address ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee Address</td><td style="padding:4px 0;">${data.consignee_address}</td></tr>` : ""}
+          <tr><td style="padding:4px 0;color:#8e8270;">Name</td><td style="padding:4px 0;word-break:break-word;">${data.customer_name}</td></tr>
+          ${data.company_name ? `<tr><td style="padding:4px 0;color:#8e8270;">Company</td><td style="padding:4px 0;word-break:break-word;">${data.company_name}</td></tr>` : ""}
+          <tr><td style="padding:4px 0;color:#8e8270;">Email</td><td style="padding:4px 0;word-break:break-word;">${data.email}</td></tr>
+          ${data.phone ? `<tr><td style="padding:4px 0;color:#8e8270;">Phone</td><td style="padding:4px 0;word-break:break-word;">${data.phone}</td></tr>` : ""}
+          ${data.country ? `<tr><td style="padding:4px 0;color:#8e8270;">Country</td><td style="padding:4px 0;word-break:break-word;">${data.country}</td></tr>` : ""}
+          ${data.delivery_address ? `<tr><td style="padding:4px 0;color:#8e8270;">Address</td><td style="padding:4px 0;word-break:break-word;">${data.delivery_address}</td></tr>` : ""}
+          ${data.proposed_shipment_date ? `<tr><td style="padding:4px 0;color:#8e8270;">Proposed Shipment</td><td style="padding:4px 0;word-break:break-word;">${data.proposed_shipment_date}</td></tr>` : ""}
+          ${data.consignee_name ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee</td><td style="padding:4px 0;word-break:break-word;">${data.consignee_name}</td></tr>` : ""}
+          ${data.consignee_phone ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee Phone</td><td style="padding:4px 0;word-break:break-word;">${data.consignee_phone}</td></tr>` : ""}
+          ${data.consignee_address ? `<tr><td style="padding:4px 0;color:#8e8270;">Consignee Address</td><td style="padding:4px 0;word-break:break-word;">${data.consignee_address}</td></tr>` : ""}
           <tr><td style="padding:4px 0;color:#8e8270;">Total Items</td><td style="padding:4px 0;font-weight:bold;">${totalItems}</td></tr>
         </table>
       </div>
@@ -229,14 +252,14 @@ export async function sendOrderStatusUpdate(data: {
       subject: `${message} — ${data.order_reference} | iNA Ornamental Fish`,
       html: `
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
+<html><head>${EMAIL_HEAD}</head>
 <body style="margin:0;padding:0;background:#faf7f2;font-family:Arial,sans-serif;">
-  <div style="max-width:600px;margin:0 auto;padding:24px;">
+  <div class="ina-container" style="max-width:600px;margin:0 auto;padding:24px;">
     <div style="background:#3b655d;padding:24px;border-radius:12px 12px 0 0;">
       <h1 style="color:white;margin:0;font-size:22px;">iNA Ornamental Fish</h1>
       <p style="color:#c7e2dc;margin:4px 0 0;font-size:13px;">Order Update</p>
     </div>
-    <div style="background:white;padding:24px;border:1px solid #e2d8c8;border-top:none;border-radius:0 0 12px 12px;">
+    <div class="ina-card" style="background:white;padding:24px;border:1px solid #e2d8c8;border-top:none;border-radius:0 0 12px 12px;">
       <p style="font-size:15px;color:#38322a;">Dear ${data.customer_name},</p>
       <p style="font-size:15px;color:#38322a;">${message}.</p>
       <div style="background:#faf7f2;padding:16px;border-radius:8px;margin:16px 0;">
