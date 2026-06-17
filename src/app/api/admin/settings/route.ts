@@ -29,13 +29,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Missing key" }, { status: 400 });
   }
 
+  // `site_settings.value` is `jsonb NOT NULL`. Coerce an empty/absent value to
+  // an empty string so we never write a SQL NULL (which violates the column).
+  const safeValue = value === null || value === undefined ? "" : value;
+
   const admin = await createAdminSupabaseClient();
   const { error } = await admin
     .from("site_settings")
-    .upsert(
-      { key, value: JSON.parse(JSON.stringify(value)) },
-      { onConflict: "key" },
-    );
+    .upsert({ key, value: safeValue }, { onConflict: "key" });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

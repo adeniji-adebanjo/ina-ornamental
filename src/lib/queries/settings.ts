@@ -9,7 +9,7 @@ export async function getSetting(key: string): Promise<string | null> {
     .single();
   if (!data) return null;
   const val = data.value;
-  if (val === null || val === "null") return null;
+  if (val === null || val === "null" || val === "") return null;
   return typeof val === "string" ? val : JSON.stringify(val);
 }
 

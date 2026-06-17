@@ -30,13 +30,16 @@ export default function SettingsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           key: "featured_category_id",
-          value: featuredCategory || null,
+          value: featuredCategory,
         }),
       });
       if (res.ok) {
         toast.success("Settings saved");
       } else {
-        toast.error("Failed to save settings");
+        const data = await res.json().catch(() => null);
+        toast.error(
+          data?.error ? `Failed to save: ${data.error}` : "Failed to save settings",
+        );
       }
     } catch {
       toast.error("Network error");
