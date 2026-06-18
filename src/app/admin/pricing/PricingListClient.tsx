@@ -30,6 +30,22 @@ interface Species {
   id: string;
   common_name: string;
   scientific_name: string;
+  availability: string;
+}
+
+// Availability is a global, per-species property managed in Admin → Species.
+// Custom pricing only reads it — it is never set per price list.
+const AVAILABILITY_BADGES: Record<string, { label: string; className: string }> =
+  {
+    available: { label: "In Stock", className: "bg-emerald-50 text-emerald-700" },
+    limited_stock: { label: "Limited", className: "bg-amber-50 text-amber-700" },
+    out_of_stock: { label: "Out of Stock", className: "bg-red-50 text-red-700" },
+    seasonal: { label: "Seasonal", className: "bg-sky-50 text-sky-700" },
+    on_request: { label: "On Request", className: "bg-slate-100 text-slate-600" },
+  };
+
+function availabilityBadge(status?: string) {
+  return AVAILABILITY_BADGES[status ?? "on_request"] ?? AVAILABILITY_BADGES.on_request;
 }
 
 interface Client {
@@ -42,7 +58,11 @@ interface PriceItem {
   id: string;
   species_id: string;
   custom_price: number;
-  species: { common_name: string; scientific_name: string } | null;
+  species: {
+    common_name: string;
+    scientific_name: string;
+    availability?: string;
+  } | null;
 }
 
 interface PriceList {
@@ -332,9 +352,14 @@ export default function PricingListClient({
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">
+                <label className="text-sm font-medium text-slate-700 mb-1 block">
                   Species & Custom Prices
                 </label>
+                <p className="text-xs text-slate-500 mb-2">
+                  Availability is managed globally per species in{" "}
+                  <strong>Species</strong> — it&apos;s shown here for reference
+                  and never set on a price list.
+                </p>
 
                 {/* Auto-fill and upload options */}
                 <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
@@ -398,7 +423,14 @@ export default function PricingListClient({
                 </div>
 
                 <div className="space-y-2 max-h-80 overflow-y-auto">
-                  {newItems.map((item, idx) => (
+                  {newItems.map((item, idx) => {
+                    const selectedSpecies = species.find(
+                      (s) => s.id === item.species_id,
+                    );
+                    const badge = selectedSpecies
+                      ? availabilityBadge(selectedSpecies.availability)
+                      : null;
+                    return (
                     <div key={idx} className="flex flex-col sm:flex-row gap-2">
                       <select
                         value={item.species_id}
@@ -414,6 +446,14 @@ export default function PricingListClient({
                           </option>
                         ))}
                       </select>
+                      {badge && (
+                        <span
+                          title="Managed in Species"
+                          className={`self-center shrink-0 text-[10px] font-medium px-2 py-1 rounded-full ${badge.className}`}
+                        >
+                          {badge.label}
+                        </span>
+                      )}
                       <Input
                         type="number"
                         step="0.01"
@@ -436,7 +476,8 @@ export default function PricingListClient({
                         </Button>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <Button
                   type="button"
@@ -546,21 +587,39 @@ export default function PricingListClient({
                         <th className="pb-2 hidden sm:table-cell">
                           Scientific Name
                         </th>
+                        <th className="pb-2">Availability</th>
                         <th className="pb-2 text-right">Price</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {pl.items.map((item) => (
-                        <tr key={item.id} className="border-t border-slate-50">
-                          <td className="py-2">{item.species?.common_name}</td>
-                          <td className="py-2 italic text-slate-500 hidden sm:table-cell">
-                            {item.species?.scientific_name}
-                          </td>
-                          <td className="py-2 text-right font-medium">
-                            ${Number(item.custom_price).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
+                      {pl.items.map((item) => {
+                        const badge = availabilityBadge(
+                          item.species?.availability,
+                        );
+                        return (
+                          <tr
+                            key={item.id}
+                            className="border-t border-slate-50"
+                          >
+                            <td className="py-2">
+                              {item.species?.common_name}
+                            </td>
+                            <td className="py-2 italic text-slate-500 hidden sm:table-cell">
+                              {item.species?.scientific_name}
+                            </td>
+                            <td className="py-2">
+                              <span
+                                className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.className}`}
+                              >
+                                {badge.label}
+                              </span>
+                            </td>
+                            <td className="py-2 text-right font-medium">
+                              ${Number(item.custom_price).toFixed(2)}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                   <div className="mt-3 p-3 bg-slate-50 rounded-lg">

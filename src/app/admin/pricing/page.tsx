@@ -12,13 +12,13 @@ export default async function AdminPricingPage() {
     supabase
       .from("client_price_lists")
       .select(
-        "*, client:clients(*), items:client_price_items(*, species:species(common_name, scientific_name))",
+        "*, client:clients(*), items:client_price_items(*, species:species(common_name, scientific_name, availability))",
       )
       .order("created_at", { ascending: false }),
     supabase.from("clients").select("id, name, company").order("name"),
     supabase
       .from("species")
-      .select("id, common_name, scientific_name")
+      .select("id, common_name, scientific_name, availability")
       .order("common_name"),
     supabase.from("location_pricing").select("location"),
   ]);
