@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SpeciesWithImages, Category } from "@/types/database";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import {
   Star,
   Fish,
   Database,
+  Upload,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -33,6 +35,8 @@ export default function SpeciesListClient({ species, categories }: Props) {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [seeding, setSeeding] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [confirmProps, showConfirm] = useConfirmDialog();
 
@@ -98,18 +102,94 @@ export default function SpeciesListClient({ species, categories }: Props) {
     }
   }
 
+  async function handleExport() {
+    const res = await fetch("/api/admin/species/export");
+    if (!res.ok) {
+      toast.error("Failed to export species");
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ina-species-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/species/import", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(
+          `Imported: ${data.created} created, ${data.updated} updated`,
+        );
+        if (data.errors?.length) {
+          toast.warning(`${data.errors.length} row(s) had issues`, {
+            description: data.errors.slice(0, 3).join("\n"),
+          });
+        }
+        router.refresh();
+      } else {
+        toast.error(data.error || "Import failed");
+      }
+    } catch {
+      toast.error("Network error during import");
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
           Species
         </h1>
-        <Link href="/admin/species/new" className="w-full sm:w-auto">
-          <Button className="rounded-xl w-full sm:w-auto">
-            <Plus className="size-4 mr-2" />
-            Add Species
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,text/csv"
+            onChange={handleImport}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={importing}
+            className="rounded-xl w-full sm:w-auto"
+          >
+            <Upload className="size-4 mr-2" />
+            {importing ? "Importing..." : "Import CSV"}
           </Button>
-        </Link>
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            className="rounded-xl w-full sm:w-auto"
+          >
+            <Download className="size-4 mr-2" />
+            Export CSV
+          </Button>
+          <Link href="/admin/species/new" className="w-full sm:w-auto">
+            <Button className="rounded-xl w-full sm:w-auto">
+              <Plus className="size-4 mr-2" />
+              Add Species
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -175,7 +255,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
           {filtered.map((s) => (
             <Card key={s.id} className="rounded-xl">
               <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-4">
-                <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
+                <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-lg bg-slate-100 overflow-hidden shrink-0">
                   {s.images?.[0] ? (
                     <Image
                       src={s.images[0].image_url}
