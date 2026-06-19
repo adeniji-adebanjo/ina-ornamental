@@ -25,25 +25,8 @@ interface BeholdFeed {
   posts?: BeholdPost[];
 }
 
-/**
- * Fetch the Instagram feed from Behold.so and cache it in `instagram_posts`.
- * Uses the service-role client so it works from a cron job (no RLS session).
- * Returns the number of posts synced.
- */
-export async function syncInstagramPosts(): Promise<number> {
-  if (!BEHOLD_FEED_URL) {
-    throw new Error("BEHOLD_FEED_URL is not configured");
-  }
-
-  const res = await fetch(BEHOLD_FEED_URL, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`Behold feed error: ${res.status} ${await res.text()}`);
-  }
-
-  const feed = (await res.json()) as BeholdFeed;
-  const posts = feed.posts ?? [];
-
-  const rows = posts.map((post) => ({
+function mapBeholdPosts(posts: BeholdPost[]): InstagramPost[] {
+  return posts.map((post) => ({
     id: post.id,
     media_type: post.mediaType,
     media_url: post.mediaUrl,
@@ -60,6 +43,27 @@ export async function syncInstagramPosts(): Promise<number> {
         : null,
     cached_at: new Date().toISOString(),
   }));
+}
+
+async function fetchBeholdFeed(): Promise<InstagramPost[]> {
+  if (!BEHOLD_FEED_URL) {
+    throw new Error("BEHOLD_FEED_URL is not configured");
+  }
+  const res = await fetch(BEHOLD_FEED_URL, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Behold feed error: ${res.status} ${await res.text()}`);
+  }
+  const feed = (await res.json()) as BeholdFeed;
+  return mapBeholdPosts(feed.posts ?? []);
+}
+
+/**
+ * Fetch the Instagram feed from Behold.so and cache it in `instagram_posts`.
+ * Uses the service-role client so it works from a cron job (no RLS session).
+ * Returns the number of posts synced.
+ */
+export async function syncInstagramPosts(): Promise<number> {
+  const rows = await fetchBeholdFeed();
 
   if (rows.length > 0) {
     const admin = await createAdminSupabaseClient();
@@ -72,15 +76,30 @@ export async function syncInstagramPosts(): Promise<number> {
   return rows.length;
 }
 
+/**
+ * Posts for the public gallery. Reads the admin-managed cache first (it
+ * accumulates across syncs); if the cache is empty, falls back to a live Behold
+ * fetch so the gallery still renders without requiring a manual sync.
+ */
 export async function getInstagramPosts(limit = 60): Promise<InstagramPost[]> {
-  // Read with the service-role client (server-side only) so the public gallery
-  // shows the same posts as the admin, independent of RLS policies. Instagram
-  // content is public, so there is no sensitivity concern here.
+  // Service-role read (server-side only) so the public gallery shows the same
+  // posts as the admin, independent of RLS. Instagram content is public.
   const supabase = await createAdminSupabaseClient();
   const { data } = await supabase
     .from("instagram_posts")
     .select("*")
     .order("timestamp", { ascending: false })
     .limit(limit);
-  return (data as InstagramPost[]) ?? [];
+
+  const cached = (data as InstagramPost[]) ?? [];
+  if (cached.length > 0) return cached;
+
+  // Cache empty (no sync has run yet) — best-effort live fetch; never throw on
+  // the public page.
+  if (!BEHOLD_FEED_URL) return [];
+  try {
+    return (await fetchBeholdFeed()).slice(0, limit);
+  } catch {
+    return [];
+  }
 }
