@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getInstagramPosts } from "@/lib/queries/instagram";
 import GalleryPageClient from "./GalleryPageClient";
 
 export const metadata = {
@@ -8,11 +8,6 @@ export const metadata = {
 };
 
 export default async function GalleryPage() {
-  const supabase = await createServerSupabaseClient();
-  const { data: posts } = await supabase
-    .from("instagram_posts")
-    .select("*")
-    .order("posted_at", { ascending: false });
-
-  return <GalleryPageClient posts={posts ?? []} />;
+  const posts = await getInstagramPosts();
+  return <GalleryPageClient posts={posts} />;
 }

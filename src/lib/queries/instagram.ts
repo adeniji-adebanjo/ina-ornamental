@@ -1,60 +1,81 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createAdminSupabaseClient,
+  createServerSupabaseClient,
+} from "@/lib/supabase/server";
 import type { InstagramPost } from "@/types/database";
 
-const INSTAGRAM_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
-const INSTAGRAM_USER_ID = process.env.INSTAGRAM_USER_ID;
+// Behold.so proxies the Instagram feed and handles all token refresh, so no
+// Instagram access token is needed here — just the feed URL.
+const BEHOLD_FEED_URL = process.env.BEHOLD_FEED_URL;
 
-interface IGMediaResponse {
-  data: {
-    id: string;
-    media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
-    media_url: string;
-    thumbnail_url?: string;
-    permalink: string;
-    caption?: string;
-    timestamp: string;
-    children?: {
-      data: { id: string; media_type: string; media_url: string }[];
-    };
-  }[];
-  paging?: { cursors: { after: string }; next: string };
+interface BeholdChild {
+  mediaType?: string;
+  mediaUrl?: string;
 }
 
-export async function syncInstagramPosts(): Promise<void> {
-  if (!INSTAGRAM_TOKEN || !INSTAGRAM_USER_ID) return;
+interface BeholdPost {
+  id: string;
+  mediaType: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  mediaUrl: string;
+  thumbnailUrl?: string;
+  permalink?: string;
+  caption?: string;
+  timestamp?: string;
+  children?: BeholdChild[];
+}
 
-  const fields =
-    "id,media_type,media_url,thumbnail_url,permalink,caption,timestamp,children{media_type,media_url}";
-  const url = `https://graph.instagram.com/${INSTAGRAM_USER_ID}/media?fields=${fields}&limit=50&access_token=${INSTAGRAM_TOKEN}`;
+interface BeholdFeed {
+  posts?: BeholdPost[];
+}
 
-  const res = await fetch(url);
-  if (!res.ok) return;
+/**
+ * Fetch the Instagram feed from Behold.so and cache it in `instagram_posts`.
+ * Uses the service-role client so it works from a cron job (no RLS session).
+ * Returns the number of posts synced.
+ */
+export async function syncInstagramPosts(): Promise<number> {
+  if (!BEHOLD_FEED_URL) {
+    throw new Error("BEHOLD_FEED_URL is not configured");
+  }
 
-  const json: IGMediaResponse = await res.json();
-  const supabase = await createServerSupabaseClient();
+  const res = await fetch(BEHOLD_FEED_URL, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Behold feed error: ${res.status} ${await res.text()}`);
+  }
 
-  const posts = json.data.map((post) => ({
+  const feed = (await res.json()) as BeholdFeed;
+  const posts = feed.posts ?? [];
+
+  const rows = posts.map((post) => ({
     id: post.id,
-    media_type: post.media_type,
-    media_url: post.media_url,
-    thumbnail_url: post.thumbnail_url ?? null,
-    permalink: post.permalink,
+    media_type: post.mediaType,
+    media_url: post.mediaUrl,
+    thumbnail_url: post.thumbnailUrl ?? null,
+    permalink: post.permalink ?? null,
     caption: post.caption ?? null,
-    timestamp: post.timestamp,
+    timestamp: post.timestamp ?? null,
     carousel_items:
-      post.children?.data.map((c) => ({
-        media_url: c.media_url,
-        media_type: c.media_type,
-      })) ?? null,
+      post.children && post.children.length > 0
+        ? post.children.map((c) => ({
+            media_url: c.mediaUrl ?? "",
+            media_type: c.mediaType ?? "IMAGE",
+          }))
+        : null,
     cached_at: new Date().toISOString(),
   }));
 
-  if (posts.length > 0) {
-    await supabase.from("instagram_posts").upsert(posts, { onConflict: "id" });
+  if (rows.length > 0) {
+    const admin = await createAdminSupabaseClient();
+    const { error } = await admin
+      .from("instagram_posts")
+      .upsert(rows, { onConflict: "id" });
+    if (error) throw new Error(error.message);
   }
+
+  return rows.length;
 }
 
-export async function getInstagramPosts(limit = 30): Promise<InstagramPost[]> {
+export async function getInstagramPosts(limit = 60): Promise<InstagramPost[]> {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
     .from("instagram_posts")
