@@ -1,7 +1,4 @@
-import {
-  createAdminSupabaseClient,
-  createServerSupabaseClient,
-} from "@/lib/supabase/server";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import type { InstagramPost } from "@/types/database";
 
 // Behold.so proxies the Instagram feed and handles all token refresh, so no
@@ -76,7 +73,10 @@ export async function syncInstagramPosts(): Promise<number> {
 }
 
 export async function getInstagramPosts(limit = 60): Promise<InstagramPost[]> {
-  const supabase = await createServerSupabaseClient();
+  // Read with the service-role client (server-side only) so the public gallery
+  // shows the same posts as the admin, independent of RLS policies. Instagram
+  // content is public, so there is no sensitivity concern here.
+  const supabase = await createAdminSupabaseClient();
   const { data } = await supabase
     .from("instagram_posts")
     .select("*")
