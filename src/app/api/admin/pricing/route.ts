@@ -52,14 +52,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: plError.message }, { status: 400 });
   }
 
-  // Insert price items
-  const priceItems = items.map(
-    (item: { species_id: string; custom_price: number }) => ({
-      price_list_id: priceList.id,
-      species_id: item.species_id,
-      custom_price: item.custom_price,
-    }),
-  );
+  // Collapse to one row per species — the list allows a single price per
+  // species (unique price_list_id+species_id), but uploads/templates can carry
+  // the same species across multiple size rows. Keep the first occurrence.
+  const seenSpecies = new Set<string>();
+  const priceItems = (
+    items as { species_id: string; custom_price: number }[]
+  ).flatMap((item) => {
+    if (!item.species_id || seenSpecies.has(item.species_id)) return [];
+    seenSpecies.add(item.species_id);
+    return [
+      {
+        price_list_id: priceList.id,
+        species_id: item.species_id,
+        custom_price: item.custom_price,
+      },
+    ];
+  });
 
   const { error: itemsError } = await admin
     .from("client_price_items")

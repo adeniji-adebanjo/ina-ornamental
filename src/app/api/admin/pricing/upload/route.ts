@@ -198,10 +198,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Templates carry one row per species+size; a price list holds one price per
+  // species. Collapse duplicates, keeping the first price seen per species.
+  const seenSpecies = new Set<string>();
+  const dedupedItems = items.filter((item) => {
+    if (seenSpecies.has(item.species_id)) return false;
+    seenSpecies.add(item.species_id);
+    return true;
+  });
+
   const availabilityUpdated = await applyAvailabilityUpdates(
     admin,
     availabilityById,
   );
 
-  return NextResponse.json({ items, errors, availabilityUpdated });
+  return NextResponse.json({ items: dedupedItems, errors, availabilityUpdated });
 }
