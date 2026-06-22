@@ -4,6 +4,7 @@ import {
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
 import ExcelJS from "exceljs";
+import { cellText, parsePrice } from "@/lib/excel";
 
 // GET: Fetch all location pricing data (or filter by location)
 export async function GET(request: NextRequest) {
@@ -131,11 +132,11 @@ export async function POST(request: NextRequest) {
     // Parse data rows
     ws.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return; // Skip header
-      const speciesName = String(row.getCell(nameCol).value || "").trim();
+      const speciesName = cellText(row.getCell(nameCol).value).trim();
       const scientificName = scientificNameCol
-        ? String(row.getCell(scientificNameCol).value || "").trim()
+        ? cellText(row.getCell(scientificNameCol).value).trim()
         : "";
-      const size = String(row.getCell(sizeCol).value || "").trim() || null;
+      const size = cellText(row.getCell(sizeCol).value).trim() || null;
 
       if (!speciesName && !scientificName) return;
 
@@ -153,9 +154,8 @@ export async function POST(request: NextRequest) {
       }
 
       for (const { col, location } of locationColumns) {
-        const priceVal = row.getCell(col).value;
-        const price = Number(priceVal);
-        if (priceVal && !isNaN(price) && price > 0) {
+        const price = parsePrice(row.getCell(col).value);
+        if (!isNaN(price) && price > 0) {
           pricingRows.push({ species_id: speciesId, location, size, price });
         }
       }

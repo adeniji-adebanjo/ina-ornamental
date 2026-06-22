@@ -190,7 +190,11 @@ export default function PricingListClient({
         }
       } else {
         const err = await res.json();
-        toast.error(err.error || "Failed to parse file");
+        toast.error(err.error || "Failed to parse file", {
+          description: err.errors?.length
+            ? err.errors.slice(0, 3).join("; ")
+            : undefined,
+        });
       }
     } catch {
       toast.error("Upload failed");

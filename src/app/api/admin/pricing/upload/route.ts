@@ -4,6 +4,7 @@ import {
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
 import ExcelJS from "exceljs";
+import { cellText, parsePrice } from "@/lib/excel";
 
 // Parse an uploaded Excel file and return species_id + price pairs
 // Supports either a simple two-column sheet (Name + Price) or a location pricing template
@@ -102,12 +103,11 @@ export async function POST(request: NextRequest) {
 
     ws.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return;
-      const speciesName = String(row.getCell(nameCol).value || "").trim();
+      const speciesName = cellText(row.getCell(nameCol).value).trim();
       const scientificName = sciCol
-        ? String(row.getCell(sciCol).value || "").trim()
+        ? cellText(row.getCell(sciCol).value).trim()
         : "";
-      const priceVal = row.getCell(priceCol!).value;
-      const price = Number(priceVal);
+      const price = parsePrice(row.getCell(priceCol!).value);
 
       if (!speciesName && !scientificName) return;
 
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         return;
       }
 
-      if (!priceVal || isNaN(price) || price <= 0) {
+      if (isNaN(price) || price <= 0) {
         errors.push(`Row ${rowNumber}: Invalid price for "${speciesName || scientificName}"`);
         return;
       }
@@ -146,12 +146,11 @@ export async function POST(request: NextRequest) {
 
     ws.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return;
-      const speciesName = String(row.getCell(nameCol).value || "").trim();
+      const speciesName = cellText(row.getCell(nameCol).value).trim();
       const scientificName = sciCol
-        ? String(row.getCell(sciCol).value || "").trim()
+        ? cellText(row.getCell(sciCol).value).trim()
         : "";
-      const priceVal = row.getCell(priceCol!).value;
-      const price = Number(priceVal);
+      const price = parsePrice(row.getCell(priceCol!).value);
 
       if (!speciesName && !scientificName) return;
 
@@ -168,7 +167,7 @@ export async function POST(request: NextRequest) {
         return;
       }
 
-      if (!priceVal || isNaN(price) || price <= 0) {
+      if (isNaN(price) || price <= 0) {
         errors.push(`Row ${rowNumber}: Invalid price for "${speciesName || scientificName}"`);
         return;
       }
