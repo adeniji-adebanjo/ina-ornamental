@@ -34,7 +34,8 @@ interface Species {
 }
 
 // Availability is a global, per-species property managed in Admin → Species.
-// Custom pricing only reads it — it is never set per price list.
+// It is never stored on a price list. This form only displays it, but a
+// pricing upload (with an Availability column) can update the global value.
 const AVAILABILITY_BADGES: Record<string, { label: string; className: string }> =
   {
     available: { label: "In Stock", className: "bg-emerald-50 text-emerald-700" },
@@ -366,9 +367,11 @@ export default function PricingListClient({
                   Species & Custom Prices
                 </label>
                 <p className="text-xs text-slate-500 mb-2">
-                  Availability is managed globally per species in{" "}
-                  <strong>Species</strong> — it&apos;s shown here for reference
-                  and never set on a price list.
+                  Availability is a global per-species setting (managed in{" "}
+                  <strong>Species</strong>) and is never stored on a price list.
+                  It&apos;s shown below for reference — but uploading a sheet
+                  with an Availability column updates each species&apos; global
+                  availability.
                 </p>
 
                 {/* Auto-fill and upload options */}
