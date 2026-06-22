@@ -70,6 +70,11 @@ export default function LocationPricingClient({
       if (res.ok) {
         toast.success(
           `Imported ${data.inserted} pricing entries for ${data.locations.length} locations`,
+          {
+            description: data.availabilityUpdated
+              ? `Updated availability for ${data.availabilityUpdated} species`
+              : undefined,
+          },
         );
         if (data.errors?.length) {
           toast.warning(`${data.errors.length} rows had issues`, {

@@ -112,7 +112,8 @@ export async function GET() {
     "NOTES:",
     "- Species names must match exactly (they are pre-filled for you)",
     "- Prices should be in USD",
-    "- Do not modify the Name, Class, Scientific Name, Size, or Availability columns",
+    "- Do not modify the Name, Class, Scientific Name, or Size columns",
+    "- Editing the Availability column updates the species' global availability on upload",
     "- You can delete rows for species you don't want to price",
   ];
   instructions.forEach((line, i) => {

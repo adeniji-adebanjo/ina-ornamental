@@ -3,7 +3,13 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
-import { cellText, parsePrice, loadWorkbook } from "@/lib/excel";
+import {
+  cellText,
+  parsePrice,
+  loadWorkbook,
+  normalizeAvailability,
+  applyAvailabilityUpdates,
+} from "@/lib/excel";
 
 // GET: Fetch all location pricing data (or filter by location)
 export async function GET(request: NextRequest) {
@@ -75,6 +81,8 @@ export async function POST(request: NextRequest) {
       price: number;
     }[] = [];
     const errors: string[] = [];
+    // Availability is global per species; capture it here to sync back afterwards.
+    const availabilityById = new Map<string, string>();
 
     const ws = workbook.worksheets[0];
     if (!ws) {
@@ -150,6 +158,11 @@ export async function POST(request: NextRequest) {
         return;
       }
 
+      if (availabilityCol && !availabilityById.has(speciesId)) {
+        const avail = normalizeAvailability(row.getCell(availabilityCol).value);
+        if (avail) availabilityById.set(speciesId, avail);
+      }
+
       for (const { col, location } of locationColumns) {
         const price = parsePrice(row.getCell(col).value);
         if (!isNaN(price) && price > 0) {
@@ -177,9 +190,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
+    const availabilityUpdated = await applyAvailabilityUpdates(
+      admin,
+      availabilityById,
+    );
+
     return NextResponse.json({
       inserted: pricingRows.length,
       locations,
+      availabilityUpdated,
       errors: errors.length > 0 ? errors : undefined,
     });
   }

@@ -184,7 +184,11 @@ export default function PricingListClient({
             custom_price: i.price.toFixed(2),
           })),
         );
-        toast.success(`Loaded ${data.items.length} species from file`);
+        toast.success(`Loaded ${data.items.length} species from file`, {
+          description: data.availabilityUpdated
+            ? `Updated availability for ${data.availabilityUpdated} species`
+            : undefined,
+        });
         if (data.errors?.length) {
           toast.warning(`${data.errors.length} rows had issues`);
         }

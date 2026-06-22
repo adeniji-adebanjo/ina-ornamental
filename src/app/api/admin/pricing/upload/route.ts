@@ -3,7 +3,13 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
-import { cellText, parsePrice, loadWorkbook } from "@/lib/excel";
+import {
+  cellText,
+  parsePrice,
+  loadWorkbook,
+  normalizeAvailability,
+  applyAvailabilityUpdates,
+} from "@/lib/excel";
 
 // Parse an uploaded Excel file and return species_id + price pairs
 // Supports either a simple two-column sheet (Name + Price) or a location pricing template
@@ -85,8 +91,11 @@ export async function POST(request: NextRequest) {
     headerIndex.get("scientific name") ||
     headerIndex.get("scientificname") ||
     headerIndex.get("scientific_name");
+  const availCol = headerIndex.get("availability");
 
   const items: { species_id: string; price: number }[] = [];
+  // Availability is global per species; capture it here to sync back afterwards.
+  const availabilityById = new Map<string, string>();
   const errors: string[] = [];
 
   if (hasExplicitPriceHeader || locationColumns.length === 0) {
@@ -118,6 +127,11 @@ export async function POST(request: NextRequest) {
         const unknownValue = speciesName || scientificName;
         errors.push(`Row ${rowNumber}: Unknown species "${unknownValue}"`);
         return;
+      }
+
+      if (availCol && !availabilityById.has(speciesId)) {
+        const avail = normalizeAvailability(row.getCell(availCol).value);
+        if (avail) availabilityById.set(speciesId, avail);
       }
 
       if (isNaN(price) || price <= 0) {
@@ -163,6 +177,11 @@ export async function POST(request: NextRequest) {
         return;
       }
 
+      if (availCol && !availabilityById.has(speciesId)) {
+        const avail = normalizeAvailability(row.getCell(availCol).value);
+        if (avail) availabilityById.set(speciesId, avail);
+      }
+
       if (isNaN(price) || price <= 0) {
         errors.push(`Row ${rowNumber}: Invalid price for "${speciesName || scientificName}"`);
         return;
@@ -179,5 +198,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ items, errors });
+  const availabilityUpdated = await applyAvailabilityUpdates(
+    admin,
+    availabilityById,
+  );
+
+  return NextResponse.json({ items, errors, availabilityUpdated });
 }

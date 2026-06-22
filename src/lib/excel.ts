@@ -1,6 +1,7 @@
 // Helpers for reading user-uploaded spreadsheets via ExcelJS.
 import ExcelJS from "exceljs";
 import { Readable } from "stream";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Load an uploaded spreadsheet into a workbook, accepting both Excel
 // (.xlsx/.xls) and CSV files. CSV is read into worksheets[0] with the same
@@ -59,4 +60,55 @@ export function parsePrice(value: unknown): number {
         : s.replace(/,/g, "");
   }
   return Number(s);
+}
+
+// Free-text → canonical `availability_status` enum value. Accepts both the
+// stored keys and common human labels. Returns null for blank/unrecognised
+// cells so we never write an invalid value or wipe existing data.
+const AVAILABILITY_ALIASES: Record<string, string> = {
+  available: "available",
+  "in stock": "available",
+  instock: "available",
+  limited: "limited_stock",
+  "limited stock": "limited_stock",
+  limited_stock: "limited_stock",
+  "out of stock": "out_of_stock",
+  out_of_stock: "out_of_stock",
+  "sold out": "out_of_stock",
+  unavailable: "out_of_stock",
+  seasonal: "seasonal",
+  "on request": "on_request",
+  on_request: "on_request",
+  request: "on_request",
+};
+
+export function normalizeAvailability(value: unknown): string | null {
+  const s = cellText(value).trim().toLowerCase();
+  if (!s) return null;
+  return AVAILABILITY_ALIASES[s] ?? null;
+}
+
+// Write availability values back to the global species records, grouped by
+// value so we issue at most one update per distinct availability. Returns the
+// number of species updated.
+export async function applyAvailabilityUpdates(
+  admin: SupabaseClient,
+  availabilityById: Map<string, string>,
+): Promise<number> {
+  if (availabilityById.size === 0) return 0;
+  const idsByValue = new Map<string, string[]>();
+  for (const [id, avail] of availabilityById) {
+    const list = idsByValue.get(avail) ?? [];
+    list.push(id);
+    idsByValue.set(avail, list);
+  }
+  let updated = 0;
+  for (const [avail, ids] of idsByValue) {
+    const { error } = await admin
+      .from("species")
+      .update({ availability: avail })
+      .in("id", ids);
+    if (!error) updated += ids.length;
+  }
+  return updated;
 }
