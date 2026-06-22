@@ -3,8 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
-import ExcelJS from "exceljs";
-import { cellText, parsePrice } from "@/lib/excel";
+import { cellText, parsePrice, loadWorkbook } from "@/lib/excel";
 
 // GET: Fetch all location pricing data (or filter by location)
 export async function GET(request: NextRequest) {
@@ -55,9 +54,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const arrayBuf = await file.arrayBuffer();
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(Buffer.from(arrayBuf) as never);
+    const workbook = await loadWorkbook(file);
 
     // Get all species for name-to-id mapping
     const { data: allSpecies } = await admin

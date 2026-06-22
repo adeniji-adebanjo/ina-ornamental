@@ -3,8 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
-import ExcelJS from "exceljs";
-import { cellText, parsePrice } from "@/lib/excel";
+import { cellText, parsePrice, loadWorkbook } from "@/lib/excel";
 
 // Parse an uploaded Excel file and return species_id + price pairs
 // Supports either a simple two-column sheet (Name + Price) or a location pricing template
@@ -22,10 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  const arrayBuf = await file.arrayBuffer();
-  const workbook = new ExcelJS.Workbook();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await workbook.xlsx.load(Buffer.from(arrayBuf) as any);
+  const workbook = await loadWorkbook(file);
 
   const admin = await createAdminSupabaseClient();
   const { data: allSpecies } = await admin

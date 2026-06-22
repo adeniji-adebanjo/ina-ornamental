@@ -1,4 +1,26 @@
-// Helpers for reading user-uploaded Excel sheets via ExcelJS.
+// Helpers for reading user-uploaded spreadsheets via ExcelJS.
+import ExcelJS from "exceljs";
+import { Readable } from "stream";
+
+// Load an uploaded spreadsheet into a workbook, accepting both Excel
+// (.xlsx/.xls) and CSV files. CSV is read into worksheets[0] with the same
+// row/cell structure, so all downstream parsing stays identical.
+export async function loadWorkbook(file: File): Promise<ExcelJS.Workbook> {
+  const arrayBuf = await file.arrayBuffer();
+  const workbook = new ExcelJS.Workbook();
+  const isCsv =
+    file.name.toLowerCase().endsWith(".csv") ||
+    file.type === "text/csv" ||
+    file.type === "application/csv";
+  if (isCsv) {
+    const stream = Readable.from(Buffer.from(arrayBuf).toString("utf-8"));
+    await workbook.csv.read(stream);
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(Buffer.from(arrayBuf) as any);
+  }
+  return workbook;
+}
 
 // ExcelJS cell values aren't always primitives: formula cells, rich text and
 // hyperlinks come back as objects. Flatten any of them to plain text.

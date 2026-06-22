@@ -138,7 +138,7 @@ export default function LocationPricingClient({
           <input
             ref={fileRef}
             type="file"
-            accept=".xlsx,.xls"
+            accept=".xlsx,.xls,.csv"
             onChange={handleUpload}
             className="hidden"
             id="pricing-upload"
