@@ -178,13 +178,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // The unique key is (species_id, location, size); a sheet can repeat the
+    // same species+size (duplicate rows, or a species listed twice), which
+    // would fail the atomic insert. Collapse to one row per key, keeping the
+    // last price seen so a corrected later row wins.
+    const dedupedByKey = new Map<string, (typeof pricingRows)[number]>();
+    for (const row of pricingRows) {
+      dedupedByKey.set(
+        `${row.species_id}|${row.location}|${row.size ?? ""}`,
+        row,
+      );
+    }
+    const dedupedRows = [...dedupedByKey.values()];
+    const duplicateCount = pricingRows.length - dedupedRows.length;
+
     // Upsert: delete existing for these locations, then insert
-    const locations = [...new Set(pricingRows.map((r) => r.location))];
+    const locations = [...new Set(dedupedRows.map((r) => r.location))];
     await admin.from("location_pricing").delete().in("location", locations);
 
     const { error: insertError } = await admin
       .from("location_pricing")
-      .insert(pricingRows);
+      .insert(dedupedRows);
 
     if (insertError) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });
@@ -196,9 +210,10 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({
-      inserted: pricingRows.length,
+      inserted: dedupedRows.length,
       locations,
       availabilityUpdated,
+      duplicatesMerged: duplicateCount,
       errors: errors.length > 0 ? errors : undefined,
     });
   }

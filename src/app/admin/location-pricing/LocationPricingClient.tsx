@@ -71,9 +71,15 @@ export default function LocationPricingClient({
         toast.success(
           `Imported ${data.inserted} pricing entries for ${data.locations.length} locations`,
           {
-            description: data.availabilityUpdated
-              ? `Updated availability for ${data.availabilityUpdated} species`
-              : undefined,
+            description:
+              [
+                data.availabilityUpdated &&
+                  `Updated availability for ${data.availabilityUpdated} species`,
+                data.duplicatesMerged &&
+                  `Merged ${data.duplicatesMerged} duplicate species/size rows`,
+              ]
+                .filter(Boolean)
+                .join(" · ") || undefined,
           },
         );
         if (data.errors?.length) {
