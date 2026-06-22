@@ -2,10 +2,20 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Upload, Download, Trash2, Globe, FileSpreadsheet } from "lucide-react";
+import {
+  Upload,
+  Download,
+  Trash2,
+  Globe,
+  FileSpreadsheet,
+  Pencil,
+  Check,
+  X,
+} from "lucide-react";
 import {
   ConfirmDialog,
   useConfirmDialog,
@@ -24,6 +34,9 @@ export default function LocationPricingClient({
   const [locations, setLocations] = useState<LocationGroup[]>(initialLocations);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renaming, setRenaming] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmProps, showConfirm] = useConfirmDialog();
 
@@ -96,6 +109,42 @@ export default function LocationPricingClient({
     }
     setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function startRename(location: string) {
+    setEditing(location);
+    setRenameValue(location);
+  }
+
+  async function handleRename(from: string) {
+    const to = renameValue.trim();
+    if (!to || to === from) {
+      setEditing(null);
+      return;
+    }
+    setRenaming(true);
+    try {
+      const res = await fetch("/api/admin/location-pricing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to }),
+      });
+      if (res.ok) {
+        setLocations((prev) =>
+          prev
+            .map((l) => (l.location === from ? { ...l, location: to } : l))
+            .sort((a, b) => a.location.localeCompare(b.location)),
+        );
+        toast.success(`Renamed "${from}" to "${to}"`);
+        setEditing(null);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Failed to rename");
+      }
+    } catch {
+      toast.error("Failed to rename");
+    }
+    setRenaming(false);
   }
 
   function handleDeleteLocation(location: string) {
@@ -209,33 +258,84 @@ export default function LocationPricingClient({
         </Card>
       ) : (
         <div className="space-y-3">
-          {locations.map((loc) => (
-            <Card key={loc.location} className="rounded-xl">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Globe className="size-5 text-sky-700" />
-                  <div>
-                    <h3 className="font-semibold text-slate-800">
-                      {loc.location}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {loc.count} species priced
-                    </p>
+          {locations.map((loc) => {
+            const isEditing = editing === loc.location;
+            return (
+              <Card key={loc.location} className="rounded-xl">
+                <CardContent className="p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Globe className="size-5 text-sky-700 shrink-0" />
+                    {isEditing ? (
+                      <Input
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleRename(loc.location);
+                          if (e.key === "Escape") setEditing(null);
+                        }}
+                        autoFocus
+                        disabled={renaming}
+                        className="h-9 rounded-lg"
+                      />
+                    ) : (
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-slate-800 truncate">
+                          {loc.location}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          {loc.count} species priced
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{loc.count} entries</Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => handleDeleteLocation(loc.location)}
-                  >
-                    <Trash2 className="size-4 text-red-500" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isEditing ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => handleRename(loc.location)}
+                          disabled={renaming}
+                          title="Save"
+                        >
+                          <Check className="size-4 text-emerald-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => setEditing(null)}
+                          disabled={renaming}
+                          title="Cancel"
+                        >
+                          <X className="size-4 text-slate-500" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Badge variant="secondary">{loc.count} entries</Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => startRename(loc.location)}
+                          title="Rename"
+                        >
+                          <Pencil className="size-4 text-slate-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => handleDeleteLocation(loc.location)}
+                          title="Delete"
+                        >
+                          <Trash2 className="size-4 text-red-500" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 

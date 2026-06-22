@@ -258,3 +258,49 @@ export async function DELETE(request: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+
+// PATCH: Rename a location (updates every pricing row for that location)
+export async function PATCH(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await request.json().catch(() => null);
+  const from = typeof body?.from === "string" ? body.from.trim() : "";
+  const to = typeof body?.to === "string" ? body.to.trim() : "";
+  if (!from || !to) {
+    return NextResponse.json(
+      { error: "Both current and new location names are required" },
+      { status: 400 },
+    );
+  }
+  if (from === to) return NextResponse.json({ success: true });
+
+  const admin = await createAdminSupabaseClient();
+
+  // Refuse to merge into an existing location — that would collide on the
+  // (species_id, location, size) unique key. The admin should delete one first.
+  const { count } = await admin
+    .from("location_pricing")
+    .select("id", { count: "exact", head: true })
+    .eq("location", to);
+  if (count && count > 0) {
+    return NextResponse.json(
+      { error: `A location named "${to}" already exists` },
+      { status: 409 },
+    );
+  }
+
+  const { error } = await admin
+    .from("location_pricing")
+    .update({ location: to })
+    .eq("location", from);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
