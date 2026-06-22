@@ -126,7 +126,8 @@ export default function PricingListClient({
         const data: {
           species_id: string;
           size: string | null;
-          price: number;
+          // Postgres decimal/numeric columns are serialized as strings by Supabase.
+          price: number | string;
         }[] = await res.json();
         if (data.length === 0) {
           toast.info("No pricing data found for this location");
@@ -136,8 +137,9 @@ export default function PricingListClient({
         // Group by species (take the first/generic price per species)
         const priceMap = new Map<string, number>();
         for (const row of data) {
-          if (!priceMap.has(row.species_id)) {
-            priceMap.set(row.species_id, row.price);
+          const price = Number(row.price);
+          if (!priceMap.has(row.species_id) && !isNaN(price)) {
+            priceMap.set(row.species_id, price);
           }
         }
         const items = Array.from(priceMap.entries()).map(
