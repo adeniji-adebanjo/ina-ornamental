@@ -1,0 +1,39 @@
+# /etc/systemd/system/inaornamentalfish-next.service
+# Runs the Next.js production server on port 3000.
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now inaornamentalfish-next
+#   sudo systemctl status inaornamentalfish-next
+#   journalctl -u inaornamentalfish-next -f
+
+[Unit]
+Description=iNA Ornamental Fish — Next.js app
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+
+# Path to the built Next.js app (run `npm ci && npm run build` here first).
+WorkingDirectory=/var/www/ina-app
+EnvironmentFile=/var/www/ina-app/.env.production
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+
+# `next start` binds to PORT (3000) on 127.0.0.1; Nginx is the only public entry.
+ExecStart=/usr/bin/npm run start
+
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

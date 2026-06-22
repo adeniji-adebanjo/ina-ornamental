@@ -5,11 +5,20 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
+  // Don't advertise the framework.
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       {
+        // WordPress media kept on the apex (served by Nginx from /wp-content/uploads).
         protocol: "https",
         hostname: "inaornamentalfish.com",
+        pathname: "/wp-content/uploads/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.inaornamentalfish.com",
+        pathname: "/wp-content/uploads/**",
       },
       {
         protocol: "https",
