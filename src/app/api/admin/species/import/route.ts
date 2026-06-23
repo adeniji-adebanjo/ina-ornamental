@@ -5,6 +5,11 @@ import {
 } from "@/lib/supabase/server";
 import { loadWorkbook, cellText } from "@/lib/excel";
 
+// ExcelJS needs Node APIs (stream/Buffer), and a large sheet shouldn't be cut
+// off by the platform's default function timeout.
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 const AVAILABILITY = [
   "available",
   "limited_stock",
@@ -124,9 +129,28 @@ export async function POST(request: NextRequest) {
   const existingSlugs = new Set((existing ?? []).map((s) => s.slug));
 
   const errors: string[] = [];
-  let created = 0;
-  let updated = 0;
-  let imagesSet = 0;
+
+  // ── Pass 1: parse every row into a record (no DB writes yet) ───────────────
+  type SpeciesRecord = {
+    slug: string;
+    common_name: string;
+    scientific_name: string | null;
+    category_id: string | null;
+    class_order: string | null;
+    origin: string;
+    description: string | null;
+    sizes: string[];
+    tags: string[];
+    qty_per_box: number;
+    availability: string;
+    featured: boolean;
+    best_seller: boolean;
+    sort_order: number;
+  };
+  type Parsed = { record: SpeciesRecord; catName: string; images: string[] };
+
+  const parsed: Parsed[] = [];
+  const newCats = new Map<string, string>(); // slug → display name
 
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];
@@ -136,30 +160,11 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    const slug = get(row, idx.slug) || slugify(common_name);
-
-    // Resolve category by name/slug, creating it if it doesn't exist yet.
-    let category_id: string | null = null;
+    // Note any category that doesn't exist yet so we can create them in bulk.
     const catName = get(row, idx.category);
-    if (catName) {
-      const key = catName.toLowerCase();
-      category_id = catMap.get(key) ?? null;
-      if (!category_id) {
-        const catSlug = slugify(catName);
-        const { data: newCat } = await admin
-          .from("categories")
-          .upsert(
-            { name: catName, slug: catSlug, sort_order: nextCatSort++ },
-            { onConflict: "slug" },
-          )
-          .select("id")
-          .single();
-        if (newCat) {
-          category_id = newCat.id;
-          catMap.set(key, newCat.id);
-          catMap.set(catSlug, newCat.id);
-        }
-      }
+    if (catName && !catMap.has(catName.toLowerCase())) {
+      const catSlug = slugify(catName);
+      if (!newCats.has(catSlug)) newCats.set(catSlug, catName);
     }
 
     const availRaw = get(row, idx.availability)
@@ -172,58 +177,120 @@ export async function POST(request: NextRequest) {
     const qty = parseInt(get(row, idx.qty_per_box), 10);
     const sort = parseInt(get(row, idx.sort_order), 10);
 
-    const record = {
+    parsed.push({
+      record: {
+        slug: get(row, idx.slug) || slugify(common_name),
+        common_name,
+        scientific_name: get(row, idx.scientific_name) || null,
+        category_id: null, // resolved after categories are created
+        class_order: get(row, idx.class_order) || null,
+        origin: get(row, idx.origin) || "West Africa",
+        description: get(row, idx.description) || null,
+        sizes: parseList(get(row, idx.sizes)),
+        tags: parseList(get(row, idx.tags)),
+        qty_per_box: Number.isFinite(qty) && qty > 0 ? qty : 1,
+        availability,
+        featured: idx.featured >= 0 ? parseBool(get(row, idx.featured)) : false,
+        best_seller:
+          idx.best_seller >= 0 ? parseBool(get(row, idx.best_seller)) : false,
+        sort_order: Number.isFinite(sort) ? sort : 0,
+      },
+      catName,
+      images: idx.image_urls >= 0 ? parseList(get(row, idx.image_urls)) : [],
+    });
+  }
+
+  // ── Create any new categories in one batch, then resolve category ids ──────
+  if (newCats.size > 0) {
+    const toCreate = Array.from(newCats.entries()).map(([slug, name]) => ({
+      name,
       slug,
-      common_name,
-      scientific_name: get(row, idx.scientific_name) || null,
-      category_id,
-      class_order: get(row, idx.class_order) || null,
-      origin: get(row, idx.origin) || "West Africa",
-      description: get(row, idx.description) || null,
-      sizes: parseList(get(row, idx.sizes)),
-      tags: parseList(get(row, idx.tags)),
-      qty_per_box: Number.isFinite(qty) && qty > 0 ? qty : 1,
-      availability,
-      featured: idx.featured >= 0 ? parseBool(get(row, idx.featured)) : false,
-      best_seller:
-        idx.best_seller >= 0 ? parseBool(get(row, idx.best_seller)) : false,
-      sort_order: Number.isFinite(sort) ? sort : 0,
-    };
+      sort_order: nextCatSort++,
+    }));
+    const { data: createdCats } = await admin
+      .from("categories")
+      .upsert(toCreate, { onConflict: "slug" })
+      .select("id, name, slug");
+    for (const c of createdCats ?? []) {
+      if (c.name) catMap.set(c.name.toLowerCase(), c.id);
+      if (c.slug) catMap.set(c.slug.toLowerCase(), c.id);
+    }
+  }
+  for (const p of parsed) {
+    if (p.catName) p.record.category_id = catMap.get(p.catName.toLowerCase()) ?? null;
+  }
 
-    const wasExisting = existingSlugs.has(slug);
+  // De-duplicate by slug (last occurrence wins) — a single upsert payload can't
+  // touch the same conflict key twice.
+  const bySlug = new Map<string, Parsed>();
+  for (const p of parsed) bySlug.set(p.record.slug, p);
+  const finalRecords = Array.from(bySlug.values());
 
+  if (finalRecords.length === 0) {
+    return NextResponse.json({
+      success: true,
+      created: 0,
+      updated: 0,
+      imagesSet: 0,
+      errors: errors.length ? errors : undefined,
+    });
+  }
+
+  // ── Bulk-upsert species in chunks, collecting the resulting slug → id map ──
+  const CHUNK = 500;
+  const slugToId = new Map<string, string>();
+  for (let i = 0; i < finalRecords.length; i += CHUNK) {
+    const chunk = finalRecords.slice(i, i + CHUNK).map((p) => p.record);
     const { data: saved, error } = await admin
       .from("species")
-      .upsert(record, { onConflict: "slug" })
-      .select("id")
-      .single();
-
-    if (error || !saved) {
-      errors.push(`Row ${r + 1} (${common_name}): ${error?.message ?? "save failed"}`);
-      continue;
+      .upsert(chunk, { onConflict: "slug" })
+      .select("id, slug");
+    if (error) {
+      return NextResponse.json(
+        { error: `Couldn't save species: ${error.message}` },
+        { status: 400 },
+      );
     }
+    for (const s of saved ?? []) slugToId.set(s.slug, s.id);
+  }
 
-    if (wasExisting) updated++;
-    else {
-      created++;
-      existingSlugs.add(slug);
+  let created = 0;
+  let updated = 0;
+  for (const p of finalRecords) {
+    if (existingSlugs.has(p.record.slug)) updated++;
+    else created++;
+  }
+
+  // ── Replace images in bulk, only for rows that supplied image urls ─────────
+  let imagesSet = 0;
+  if (idx.image_urls >= 0) {
+    const idsToClear: string[] = [];
+    const imgRows: {
+      species_id: string;
+      image_url: string;
+      sort_order: number;
+    }[] = [];
+    for (const p of finalRecords) {
+      if (p.images.length === 0) continue;
+      const id = slugToId.get(p.record.slug);
+      if (!id) continue;
+      idsToClear.push(id);
+      p.images.forEach((url, i) =>
+        imgRows.push({ species_id: id, image_url: url, sort_order: i }),
+      );
     }
-
-    // Replace the image set only when an image_urls column is provided with values.
-    if (idx.image_urls >= 0) {
-      const urls = parseList(get(row, idx.image_urls));
-      if (urls.length > 0) {
-        await admin.from("species_images").delete().eq("species_id", saved.id);
-        const imgRows = urls.map((url, i) => ({
-          species_id: saved.id,
-          image_url: url,
-          sort_order: i,
-        }));
-        const { error: imgErr } = await admin
-          .from("species_images")
-          .insert(imgRows);
-        if (!imgErr) imagesSet += urls.length;
-      }
+    for (let i = 0; i < idsToClear.length; i += CHUNK) {
+      await admin
+        .from("species_images")
+        .delete()
+        .in("species_id", idsToClear.slice(i, i + CHUNK));
+    }
+    for (let i = 0; i < imgRows.length; i += CHUNK) {
+      const chunk = imgRows.slice(i, i + CHUNK);
+      const { error: imgErr } = await admin
+        .from("species_images")
+        .insert(chunk);
+      if (!imgErr) imagesSet += chunk.length;
     }
   }
 
