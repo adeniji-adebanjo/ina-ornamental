@@ -4,7 +4,6 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Upload,
@@ -170,32 +169,29 @@ export default function LocationPricingClient({
     });
   }
 
+  const totalEntries = locations.reduce((sum, l) => sum + l.count, 0);
+
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
             Location Pricing
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
             Upload a master pricing sheet to auto-fill prices when creating
             client price lists.
           </p>
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-6">
-        <a
-          href="/api/admin/location-pricing/template"
-          className="w-full sm:w-auto"
-        >
-          <Button variant="outline" className="rounded-xl w-full sm:w-auto">
-            <Download className="size-4 mr-2" />
-            Download Template
-          </Button>
-        </a>
-        <div className="w-full sm:w-auto">
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
+          <a href="/api/admin/location-pricing/template">
+            <Button variant="outline" className="rounded-xl w-full sm:w-auto">
+              <Download className="size-4 mr-2" />
+              Download Template
+            </Button>
+          </a>
           <input
             ref={fileRef}
             type="file"
@@ -215,13 +211,45 @@ export default function LocationPricingClient({
         </div>
       </div>
 
+      {/* Summary */}
+      {locations.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 max-w-md">
+          <Card className="rounded-xl">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-sky-50 text-sky-700">
+                <Globe className="size-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 leading-none">
+                  {locations.length}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">Locations</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="rounded-xl">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700">
+                <FileSpreadsheet className="size-5" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900 leading-none">
+                  {totalEntries}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">Priced entries</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Info card */}
       <Card className="mb-6 rounded-xl border-sky-200 bg-sky-50">
         <CardContent className="p-4">
           <div className="flex gap-3">
             <FileSpreadsheet className="size-5 text-sky-700 shrink-0 mt-0.5" />
             <div className="text-sm text-sky-800">
-              <p className="font-semibold mb-1">How it works:</p>
+              <p className="font-semibold mb-1">How it works</p>
               <ol className="list-decimal ml-4 space-y-1 text-sky-700">
                 <li>
                   Download the template — it&apos;s pre-filled with all your
@@ -244,100 +272,124 @@ export default function LocationPricingClient({
 
       {/* Location list */}
       {loading ? (
-        <p className="text-sm text-slate-500">Loading...</p>
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-[72px] rounded-xl bg-slate-100 animate-pulse"
+            />
+          ))}
+        </div>
       ) : locations.length === 0 ? (
-        <Card className="rounded-xl">
+        <Card className="rounded-xl border-dashed">
           <CardContent className="py-12 text-center">
             <Globe className="size-10 mx-auto text-slate-300 mb-3" />
             <h3 className="font-semibold text-slate-700 mb-1">
               No pricing data yet
             </h3>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 mb-4">
               Download the template, fill in prices per region, and upload it.
             </p>
+            <Button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="rounded-xl"
+            >
+              <Upload className="size-4 mr-2" />
+              Upload Pricing Sheet
+            </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {locations.map((loc) => {
-            const isEditing = editing === loc.location;
-            return (
-              <Card key={loc.location} className="rounded-xl">
-                <CardContent className="p-4 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <Globe className="size-5 text-sky-700 shrink-0" />
-                    {isEditing ? (
-                      <Input
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleRename(loc.location);
-                          if (e.key === "Escape") setEditing(null);
-                        }}
-                        autoFocus
-                        disabled={renaming}
-                        className="h-9 rounded-lg"
-                      />
-                    ) : (
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-slate-800 truncate">
-                          {loc.location}
-                        </h3>
-                        <p className="text-xs text-slate-500">
-                          {loc.count} species priced
-                        </p>
+        <>
+          <h2 className="text-sm font-semibold text-slate-500 mb-3">
+            Locations
+          </h2>
+          <div className="space-y-2.5">
+            {locations.map((loc) => {
+              const isEditing = editing === loc.location;
+              return (
+                <Card
+                  key={loc.location}
+                  className="rounded-xl transition-shadow hover:shadow-sm"
+                >
+                  <CardContent className="p-4 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="p-2 rounded-lg bg-sky-50 text-sky-700 shrink-0">
+                        <Globe className="size-4" />
                       </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isEditing ? (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleRename(loc.location)}
+                      {isEditing ? (
+                        <Input
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleRename(loc.location);
+                            if (e.key === "Escape") setEditing(null);
+                          }}
+                          autoFocus
                           disabled={renaming}
-                          title="Save"
-                        >
-                          <Check className="size-4 text-emerald-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => setEditing(null)}
-                          disabled={renaming}
-                          title="Cancel"
-                        >
-                          <X className="size-4 text-slate-500" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Badge variant="secondary">{loc.count} entries</Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => startRename(loc.location)}
-                          title="Rename"
-                        >
-                          <Pencil className="size-4 text-slate-500" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleDeleteLocation(loc.location)}
-                          title="Delete"
-                        >
-                          <Trash2 className="size-4 text-red-500" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                          className="h-9 rounded-lg"
+                        />
+                      ) : (
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-slate-800 truncate">
+                            {loc.location}
+                          </h3>
+                          <p className="text-xs text-slate-500">
+                            {loc.count} species priced
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                      {isEditing ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => handleRename(loc.location)}
+                            disabled={renaming}
+                            title="Save"
+                          >
+                            <Check className="size-4 text-emerald-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => setEditing(null)}
+                            disabled={renaming}
+                            title="Cancel"
+                          >
+                            <X className="size-4 text-slate-500" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => startRename(loc.location)}
+                            title="Rename"
+                          >
+                            <Pencil className="size-4 text-slate-500" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => handleDeleteLocation(loc.location)}
+                            title="Delete"
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </>
       )}
 
       <ConfirmDialog {...confirmProps} />

@@ -3,7 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
-import { parseCsv } from "@/lib/csv";
+import { loadWorkbook, cellText } from "@/lib/excel";
 
 const AVAILABILITY = [
   "available",
@@ -45,11 +45,30 @@ export async function POST(request: NextRequest) {
   if (!file)
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-  const text = await file.text();
-  const rows = parseCsv(text).filter((r) => r.some((c) => c.trim() !== ""));
+  // Accept both CSV and Excel (.xlsx/.xls). loadWorkbook reads either into a
+  // worksheet; flatten the first sheet into rows of trimmed cell text so the
+  // rest of the parsing stays format-agnostic.
+  const workbook = await loadWorkbook(file);
+  const ws = workbook.worksheets[0];
+  if (!ws)
+    return NextResponse.json(
+      { error: "No worksheet found in the file." },
+      { status: 400 },
+    );
+
+  const colCount = ws.columnCount;
+  const allRows: string[][] = [];
+  ws.eachRow((row) => {
+    const cells: string[] = [];
+    for (let c = 1; c <= colCount; c++) {
+      cells.push(cellText(row.getCell(c).value));
+    }
+    allRows.push(cells);
+  });
+  const rows = allRows.filter((r) => r.some((c) => c.trim() !== ""));
   if (rows.length < 2)
     return NextResponse.json(
-      { error: "CSV has no data rows" },
+      { error: "The file has no data rows. Add at least one species below the header." },
       { status: 400 },
     );
 

@@ -163,7 +163,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
           <input
             ref={fileRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
             onChange={handleImport}
             className="hidden"
           />
@@ -174,7 +174,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
             className="rounded-xl w-full sm:w-auto"
           >
             <Upload className="size-4 mr-2" />
-            {importing ? "Importing..." : "Import CSV"}
+            {importing ? "Importing..." : "Import CSV / Excel"}
           </Button>
           <Button
             variant="outline"
