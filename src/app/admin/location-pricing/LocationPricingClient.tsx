@@ -211,186 +211,199 @@ export default function LocationPricingClient({
         </div>
       </div>
 
-      {/* Summary */}
-      {locations.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 max-w-md">
-          <Card className="rounded-xl">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-sky-50 text-sky-700">
-                <Globe className="size-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-900 leading-none">
-                  {locations.length}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">Locations</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-xl">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700">
-                <FileSpreadsheet className="size-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-900 leading-none">
-                  {totalEntries}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">Priced entries</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Info card */}
-      <Card className="mb-6 rounded-xl border-sky-200 bg-sky-50">
-        <CardContent className="p-4">
-          <div className="flex gap-3">
-            <FileSpreadsheet className="size-5 text-sky-700 shrink-0 mt-0.5" />
-            <div className="text-sm text-sky-800">
-              <p className="font-semibold mb-1">How it works</p>
-              <ol className="list-decimal ml-4 space-y-1 text-sky-700">
-                <li>
-                  Download the template — it&apos;s pre-filled with all your
-                  species
-                </li>
-                <li>
-                  Fill in prices for each location/region column (e.g. Europe,
-                  Asia, USA)
-                </li>
-                <li>Upload the completed file here</li>
-                <li>
-                  When you create a client price list, select the client&apos;s
-                  region and prices auto-fill
-                </li>
-              </ol>
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* Main column: summary cards + boxed location list */}
+        <div className="w-full lg:flex-1 min-w-0 space-y-6">
+          {/* Summary */}
+          {locations.length > 0 && (
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md">
+              <Card className="rounded-xl">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-sky-50 text-sky-700">
+                    <Globe className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-slate-900 leading-none">
+                      {locations.length}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">Locations</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="rounded-xl">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700">
+                    <FileSpreadsheet className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-slate-900 leading-none">
+                      {totalEntries}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">Priced entries</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          )}
 
-      {/* Location list */}
-      {loading ? (
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-[72px] rounded-xl bg-slate-100 animate-pulse"
-            />
-          ))}
-        </div>
-      ) : locations.length === 0 ? (
-        <Card className="rounded-xl border-dashed">
-          <CardContent className="py-12 text-center">
-            <Globe className="size-10 mx-auto text-slate-300 mb-3" />
-            <h3 className="font-semibold text-slate-700 mb-1">
-              No pricing data yet
-            </h3>
-            <p className="text-sm text-slate-500 mb-4">
-              Download the template, fill in prices per region, and upload it.
-            </p>
-            <Button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="rounded-xl"
-            >
-              <Upload className="size-4 mr-2" />
-              Upload Pricing Sheet
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <h2 className="text-sm font-semibold text-slate-500 mb-3">
-            Locations
-          </h2>
-          <div className="space-y-2.5">
-            {locations.map((loc) => {
-              const isEditing = editing === loc.location;
-              return (
-                <Card
-                  key={loc.location}
-                  className="rounded-xl transition-shadow hover:shadow-sm"
-                >
-                  <CardContent className="p-4 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="p-2 rounded-lg bg-sky-50 text-sky-700 shrink-0">
-                        <Globe className="size-4" />
-                      </div>
-                      {isEditing ? (
-                        <Input
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleRename(loc.location);
-                            if (e.key === "Escape") setEditing(null);
-                          }}
-                          autoFocus
-                          disabled={renaming}
-                          className="h-9 rounded-lg"
-                        />
-                      ) : (
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-slate-800 truncate">
-                            {loc.location}
-                          </h3>
-                          <p className="text-xs text-slate-500">
-                            {loc.count} species priced
-                          </p>
+          {/* Boxed location list */}
+          <Card className="rounded-xl">
+            <CardContent className="p-0">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900">Locations</h2>
+                {locations.length > 0 && (
+                  <span className="text-xs text-slate-500">
+                    {locations.length}{" "}
+                    {locations.length === 1 ? "location" : "locations"}
+                  </span>
+                )}
+              </div>
+
+              {loading ? (
+                <div className="divide-y divide-slate-100">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="px-5 py-4">
+                      <div className="h-9 rounded-lg bg-slate-100 animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : locations.length === 0 ? (
+                <div className="py-12 px-5 text-center">
+                  <Globe className="size-10 mx-auto text-slate-300 mb-3" />
+                  <h3 className="font-semibold text-slate-700 mb-1">
+                    No pricing data yet
+                  </h3>
+                  <p className="text-sm text-slate-500 mb-4">
+                    Download the template, fill in prices per region, and upload
+                    it.
+                  </p>
+                  <Button
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                    className="rounded-xl"
+                  >
+                    <Upload className="size-4 mr-2" />
+                    Upload Pricing Sheet
+                  </Button>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {locations.map((loc) => {
+                    const isEditing = editing === loc.location;
+                    return (
+                      <div
+                        key={loc.location}
+                        className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="p-2 rounded-lg bg-sky-50 text-sky-700 shrink-0">
+                            <Globe className="size-4" />
+                          </div>
+                          {isEditing ? (
+                            <Input
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter")
+                                  handleRename(loc.location);
+                                if (e.key === "Escape") setEditing(null);
+                              }}
+                              autoFocus
+                              disabled={renaming}
+                              className="h-9 rounded-lg"
+                            />
+                          ) : (
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-slate-800 truncate">
+                                {loc.location}
+                              </h3>
+                              <p className="text-xs text-slate-500">
+                                {loc.count} species priced
+                              </p>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                      {isEditing ? (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => handleRename(loc.location)}
-                            disabled={renaming}
-                            title="Save"
-                          >
-                            <Check className="size-4 text-emerald-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => setEditing(null)}
-                            disabled={renaming}
-                            title="Cancel"
-                          >
-                            <X className="size-4 text-slate-500" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => startRename(loc.location)}
-                            title="Rename"
-                          >
-                            <Pencil className="size-4 text-slate-500" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => handleDeleteLocation(loc.location)}
-                            title="Delete"
-                          >
-                            <Trash2 className="size-4 text-red-500" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </>
-      )}
+                        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                          {isEditing ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => handleRename(loc.location)}
+                                disabled={renaming}
+                                title="Save"
+                              >
+                                <Check className="size-4 text-emerald-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => setEditing(null)}
+                                disabled={renaming}
+                                title="Cancel"
+                              >
+                                <X className="size-4 text-slate-500" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => startRename(loc.location)}
+                                title="Rename"
+                              >
+                                <Pencil className="size-4 text-slate-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => handleDeleteLocation(loc.location)}
+                                title="Delete"
+                              >
+                                <Trash2 className="size-4 text-red-500" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column: docked, static "How it works" */}
+        <aside className="w-full lg:w-80 shrink-0">
+          <Card className="rounded-xl border-sky-200 bg-sky-50 lg:sticky lg:top-6">
+            <CardContent className="p-4">
+              <div className="flex gap-3">
+                <FileSpreadsheet className="size-5 text-sky-700 shrink-0 mt-0.5" />
+                <div className="text-sm text-sky-800">
+                  <p className="font-semibold mb-1">How it works</p>
+                  <ol className="list-decimal ml-4 space-y-1 text-sky-700">
+                    <li>
+                      Download the template — it&apos;s pre-filled with all your
+                      species
+                    </li>
+                    <li>
+                      Fill in prices for each location/region column (e.g.
+                      Europe, Asia, USA)
+                    </li>
+                    <li>Upload the completed file here</li>
+                    <li>
+                      When you create a client price list, select the
+                      client&apos;s region and prices auto-fill
+                    </li>
+                  </ol>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+      </div>
 
       <ConfirmDialog {...confirmProps} />
     </div>

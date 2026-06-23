@@ -5,13 +5,32 @@ import type {
   AvailabilityStatus,
 } from "@/types/database";
 
+// Categories matching one of these (case-insensitive slug substring) are pinned
+// to the front of the list, in this order, regardless of their stored
+// sort_order. Everything else keeps its normal sort_order ordering. This drives
+// both the public catalogue filter and the admin category dropdown.
+const PINNED_CATEGORY_SLUGS = ["puffer"];
+
+function categoryRank(slug: string): number {
+  const s = (slug ?? "").toLowerCase();
+  const i = PINNED_CATEGORY_SLUGS.findIndex((p) => s.includes(p));
+  return i === -1 ? PINNED_CATEGORY_SLUGS.length : i;
+}
+
 export async function getCategories(): Promise<Category[]> {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
     .from("categories")
     .select("*")
     .order("sort_order");
-  return data ?? [];
+  const categories = data ?? [];
+  // Stable reorder: pinned categories first, then by sort_order as before.
+  return categories.slice().sort((a, b) => {
+    const ra = categoryRank(a.slug);
+    const rb = categoryRank(b.slug);
+    if (ra !== rb) return ra - rb;
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
 }
 
 export async function getSpecies(options?: {
