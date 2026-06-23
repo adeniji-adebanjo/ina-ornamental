@@ -60,7 +60,7 @@ export const metadata: Metadata = {
       "Expert exporter of premium West African ornamental fish. Ethically sourced, B2B specialists delivering worldwide with live arrival guarantee.",
     images: [
       {
-        url: "/ina-logo.png",
+        url: "/icon-512.png",
         width: 512,
         height: 512,
         alt: "INA Ornamental Fish Logo",
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     title: "INA Ornamental Fish | West African Ornamental Fish Exporter",
     description:
       "Expert exporter of premium West African ornamental fish. Ethically sourced, B2B specialists delivering worldwide.",
-    images: ["/ina-logo.png"],
+    images: ["/icon-512.png"],
   },
   robots: {
     index: true,

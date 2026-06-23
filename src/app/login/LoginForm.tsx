@@ -45,11 +45,11 @@ export default function LoginForm() {
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <Image
-              src="/ina-logo.svg"
+              src="/logo-mark.svg"
               alt="INA Ornamental Fish"
               width={64}
               height={64}
-              className="mx-auto mb-4 rounded-xl"
+              className="mx-auto mb-4 rounded-xl object-contain"
             />
             <h1 className="text-2xl font-black text-slate-900">
               INA Admin Portal

@@ -29,11 +29,11 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <Image
-                src="/ina-logo.png"
+                src="/logo-mark-light.svg"
                 alt="INA Ornamental Fish logo"
                 width={40}
                 height={40}
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-10 h-10 object-contain"
               />
             </div>
             <p className="text-sm text-slate-400 leading-relaxed mb-4">

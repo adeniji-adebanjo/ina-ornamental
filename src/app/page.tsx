@@ -17,7 +17,7 @@ const jsonLd = {
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/ina-logo.png`,
+        url: `${SITE_URL}/icon-512.png`,
       },
       description:
         "Expert exporter of premium West African ornamental fish. Ethically sourced African aquarium fish, B2B specialists delivering worldwide with live arrival guarantee.",

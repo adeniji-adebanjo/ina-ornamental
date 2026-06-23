@@ -58,11 +58,11 @@ export default function AdminLayoutClient({
       <div className="p-6 border-b border-slate-200">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/ina-logo.svg"
+            src="/logo-mark.svg"
             alt="INA Ornamental"
             width={36}
             height={36}
-            className="rounded-lg"
+            className="rounded-lg object-contain"
           />
           <span className="text-lg font-black text-sky-800">Admin</span>
         </Link>
