@@ -116,7 +116,7 @@ export default function SpeciesFormClient({ species, categories }: Props) {
       router.refresh();
     } else {
       const data = await res.json().catch(() => null);
-      toast.error(data?.error || "Failed to save");
+      toast.error(data?.error || "Couldn't save the species. Please try again.");
     }
     setSaving(false);
   }

@@ -155,7 +155,7 @@ export default function PricingListClient({
         toast.error("Failed to fetch location pricing");
       }
     } catch {
-      toast.error("Network error");
+      toast.error("Network error — please check your connection and try again.");
     }
     setLoadingLocation(false);
   }
@@ -266,7 +266,8 @@ export default function PricingListClient({
           toast.success("Price list deleted");
           router.refresh();
         } else {
-          toast.error("Failed to delete");
+          const data = await res.json().catch(() => null);
+          toast.error(data?.error || "Couldn't delete the price list. Please try again.");
         }
       },
     });

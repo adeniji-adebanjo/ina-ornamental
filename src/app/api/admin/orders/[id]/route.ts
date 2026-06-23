@@ -30,7 +30,10 @@ export async function PATCH(
     "cancelled",
   ];
   if (status && !validStatuses.includes(status)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    return NextResponse.json(
+      { error: `Invalid status "${status}". Must be one of: ${validStatuses.join(", ")}.` },
+      { status: 400 },
+    );
   }
 
   const admin = await createAdminSupabaseClient();

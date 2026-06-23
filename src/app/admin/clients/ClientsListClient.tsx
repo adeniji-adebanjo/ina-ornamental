@@ -154,7 +154,8 @@ export default function ClientsListClient({
       setEditing(null);
       router.refresh();
     } else {
-      toast.error("Failed to save client");
+      const err = await res.json().catch(() => null);
+      toast.error(err?.error || "Couldn't save the client. Please try again.");
     }
     setSaving(false);
   }
@@ -174,7 +175,8 @@ export default function ClientsListClient({
           toast.success("Client deleted");
           router.refresh();
         } else {
-          toast.error("Failed to delete client");
+          const err = await res.json().catch(() => null);
+          toast.error(err?.error || "Couldn't delete the client. Please try again.");
         }
       },
     });

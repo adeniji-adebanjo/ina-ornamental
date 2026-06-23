@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   if (!customer_name || !email || !groups?.length) {
     return NextResponse.json(
-      { error: "Missing required fields: customer_name, email, groups" },
+      { error: "Please provide your name, email, and at least one item before submitting." },
       { status: 400 },
     );
   }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return NextResponse.json(
-      { error: "Invalid email format" },
+      { error: "Please enter a valid email address." },
       { status: 400 },
     );
   }
@@ -74,7 +74,11 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (orderError) {
-    return NextResponse.json({ error: orderError.message }, { status: 500 });
+    console.error("Order insert failed:", orderError.message);
+    return NextResponse.json(
+      { error: "We couldn't submit your order just now. Please try again, or contact us if it keeps happening." },
+      { status: 500 },
+    );
   }
 
   // Supabase has no client-side transactions, so if any group/item insert
@@ -108,8 +112,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (groupError) {
+      console.error("Order group insert failed:", groupError.message);
       await rollbackOrder();
-      return NextResponse.json({ error: groupError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: "We couldn't submit your order just now. Please try again, or contact us if it keeps happening." },
+        { status: 500 },
+      );
     }
 
     if (group.items?.length) {
@@ -164,9 +172,10 @@ export async function POST(request: NextRequest) {
         .insert(items);
 
       if (itemsError) {
+        console.error("Order items insert failed:", itemsError.message);
         await rollbackOrder();
         return NextResponse.json(
-          { error: itemsError.message },
+          { error: "We couldn't submit your order just now. Please try again, or contact us if it keeps happening." },
           { status: 500 },
         );
       }

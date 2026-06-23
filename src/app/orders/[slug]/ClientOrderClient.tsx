@@ -359,10 +359,11 @@ export default function ClientOrderClient({
           description: `Reference: ${data.order_reference}`,
         });
       } else {
-        toast.error("Failed to submit order");
+        const err = await res.json().catch(() => null);
+        toast.error(err?.error || "We couldn't submit your order. Please try again.");
       }
     } catch {
-      toast.error("Network error");
+      toast.error("Network error — please check your connection and try again.");
     }
     setSubmitting(false);
   }

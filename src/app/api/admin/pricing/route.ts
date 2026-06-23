@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
   if (!client_id || !title || !items?.length) {
     return NextResponse.json(
-      { error: "Missing required fields" },
+      { error: "A client, a title, and at least one priced item are required." },
       { status: 400 },
     );
   }

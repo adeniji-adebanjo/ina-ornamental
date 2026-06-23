@@ -56,7 +56,8 @@ export default function OrdersListClient({
       toast.success(`Status updated to "${status}"`);
       router.refresh();
     } else {
-      toast.error("Failed to update status");
+      const err = await res.json().catch(() => null);
+      toast.error(err?.error || "Couldn't update the order status. Please try again.");
     }
   }
 

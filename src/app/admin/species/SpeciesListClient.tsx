@@ -65,7 +65,8 @@ export default function SpeciesListClient({ species, categories }: Props) {
           toast.success(`"${name}" deleted`);
           router.refresh();
         } else {
-          toast.error("Failed to delete species");
+          const err = await res.json().catch(() => null);
+          toast.error(err?.error || `Couldn't delete "${name}". Please try again.`);
         }
       },
     });

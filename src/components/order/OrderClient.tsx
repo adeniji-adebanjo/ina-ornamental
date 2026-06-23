@@ -212,10 +212,10 @@ export default function OrderClient() {
         });
       } else {
         const err = await res.json().catch(() => null);
-        toast.error(err?.error || "Failed to submit order");
+        toast.error(err?.error || "We couldn't submit your order. Please try again.");
       }
     } catch {
-      toast.error("Network error. Please try again.");
+      toast.error("Network error — please check your connection and try again.");
     }
     setSubmitting(false);
   };

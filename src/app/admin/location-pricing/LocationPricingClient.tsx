@@ -163,7 +163,8 @@ export default function LocationPricingClient({
           setLocations((prev) => prev.filter((l) => l.location !== location));
           toast.success(`Pricing for "${location}" deleted`);
         } else {
-          toast.error("Failed to delete");
+          const data = await res.json().catch(() => null);
+          toast.error(data?.error || `Couldn't delete pricing for "${location}". Please try again.`);
         }
       },
     });

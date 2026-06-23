@@ -42,7 +42,7 @@ export default function SettingsClient({
         );
       }
     } catch {
-      toast.error("Network error");
+      toast.error("Network error — please check your connection and try again.");
     }
     setSaving(false);
   }
