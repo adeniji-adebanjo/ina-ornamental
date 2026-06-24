@@ -4,6 +4,11 @@ import ClientOrderClient from "./ClientOrderClient";
 
 export const dynamic = "force-dynamic";
 
+// Private, token-gated client price lists — never index these.
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default async function ClientOrderPage({
   params,
   searchParams,

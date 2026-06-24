@@ -9,7 +9,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/"],
+        // Private (token-gated client price lists), auth, and utility routes.
+        disallow: ["/api/", "/admin/", "/login", "/orders/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
