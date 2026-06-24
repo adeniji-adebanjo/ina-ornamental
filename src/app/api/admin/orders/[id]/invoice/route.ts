@@ -60,7 +60,7 @@ export async function GET(
   });
 
   // Header
-  doc.fontSize(20).text("INA Ornamental Fish", { align: "center" });
+  doc.fontSize(20).text("INÁ Ornamental Fish", { align: "center" });
   doc.fontSize(10).text("Premium Ornamental Fish Export", { align: "center" });
   doc.moveDown(0.5);
 
@@ -202,7 +202,7 @@ export async function GET(
   doc
     .fontSize(8)
     .fillColor("#999999")
-    .text("INA Ornamental Fish — Thank you for your business!", {
+    .text("INÁ Ornamental Fish — Thank you for your business!", {
       align: "center",
     });
 

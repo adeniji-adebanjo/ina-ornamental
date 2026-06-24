@@ -121,7 +121,7 @@ function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
 <body style="margin:0;padding:0;background:#faf7f2;font-family:Arial,sans-serif;">
   <div class="ina-container" style="max-width:600px;margin:0 auto;padding:24px;">
     <div style="background:#3b655d;padding:24px;border-radius:12px 12px 0 0;">
-      <h1 style="color:white;margin:0;font-size:22px;">iNA Ornamental Fish</h1>
+      <h1 style="color:white;margin:0;font-size:22px;">INÁ Ornamental Fish</h1>
       <p style="color:#c7e2dc;margin:4px 0 0;font-size:13px;">
         ${isAdmin ? "New Order Received" : "Order Confirmation"}
       </p>
@@ -160,7 +160,7 @@ function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
     </div>
 
     <p style="text-align:center;margin:16px 0 0;font-size:11px;color:#b0a48e;">
-      © ${new Date().getFullYear()} INA Ornamental Fish • Lagos, Nigeria
+      © ${new Date().getFullYear()} INÁ Ornamental Fish • Lagos, Nigeria
     </p>
   </div>
 </body>
@@ -199,9 +199,9 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
   if (data.email) {
     promises.push(
       transport.sendMail({
-        from: `"iNA Ornamental Fish" <${FROM_EMAIL}>`,
+        from: `"INÁ Ornamental Fish" <${FROM_EMAIL}>`,
         to: data.email,
-        subject: `Order Confirmed — ${data.order_reference} | iNA Ornamental Fish`,
+        subject: `Order Confirmed — ${data.order_reference} | INÁ Ornamental Fish`,
         html: buildEmailHTML(data, false),
         attachments,
       }),
@@ -211,7 +211,7 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
   // Send notification to admin
   promises.push(
     transport.sendMail({
-      from: `"iNA Ornamental Fish" <${FROM_EMAIL}>`,
+      from: `"INÁ Ornamental Fish" <${FROM_EMAIL}>`,
       to: ADMIN_EMAILS.join(", "),
       subject: `New Order: ${data.order_reference} from ${data.customer_name}`,
       html: buildEmailHTML(data, true),
@@ -247,16 +247,16 @@ export async function sendOrderStatusUpdate(data: {
 
   try {
     await transport.sendMail({
-      from: `"iNA Ornamental Fish" <${FROM_EMAIL}>`,
+      from: `"INÁ Ornamental Fish" <${FROM_EMAIL}>`,
       to: data.email,
-      subject: `${message} — ${data.order_reference} | iNA Ornamental Fish`,
+      subject: `${message} — ${data.order_reference} | INÁ Ornamental Fish`,
       html: `
 <!DOCTYPE html>
 <html><head>${EMAIL_HEAD}</head>
 <body style="margin:0;padding:0;background:#faf7f2;font-family:Arial,sans-serif;">
   <div class="ina-container" style="max-width:600px;margin:0 auto;padding:24px;">
     <div style="background:#3b655d;padding:24px;border-radius:12px 12px 0 0;">
-      <h1 style="color:white;margin:0;font-size:22px;">iNA Ornamental Fish</h1>
+      <h1 style="color:white;margin:0;font-size:22px;">INÁ Ornamental Fish</h1>
       <p style="color:#c7e2dc;margin:4px 0 0;font-size:13px;">Order Update</p>
     </div>
     <div class="ina-card" style="background:white;padding:24px;border:1px solid #e2d8c8;border-top:none;border-radius:0 0 12px 12px;">
@@ -270,7 +270,7 @@ export async function sendOrderStatusUpdate(data: {
       </div>
       <p style="font-size:13px;color:#8e8270;">If you have questions, reply to this email or contact us on WhatsApp.</p>
     </div>
-    <p style="text-align:center;margin:16px 0 0;font-size:11px;color:#b0a48e;">© ${new Date().getFullYear()} INA Ornamental Fish</p>
+    <p style="text-align:center;margin:16px 0 0;font-size:11px;color:#b0a48e;">© ${new Date().getFullYear()} INÁ Ornamental Fish</p>
   </div>
 </body></html>`,
     });

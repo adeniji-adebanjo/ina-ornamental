@@ -93,7 +93,7 @@ export default function OrderClient() {
     );
 
     const lines: string[] = [
-      "Hello iNA Ornamental Fish,",
+      "Hello INÁ Ornamental Fish,",
       "",
       `Customer: ${customerName || "N/A"}`,
       `Email: ${customerEmail || "N/A"}`,
@@ -225,7 +225,7 @@ export default function OrderClient() {
       <section className="bg-linear-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200 mb-3">
-            iNA Ornamental Portal
+            INÁ Ornamental Portal
           </p>
           <h1 className="text-2xl sm:text-3xl md:text-5xl font-black leading-tight">
             Request Order Quote

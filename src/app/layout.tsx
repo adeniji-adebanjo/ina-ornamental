@@ -23,8 +23,8 @@ const SITE_URL =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "INA Ornamental Fish | West African Ornamental Fish Exporter",
-    template: "%s | INA Ornamental Fish",
+    default: "INÁ Ornamental Fish | West African Ornamental Fish Exporter",
+    template: "%s | INÁ Ornamental Fish",
   },
   description:
     "Expert exporter of premium West African ornamental fish. Ethically sourced African aquarium fish, B2B specialists delivering worldwide with live arrival guarantee.",
@@ -43,9 +43,9 @@ export const metadata: Metadata = {
     "B2B fish supplier",
     "ornamental fish wholesale",
   ],
-  authors: [{ name: "INA Ornamental Fish" }],
-  creator: "INA Ornamental Fish",
-  publisher: "INA Ornamental Fish",
+  authors: [{ name: "INÁ Ornamental Fish" }],
+  creator: "INÁ Ornamental Fish",
+  publisher: "INÁ Ornamental Fish",
   formatDetection: {
     email: false,
     telephone: false,
@@ -54,8 +54,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: SITE_URL,
-    siteName: "INA Ornamental Fish",
-    title: "INA Ornamental Fish | West African Ornamental Fish Exporter",
+    siteName: "INÁ Ornamental Fish",
+    title: "INÁ Ornamental Fish | West African Ornamental Fish Exporter",
     description:
       "Expert exporter of premium West African ornamental fish. Ethically sourced, B2B specialists delivering worldwide with live arrival guarantee.",
     images: [
@@ -63,13 +63,13 @@ export const metadata: Metadata = {
         url: "/icon-512.png",
         width: 512,
         height: 512,
-        alt: "INA Ornamental Fish Logo",
+        alt: "INÁ Ornamental Fish Logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "INA Ornamental Fish | West African Ornamental Fish Exporter",
+    title: "INÁ Ornamental Fish | West African Ornamental Fish Exporter",
     description:
       "Expert exporter of premium West African ornamental fish. Ethically sourced, B2B specialists delivering worldwide.",
     images: ["/icon-512.png"],

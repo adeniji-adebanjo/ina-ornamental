@@ -152,7 +152,7 @@ export default function ClientOrderClient({
     );
 
     const lines: string[] = [
-      "Hello iNA Ornamental Fish,",
+      "Hello INÁ Ornamental Fish,",
       "",
       `Customer: ${customerName || "N/A"}`,
       `Email: ${customerEmail || "N/A"}`,
@@ -390,7 +390,7 @@ export default function ClientOrderClient({
             </p>
             <p className="text-xs text-slate-500 mt-3">
               By submitting this form, an Excel invoice will be automatically
-              generated and shared with the INA team for procurement. You will
+              generated and shared with the INÁ team for procurement. You will
               also receive the invoice by email for your records.
             </p>
           </CardContent>
@@ -405,7 +405,7 @@ export default function ClientOrderClient({
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h1 className="text-base sm:text-lg font-bold text-sky-800 truncate">
-              iNA Ornamental Fish
+              INÁ Ornamental Fish
             </h1>
             <p className="text-xs text-slate-500 truncate">{priceList.title}</p>
           </div>

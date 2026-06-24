@@ -17,7 +17,7 @@ export async function GET() {
     .order("common_name");
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "iNA Ornamental Fish";
+  workbook.creator = "INÁ Ornamental Fish";
   workbook.created = new Date();
 
   const ws = workbook.addWorksheet("Pricing Template", {
@@ -75,7 +75,7 @@ export async function GET() {
   const instrWs = workbook.addWorksheet("Instructions");
   instrWs.getColumn(1).width = 80;
   const instructions = [
-    "INA ORNAMENTAL FISH - CUSTOM PRICING TEMPLATE",
+    "INÁ ORNAMENTAL FISH - CUSTOM PRICING TEMPLATE",
     "",
     "HOW TO USE THIS TEMPLATE:",
     "1. Go to the 'Pricing Template' sheet",

@@ -4,7 +4,7 @@ import { MessageCircle, Mail, MapPin } from "lucide-react";
 export const metadata = {
   title: "Contact",
   description:
-    "Contact INA Ornamental Fish for B2B ornamental fish export inquiries, catalogue requests, pricing, and global shipment support.",
+    "Contact INÁ Ornamental Fish for B2B ornamental fish export inquiries, catalogue requests, pricing, and global shipment support.",
   alternates: { canonical: "/contact" },
 };
 

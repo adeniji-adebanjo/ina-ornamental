@@ -52,7 +52,7 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2 group">
             <Image
               src="/logo-mark.svg"
-              alt="INA Ornamental Fish logo"
+              alt="INÁ Ornamental Fish logo"
               width={96}
               height={96}
               className="w-10 h-10 md:w-12 md:h-12 object-contain"

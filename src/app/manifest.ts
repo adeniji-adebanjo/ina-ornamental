@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "INA Ornamental Fish",
-    short_name: "INA",
+    name: "INÁ Ornamental Fish",
+    short_name: "INÁ",
     description:
       "Premium West African ornamental fish — B2B export with live arrival guarantee.",
     start_url: "/",

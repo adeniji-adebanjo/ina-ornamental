@@ -30,7 +30,7 @@ export default function Footer() {
             <div className="flex items-center gap-2 mb-4">
               <Image
                 src="/logo-mark-light.svg"
-                alt="INA Ornamental Fish logo"
+                alt="INÁ Ornamental Fish logo"
                 width={40}
                 height={40}
                 className="w-10 h-10 object-contain"
@@ -123,7 +123,7 @@ export default function Footer() {
         <Separator className="mt-12 bg-slate-800" />
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-500">
-            © {new Date().getFullYear()} INA Ornamental Fish Export. All rights
+            © {new Date().getFullYear()} INÁ Ornamental Fish. All rights
             reserved.
           </p>
           <div className="flex items-center gap-4">

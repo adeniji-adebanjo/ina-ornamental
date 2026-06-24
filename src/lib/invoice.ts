@@ -31,7 +31,7 @@ const HEADER_BG = "F5F3EE";
 
 function addInfoSection(ws: ExcelJS.Worksheet, data: InvoiceData) {
   // Company header
-  const titleRow = ws.addRow(["iNA Ornamental Fish"]);
+  const titleRow = ws.addRow(["INÁ Ornamental Fish"]);
   titleRow.getCell(1).font = {
     size: 18,
     bold: true,
@@ -179,7 +179,7 @@ function setupColumns(ws: ExcelJS.Worksheet) {
 
 export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "iNA Ornamental Fish";
+  workbook.creator = "INÁ Ornamental Fish";
   workbook.created = new Date();
 
   const hasAnyPrice = data.groups.some((g) =>
@@ -253,7 +253,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
 
     ws.addRow([]);
     const footerRow = ws.addRow([
-      "iNA Ornamental Fish • Lagos, Nigeria • inaornamentalfish.com",
+      "INÁ Ornamental Fish • Lagos, Nigeria • inaornamentalfish.com",
     ]);
     footerRow.getCell(1).font = {
       size: 9,
@@ -353,7 +353,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
 
   summaryWs.addRow([]);
   const footerRow = summaryWs.addRow([
-    "iNA Ornamental Fish • Lagos, Nigeria • inaornamentalfish.com",
+    "INÁ Ornamental Fish • Lagos, Nigeria • inaornamentalfish.com",
   ]);
   footerRow.getCell(1).font = {
     size: 9,

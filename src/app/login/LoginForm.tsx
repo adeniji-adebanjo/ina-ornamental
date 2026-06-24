@@ -46,13 +46,13 @@ export default function LoginForm() {
           <div className="text-center mb-8">
             <Image
               src="/logo-mark.svg"
-              alt="INA Ornamental Fish"
+              alt="INÁ Ornamental Fish"
               width={64}
               height={64}
               className="mx-auto mb-4 rounded-xl object-contain"
             />
             <h1 className="text-2xl font-black text-slate-900">
-              INA Admin Portal
+              INÁ Admin Portal
             </h1>
             <p className="text-sm text-slate-500 mt-1">
               Sign in to manage your catalogue

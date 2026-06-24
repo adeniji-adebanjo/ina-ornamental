@@ -59,7 +59,7 @@ export default function AdminLayoutClient({
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="/logo-mark.svg"
-            alt="INA Ornamental"
+            alt="INÁ Ornamental Fish"
             width={36}
             height={36}
             className="rounded-lg object-contain"
