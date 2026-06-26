@@ -17,6 +17,7 @@ import {
   X,
   Settings,
   Upload,
+  Newspaper,
 } from "lucide-react";
 import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/admin/pricing", label: "Custom Pricing", icon: DollarSign },
   { href: "/admin/location-pricing", label: "Location Pricing", icon: Upload },
   { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
+  { href: "/admin/blog", label: "Blog", icon: Newspaper },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

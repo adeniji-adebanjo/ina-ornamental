@@ -25,6 +25,11 @@ const nextConfig: NextConfig = {
         hostname: "*.inaornamentalfish.com",
       },
       {
+        // Headless WordPress CMS (blog posts + media library).
+        protocol: "https",
+        hostname: "cms.inaornamental.com",
+      },
+      {
         protocol: "https",
         hostname: "i0.wp.com",
       },

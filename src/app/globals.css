@@ -72,6 +72,149 @@ h6 {
   font-family: var(--font-serif), Georgia, "Times New Roman", serif;
 }
 
+/* ── Blog article / rich-text prose (brand-styled) ──
+   Shared by the public post body and the Tiptap editor surface so the admin
+   sees a true WYSIWYG preview. Scoped to .prose-ina to avoid leaking into the
+   rest of the app. */
+.prose-ina {
+  color: #38322a;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  word-break: break-word;
+}
+.prose-ina > :first-child {
+  margin-top: 0;
+}
+.prose-ina > :last-child {
+  margin-bottom: 0;
+}
+.prose-ina p {
+  margin: 1.25em 0;
+}
+.prose-ina h1,
+.prose-ina h2,
+.prose-ina h3,
+.prose-ina h4 {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  color: #243d38;
+  line-height: 1.25;
+  font-weight: 700;
+}
+.prose-ina h2 {
+  font-size: 1.6rem;
+  margin: 1.8em 0 0.6em;
+}
+.prose-ina h3 {
+  font-size: 1.3rem;
+  margin: 1.5em 0 0.5em;
+}
+.prose-ina h4 {
+  font-size: 1.1rem;
+  margin: 1.4em 0 0.5em;
+}
+.prose-ina a {
+  color: #3b655d;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+.prose-ina a:hover {
+  color: #243d38;
+}
+.prose-ina strong {
+  color: #231e16;
+  font-weight: 700;
+}
+.prose-ina ul,
+.prose-ina ol {
+  margin: 1.25em 0;
+  padding-left: 1.5em;
+}
+.prose-ina ul {
+  list-style: disc;
+}
+.prose-ina ol {
+  list-style: decimal;
+}
+.prose-ina li {
+  margin: 0.4em 0;
+}
+.prose-ina li > ul,
+.prose-ina li > ol {
+  margin: 0.4em 0;
+}
+.prose-ina blockquote {
+  margin: 1.5em 0;
+  padding: 0.25em 1.25em;
+  border-left: 4px solid #d4a85f;
+  background: #fdf7ee;
+  color: #524a3c;
+  font-style: italic;
+}
+.prose-ina blockquote p {
+  margin: 0.5em 0;
+}
+.prose-ina img {
+  border-radius: 0.75rem;
+  margin: 1.5em 0;
+  max-width: 100%;
+  height: auto;
+}
+.prose-ina hr {
+  border: 0;
+  border-top: 1px solid #e2d8c8;
+  margin: 2em 0;
+}
+.prose-ina code {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  background: #efe7d6;
+  padding: 0.15em 0.4em;
+  border-radius: 0.35rem;
+  font-size: 0.9em;
+}
+.prose-ina pre {
+  background: #231e16;
+  color: #faf7f2;
+  padding: 1em 1.25em;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 1.5em 0;
+}
+.prose-ina pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+.prose-ina table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95em;
+}
+.prose-ina th,
+.prose-ina td {
+  border: 1px solid #e2d8c8;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+.prose-ina th {
+  background: #faf7f2;
+  font-weight: 700;
+}
+
+/* Tiptap editor: placeholder text for the empty document */
+.prose-ina p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #b0a48e;
+  pointer-events: none;
+  height: 0;
+}
+/* Tiptap focus outline is handled by the wrapper, not the content area */
+.prose-ina.ProseMirror:focus {
+  outline: none;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
