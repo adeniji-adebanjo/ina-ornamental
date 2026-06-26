@@ -1,5 +1,15 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   Bold,
@@ -76,8 +86,8 @@ const TOOLBAR_GROUPS: ToolbarButton[][] = [
     { icon: ImageIcon, label: "Insert image", action: { type: "image" } },
   ],
   [
-    { icon: Undo2, label: "Undo", action: { type: "command", command: "undo" } },
-    { icon: Redo2, label: "Redo", action: { type: "command", command: "redo" } },
+    { icon: Undo2, label: "Undo (Ctrl+Z)", action: { type: "command", command: "undo" } },
+    { icon: Redo2, label: "Redo (Ctrl+Y)", action: { type: "command", command: "redo" } },
     { icon: RemoveFormatting, label: "Clear formatting", action: { type: "command", command: "removeFormat" } },
   ],
 ];
@@ -112,6 +122,12 @@ export default function RichTextEditor({
   const [isEmpty, setIsEmpty] = useState(!value);
   const [uploading, setUploading] = useState(false);
   const [, forceTick] = useState(0); // re-render to refresh active states
+
+  // Link dialog state. The selection is saved when the dialog opens (focusing
+  // the input would otherwise clear it) and restored before applying the link.
+  const savedRangeRef = useRef<Range | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
 
   // Sync external value into the DOM only when it diverges from what the user
   // last produced (initial load, loading a different post) — avoids cursor jumps.
@@ -150,11 +166,28 @@ export default function RichTextEditor({
       toast.info("Select the text you want to turn into a link first.");
       return;
     }
-    const url = window.prompt("Link URL (https://…)");
-    if (!url) return;
-    const safe = /^(https?:|mailto:|tel:|\/)/i.test(url) ? url : `https://${url}`;
-    runCommand("createLink", safe);
-  }, [runCommand]);
+    savedRangeRef.current = selection.getRangeAt(0).cloneRange();
+    setLinkUrl("");
+    setLinkDialogOpen(true);
+  }, []);
+
+  const applyLink = useCallback(() => {
+    const raw = linkUrl.trim();
+    const el = editorRef.current;
+    const selection = window.getSelection();
+    if (raw && el && selection && savedRangeRef.current) {
+      const safe = /^(https?:|mailto:|tel:|\/)/i.test(raw)
+        ? raw
+        : `https://${raw}`;
+      el.focus();
+      selection.removeAllRanges();
+      selection.addRange(savedRangeRef.current);
+      document.execCommand("createLink", false, safe);
+      emit();
+    }
+    savedRangeRef.current = null;
+    setLinkDialogOpen(false);
+  }, [linkUrl, emit]);
 
   const handleImageButton = useCallback(() => {
     if (!onImageUpload) {
@@ -200,10 +233,30 @@ export default function RichTextEditor({
 
   const refreshActiveStates = useCallback(() => forceTick((n) => n + 1), []);
 
+  // Keyboard undo/redo. Handled explicitly (rather than relying on the
+  // browser's native contentEditable history) so it stays in sync with React
+  // state via emit() and shares the exact same path as the toolbar buttons.
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        runCommand("undo");
+      } else if (key === "y" || (key === "z" && e.shiftKey)) {
+        e.preventDefault();
+        runCommand("redo");
+      }
+    },
+    [runCommand],
+  );
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden focus-within:border-sky-400 focus-within:ring-1 focus-within:ring-sky-400/40 transition-colors">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-2 py-1.5">
+    <div className="rounded-xl border border-slate-200 bg-white focus-within:border-sky-400 focus-within:ring-1 focus-within:ring-sky-400/40 transition-colors">
+      {/* Toolbar — sticks below the admin header while a long post scrolls.
+          The container intentionally has no `overflow-hidden`, since that would
+          disable position: sticky. */}
+      <div className="sticky top-16 z-20 flex flex-wrap items-center gap-1 rounded-t-xl border-b border-slate-200 bg-slate-50 px-2 py-1.5">
         {TOOLBAR_GROUPS.map((group, gi) => (
           <div key={gi} className="flex items-center gap-0.5">
             {gi > 0 && <span className="mx-1 h-5 w-px bg-slate-200" />}
@@ -255,6 +308,7 @@ export default function RichTextEditor({
           aria-label="Post content"
           onInput={emit}
           onBlur={emit}
+          onKeyDown={handleKeyDown}
           onKeyUp={refreshActiveStates}
           onMouseUp={refreshActiveStates}
           className="prose-ina min-h-80 max-w-none px-5 py-4 outline-none"
@@ -268,6 +322,47 @@ export default function RichTextEditor({
         className="hidden"
         onChange={handleFileSelected}
       />
+
+      {/* App-styled link dialog (replaces the native window.prompt) */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add link</DialogTitle>
+            <DialogDescription>
+              Enter the URL to link the selected text to.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            autoFocus
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                applyLink();
+              }
+            }}
+            placeholder="https://example.com"
+            className="h-9 rounded-lg"
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setLinkDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="rounded-xl"
+              onClick={applyLink}
+              disabled={!linkUrl.trim()}
+            >
+              Add link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

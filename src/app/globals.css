@@ -48,6 +48,27 @@
   --color-surface-dark: #231e16;
   --color-muted: #8e8270;
 
+  /* ── shadcn/ui semantic tokens ──
+     Required by the shared UI primitives (dialog, sheet, popover, input,
+     button). Without these, `bg-popover`/`bg-card`/`border-input` resolve to
+     nothing and panels render transparent — letting the dialog overlay show
+     through. Mapped to the brand's warm neutrals. */
+  --color-background: #fdfbf7;
+  --color-foreground: #231e16;
+  --color-card: #ffffff;
+  --color-card-foreground: #231e16;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #231e16;
+  --color-secondary: #efe7d6;
+  --color-secondary-foreground: #38322a;
+  --color-accent-foreground: #231e16;
+  --color-muted-foreground: #6e6355;
+  --color-border: #e2d8c8;
+  --color-input: #d0c3af;
+  --color-ring: #3b655d;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+
   /* ── Typography ── */
   --font-sans: var(--font-manrope);
   --font-serif: var(--font-stix-two-text);

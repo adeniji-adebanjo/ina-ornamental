@@ -209,8 +209,11 @@ export default function BlogEditorClient({ post, categories }: Props) {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-4">
+        {/* Sidebar — pinned on large screens while the content column scrolls.
+            self-start stops the grid cell stretching (sticky needs that); the
+            inner cap lets the sidebar scroll on its own if it outgrows the
+            viewport. top-20 clears the admin layout's sticky header. */}
+        <div className="space-y-4 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pb-2">
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
             <p className="text-sm font-semibold text-slate-800">Status</p>
             <div className="flex gap-2">
