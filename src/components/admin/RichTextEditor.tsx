@@ -105,7 +105,10 @@ export default function RichTextEditor({
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const lastHtmlRef = useRef<string>(value);
+  // Start empty (not `value`) so the sync effect below always populates the
+  // editor's DOM on first mount — otherwise an existing post's content, which
+  // equals the initial ref, would be skipped and the editor would render blank.
+  const lastHtmlRef = useRef<string>("");
   const [isEmpty, setIsEmpty] = useState(!value);
   const [uploading, setUploading] = useState(false);
   const [, forceTick] = useState(0); // re-render to refresh active states
