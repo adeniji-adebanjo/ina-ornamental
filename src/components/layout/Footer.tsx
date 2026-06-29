@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <Image
-                src="/logo-mark-light.svg"
+                src="/logo-mark-white.svg"
                 alt="INÁ Ornamental Fish logo"
                 width={40}
                 height={40}
