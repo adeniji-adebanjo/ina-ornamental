@@ -2,7 +2,11 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { SpeciesWithImages, Category } from "@/types/database";
+import type {
+  SpeciesWithImages,
+  Category,
+  AvailabilityStatus,
+} from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +21,8 @@ import {
   Database,
   Upload,
   Download,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -31,6 +37,14 @@ interface Props {
   categories: Category[];
 }
 
+const AVAILABILITY_OPTIONS: { value: AvailabilityStatus; label: string }[] = [
+  { value: "available", label: "Available" },
+  { value: "limited_stock", label: "Limited Stock" },
+  { value: "out_of_stock", label: "Out of Stock" },
+  { value: "seasonal", label: "Seasonal" },
+  { value: "on_request", label: "On Request" },
+];
+
 export default function SpeciesListClient({ species, categories }: Props) {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -39,6 +53,11 @@ export default function SpeciesListClient({ species, categories }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [confirmProps, showConfirm] = useConfirmDialog();
+  // Inline availability editing — optimistic per-row override + in-flight id.
+  const [availOverride, setAvailOverride] = useState<
+    Record<string, AvailabilityStatus>
+  >({});
+  const [savingAvail, setSavingAvail] = useState<string | null>(null);
 
   const filtered = species.filter((s) => {
     const matchSearch =
@@ -82,6 +101,85 @@ export default function SpeciesListClient({ species, categories }: Props) {
     };
     return colors[status] || colors.on_request;
   };
+
+  // Persist a new availability inline (no edit form). Optimistic, reverts on error.
+  async function updateAvailability(
+    id: string,
+    value: AvailabilityStatus,
+    previous: AvailabilityStatus,
+  ) {
+    if (value === previous) return;
+    setAvailOverride((m) => ({ ...m, [id]: value }));
+    setSavingAvail(id);
+    try {
+      const res = await fetch(`/api/admin/species/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ availability: value }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "save failed");
+      }
+      const label =
+        AVAILABILITY_OPTIONS.find((o) => o.value === value)?.label ?? value;
+      toast.success(`Availability set to "${label}"`);
+    } catch {
+      setAvailOverride((m) => ({ ...m, [id]: previous })); // revert
+      toast.error("Couldn't update availability. Please try again.");
+    } finally {
+      setSavingAvail(null);
+    }
+  }
+
+  // Colored pill that is also a dropdown — change availability without the edit form.
+  function availabilityControl(s: SpeciesWithImages, small: boolean) {
+    const current = availOverride[s.id] ?? s.availability;
+    const isSaving = savingAvail === s.id;
+    return (
+      <span
+        className={`relative inline-flex items-center rounded-full font-medium ${availabilityBadge(
+          current,
+        )} ${small ? "text-[10px]" : "text-xs"}`}
+      >
+        <select
+          value={current}
+          disabled={isSaving}
+          aria-label="Availability"
+          title="Change availability"
+          onChange={(e) =>
+            updateAvailability(
+              s.id,
+              e.target.value as AvailabilityStatus,
+              current,
+            )
+          }
+          className={`appearance-none bg-transparent cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:opacity-60 ${
+            small ? "pl-1.5 pr-4 py-0.5" : "pl-2 pr-5 py-0.5"
+          }`}
+        >
+          {AVAILABILITY_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value} className="bg-white text-slate-700">
+              {o.label}
+            </option>
+          ))}
+        </select>
+        {isSaving ? (
+          <Loader2
+            className={`pointer-events-none absolute right-1 animate-spin opacity-70 ${
+              small ? "size-2.5" : "size-3"
+            }`}
+          />
+        ) : (
+          <ChevronDown
+            className={`pointer-events-none absolute right-1 opacity-60 ${
+              small ? "size-2.5" : "size-3"
+            }`}
+          />
+        )}
+      </span>
+    );
+  }
 
   async function handleSeed() {
     setSeeding(true);
@@ -292,11 +390,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
                         {s.category.name}
                       </Badge>
                     )}
-                    <span
-                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${availabilityBadge(s.availability)}`}
-                    >
-                      {s.availability.replace("_", " ")}
-                    </span>
+                    {availabilityControl(s, true)}
                   </div>
                 </div>
 
@@ -304,11 +398,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
                   <Badge variant="outline" className="text-xs">
                     {s.category?.name ?? "—"}
                   </Badge>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${availabilityBadge(s.availability)}`}
-                  >
-                    {s.availability.replace("_", " ")}
-                  </span>
+                  {availabilityControl(s, false)}
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
