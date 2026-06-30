@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   OrderWithGroups,
   OrderInsert,
@@ -109,4 +110,24 @@ function generateOrderReference(): string {
   return `INA-${y}${m}${d}-${rand}`;
 }
 
-export { generateOrderReference };
+// The public order form relies on the random suffix rarely colliding. Admin
+// imports create orders deliberately, so guard against the (small) collision
+// chance by checking the unique constraint before insert and regenerating.
+async function generateUniqueOrderReference(
+  admin: SupabaseClient,
+  attempts = 10,
+): Promise<string> {
+  for (let i = 0; i < attempts; i++) {
+    const ref = generateOrderReference();
+    const { data } = await admin
+      .from("orders")
+      .select("id")
+      .eq("order_reference", ref)
+      .maybeSingle();
+    if (!data) return ref;
+  }
+  // Extremely unlikely fallback — widen the suffix to make a clash negligible.
+  return `${generateOrderReference()}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+export { generateOrderReference, generateUniqueOrderReference };

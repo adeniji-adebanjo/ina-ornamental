@@ -7,8 +7,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog, useConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Search, ChevronDown, ChevronUp, UserPlus, Trash2 } from "lucide-react";
+import {
+  Search,
+  ChevronDown,
+  ChevronUp,
+  UserPlus,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
+import OrderUploadDialog from "./OrderUploadDialog";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-slate-50 text-slate-600",
@@ -36,6 +44,7 @@ export default function OrdersListClient({
 }) {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [confirmProps, showConfirm] = useConfirmDialog();
   const router = useRouter();
 
@@ -96,6 +105,14 @@ export default function OrdersListClient({
           className="pl-9 rounded-xl"
         />
         <div className="ml-auto flex items-center gap-2">
+          <Button
+            size="sm"
+            className="rounded-lg text-xs gap-1.5"
+            onClick={() => setUploadOpen(true)}
+          >
+            <Upload className="size-3.5" />
+            Upload Order
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -296,6 +313,11 @@ export default function OrdersListClient({
         })}
       </div>
       <ConfirmDialog {...confirmProps} />
+      <OrderUploadDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        onCreated={() => router.refresh()}
+      />
     </div>
   );
 }

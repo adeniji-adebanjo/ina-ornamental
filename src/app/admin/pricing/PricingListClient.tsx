@@ -18,6 +18,10 @@ import {
   Download,
   Globe,
   Info,
+  Pencil,
+  Check,
+  X,
+  Loader2,
 } from "lucide-react";
 import {
   ConfirmDialog,
@@ -101,6 +105,107 @@ export default function PricingListClient({
   >([{ species_id: "", custom_price: "" }]);
   const [confirmProps, showConfirm] = useConfirmDialog();
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Inline editing of an existing list item's price.
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [busyItemId, setBusyItemId] = useState<string | null>(null);
+
+  // Add-species control for the currently expanded list.
+  const [addSpeciesId, setAddSpeciesId] = useState("");
+  const [addPrice, setAddPrice] = useState("");
+  const [addingItem, setAddingItem] = useState(false);
+
+  function startEditItem(item: PriceItem) {
+    setEditingItemId(item.id);
+    setEditPrice(String(item.custom_price));
+  }
+
+  async function saveItemPrice(listId: string, item: PriceItem) {
+    const price = parseFloat(editPrice);
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error("Enter a valid price greater than 0");
+      return;
+    }
+    setBusyItemId(item.id);
+    try {
+      const res = await fetch(
+        `/api/admin/pricing/${listId}/items/${item.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ custom_price: price }),
+        },
+      );
+      if (res.ok) {
+        toast.success("Price updated");
+        setEditingItemId(null);
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error(data?.error || "Failed to update price");
+      }
+    } catch {
+      toast.error("Network error — please try again.");
+    } finally {
+      setBusyItemId(null);
+    }
+  }
+
+  function removeItem(listId: string, item: PriceItem) {
+    showConfirm({
+      title: `Remove "${item.species?.common_name ?? "species"}"?`,
+      description: "This species will be removed from this price list.",
+      confirmLabel: "Remove",
+      variant: "danger",
+      onConfirm: async () => {
+        const res = await fetch(
+          `/api/admin/pricing/${listId}/items/${item.id}`,
+          { method: "DELETE" },
+        );
+        if (res.ok) {
+          toast.success("Species removed");
+          router.refresh();
+        } else {
+          const data = await res.json().catch(() => null);
+          toast.error(data?.error || "Failed to remove species");
+        }
+      },
+    });
+  }
+
+  async function addSpeciesToList(listId: string) {
+    const price = parseFloat(addPrice);
+    if (!addSpeciesId) {
+      toast.error("Select a species");
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error("Enter a valid price greater than 0");
+      return;
+    }
+    setAddingItem(true);
+    try {
+      const res = await fetch(`/api/admin/pricing/${listId}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ species_id: addSpeciesId, custom_price: price }),
+      });
+      if (res.ok) {
+        toast.success("Species added");
+        setAddSpeciesId("");
+        setAddPrice("");
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error(data?.error || "Failed to add species");
+      }
+    } catch {
+      toast.error("Network error — please try again.");
+    } finally {
+      setAddingItem(false);
+    }
+  }
 
   function addItemRow() {
     setNewItems((prev) => [...prev, { species_id: "", custom_price: "" }]);
@@ -603,6 +708,7 @@ export default function PricingListClient({
                         </th>
                         <th className="pb-2">Availability</th>
                         <th className="pb-2 text-right">Price</th>
+                        <th className="pb-2 text-right w-px">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -629,13 +735,119 @@ export default function PricingListClient({
                               </span>
                             </td>
                             <td className="py-2 text-right font-medium">
-                              ${Number(item.custom_price).toFixed(2)}
+                              {editingItemId === item.id ? (
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  autoFocus
+                                  value={editPrice}
+                                  onChange={(e) => setEditPrice(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") saveItemPrice(pl.id, item);
+                                    if (e.key === "Escape") setEditingItemId(null);
+                                  }}
+                                  className="h-8 w-24 ml-auto rounded-lg text-right"
+                                />
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => startEditItem(item)}
+                                  className="inline-flex items-center gap-1 rounded px-1 hover:text-sky-700 hover:bg-sky-50"
+                                  title="Edit price"
+                                >
+                                  ${Number(item.custom_price).toFixed(2)}
+                                  <Pencil className="size-3 text-slate-400" />
+                                </button>
+                              )}
+                            </td>
+                            <td className="py-2 text-right whitespace-nowrap">
+                              {editingItemId === item.id ? (
+                                <span className="inline-flex items-center gap-0.5">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    disabled={busyItemId === item.id}
+                                    onClick={() => saveItemPrice(pl.id, item)}
+                                    title="Save"
+                                  >
+                                    {busyItemId === item.id ? (
+                                      <Loader2 className="size-4 animate-spin" />
+                                    ) : (
+                                      <Check className="size-4 text-emerald-600" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    onClick={() => setEditingItemId(null)}
+                                    title="Cancel"
+                                  >
+                                    <X className="size-4 text-slate-500" />
+                                  </Button>
+                                </span>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => removeItem(pl.id, item)}
+                                  title="Remove species"
+                                >
+                                  <Trash2 className="size-4 text-red-500" />
+                                </Button>
+                              )}
                             </td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
+
+                  {/* Add a species to this list */}
+                  <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                    <select
+                      value={addSpeciesId}
+                      onChange={(e) => setAddSpeciesId(e.target.value)}
+                      className="flex-1 rounded-xl border border-slate-200 h-9 px-3 text-sm min-w-0"
+                    >
+                      <option value="">Add species…</option>
+                      {species
+                        .filter(
+                          (s) =>
+                            !pl.items.some((it) => it.species_id === s.id),
+                        )
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.common_name} ({s.scientific_name})
+                          </option>
+                        ))}
+                    </select>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={addPrice}
+                      onChange={(e) => setAddPrice(e.target.value)}
+                      placeholder="Price"
+                      className="w-full sm:w-28 rounded-xl h-9"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => addSpeciesToList(pl.id)}
+                      disabled={addingItem}
+                      className="rounded-xl h-9"
+                    >
+                      {addingItem ? (
+                        <Loader2 className="size-4 mr-1 animate-spin" />
+                      ) : (
+                        <Plus className="size-4 mr-1" />
+                      )}
+                      Add
+                    </Button>
+                  </div>
                   <div className="mt-3 p-3 bg-slate-50 rounded-lg">
                     <p className="text-xs text-slate-500">
                       <strong>Order Link:</strong>{" "}

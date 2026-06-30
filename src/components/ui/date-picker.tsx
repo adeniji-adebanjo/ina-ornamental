@@ -74,6 +74,7 @@ export function DatePicker({
   const selected = parseISO(value);
 
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"day" | "year">("day");
   const [view, setView] = useState<Date>(() => parseISO(value) ?? new Date());
   const ref = useRef<HTMLDivElement>(null);
 
@@ -124,6 +125,7 @@ export function DatePicker({
         id={id}
         onClick={() => {
           setOpen((o) => !o);
+          setMode("day");
           if (selected) setView(selected);
         }}
         className={cn(
@@ -139,70 +141,121 @@ export function DatePicker({
 
       {open && (
         <div className="absolute z-50 mt-1 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
-          {/* Month navigation */}
+          {/* Navigation — chevrons move by month (day view) or by a page of
+              years (year view); the title toggles the year picker. */}
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setView(new Date(year, month - 1, 1))}
+              onClick={() =>
+                setView(
+                  mode === "day"
+                    ? new Date(year, month - 1, 1)
+                    : new Date(year - 12, month, 1),
+                )
+              }
               className="flex size-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
-              aria-label="Previous month"
+              aria-label={mode === "day" ? "Previous month" : "Previous years"}
             >
               <ChevronLeft className="size-4" />
             </button>
-            <span className="text-sm font-medium text-slate-900">
-              {MONTHS[month]} {year}
-            </span>
             <button
               type="button"
-              onClick={() => setView(new Date(year, month + 1, 1))}
+              onClick={() => setMode((m) => (m === "day" ? "year" : "day"))}
+              className="rounded-lg px-2 py-1 text-sm font-medium text-slate-900 hover:bg-slate-100"
+              aria-label="Toggle year selection"
+            >
+              {mode === "day"
+                ? `${MONTHS[month]} ${year}`
+                : `${year - (year % 12)} – ${year - (year % 12) + 11}`}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setView(
+                  mode === "day"
+                    ? new Date(year, month + 1, 1)
+                    : new Date(year + 12, month, 1),
+                )
+              }
               className="flex size-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
-              aria-label="Next month"
+              aria-label={mode === "day" ? "Next month" : "Next years"}
             >
               <ChevronRight className="size-4" />
             </button>
           </div>
 
-          {/* Weekday headers */}
-          <div className="mb-1 grid grid-cols-7 gap-0.5">
-            {WEEKDAYS.map((w) => (
-              <div
-                key={w}
-                className="py-1 text-center text-xs font-medium text-slate-400"
-              >
-                {w}
+          {mode === "day" ? (
+            <>
+              {/* Weekday headers */}
+              <div className="mb-1 grid grid-cols-7 gap-0.5">
+                {WEEKDAYS.map((w) => (
+                  <div
+                    key={w}
+                    className="py-1 text-center text-xs font-medium text-slate-400"
+                  >
+                    {w}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Day grid */}
-          <div className="grid grid-cols-7 gap-0.5">
-            {Array.from({ length: firstWeekday }).map((_, i) => (
-              <div key={`blank-${i}`} />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1;
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  onClick={() => {
-                    commit(toISO(new Date(year, month, day)));
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    "h-8 w-full rounded-lg text-sm hover:bg-sky-50",
-                    isSelected(day)
-                      ? "bg-sky-600 text-white hover:bg-sky-600"
-                      : isToday(day)
-                        ? "font-semibold text-sky-700"
-                        : "text-slate-700",
-                  )}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
+              {/* Day grid */}
+              <div className="grid grid-cols-7 gap-0.5">
+                {Array.from({ length: firstWeekday }).map((_, i) => (
+                  <div key={`blank-${i}`} />
+                ))}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => {
+                        commit(toISO(new Date(year, month, day)));
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        "h-8 w-full rounded-lg text-sm hover:bg-sky-50",
+                        isSelected(day)
+                          ? "bg-sky-600 text-white hover:bg-sky-600"
+                          : isToday(day)
+                            ? "font-semibold text-sky-700"
+                            : "text-slate-700",
+                      )}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            /* Year grid — a 12-year page; picking a year returns to days. */
+            <div className="grid grid-cols-3 gap-1">
+              {Array.from({ length: 12 }).map((_, i) => {
+                const y = year - (year % 12) + i;
+                return (
+                  <button
+                    key={y}
+                    type="button"
+                    onClick={() => {
+                      setView(new Date(y, month, 1));
+                      setMode("day");
+                    }}
+                    className={cn(
+                      "h-9 w-full rounded-lg text-sm hover:bg-sky-50",
+                      y === year
+                        ? "bg-sky-600 text-white hover:bg-sky-600"
+                        : y === today.getFullYear()
+                          ? "font-semibold text-sky-700"
+                          : "text-slate-700",
+                    )}
+                  >
+                    {y}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Footer actions */}
           <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
