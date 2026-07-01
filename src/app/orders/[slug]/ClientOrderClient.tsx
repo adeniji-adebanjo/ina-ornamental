@@ -16,6 +16,9 @@ import {
   Package,
   ChevronDown,
   Search,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import { COUNTRIES } from "@/data/countries";
 import Image from "next/image";
@@ -66,6 +69,8 @@ export default function ClientOrderClient({
     { id: 1, name: "Order A", items: {} },
   ]);
   const [activeGroupId, setActiveGroupId] = useState(1);
+  const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderRef, setOrderRef] = useState("");
@@ -290,6 +295,21 @@ export default function ClientOrderClient({
     }
   }
 
+  function startRename(id: number, currentName: string) {
+    setEditingGroupId(id);
+    setEditValue(currentName);
+  }
+
+  function commitRename() {
+    const name = editValue.trim();
+    if (editingGroupId != null && name) {
+      setGroups((prev) =>
+        prev.map((g) => (g.id === editingGroupId ? { ...g, name } : g)),
+      );
+    }
+    setEditingGroupId(null);
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (totalPieces === 0) return;
@@ -425,11 +445,48 @@ export default function ClientOrderClient({
               (s, i) => s + i.pieces,
               0,
             );
+            if (editingGroupId === g.id) {
+              return (
+                <div
+                  key={g.id}
+                  className="flex items-center gap-1 rounded-full border border-sky-300 bg-white pl-3 pr-1 py-1 whitespace-nowrap"
+                >
+                  <input
+                    autoFocus
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitRename();
+                      if (e.key === "Escape") setEditingGroupId(null);
+                    }}
+                    className="w-28 bg-transparent text-sm outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={commitRename}
+                    className="flex size-6 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-50"
+                    aria-label="Save group name"
+                  >
+                    <Check className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingGroupId(null)}
+                    className="flex size-6 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100"
+                    aria-label="Cancel"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              );
+            }
             return (
               <button
                 key={g.id}
                 type="button"
                 onClick={() => setActiveGroupId(g.id)}
+                onDoubleClick={() => startRename(g.id, g.name)}
+                title="Double-click to rename"
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                   g.id === activeGroupId
                     ? "bg-sky-800 text-white"
@@ -451,6 +508,17 @@ export default function ClientOrderClient({
             className="px-3 py-2 rounded-full text-sm font-medium text-sky-700 hover:bg-sky-50"
           >
             + New Group
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const g = groups.find((x) => x.id === activeGroupId);
+              if (g) startRename(g.id, g.name);
+            }}
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100"
+          >
+            <Pencil className="size-3.5" />
+            Rename
           </button>
           {groups.length > 1 && (
             <button
