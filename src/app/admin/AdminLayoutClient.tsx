@@ -19,8 +19,9 @@ import {
   Upload,
   Newspaper,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -34,6 +35,9 @@ const navItems = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
+// Sign an admin out after this long with no interaction.
+const IDLE_LIMIT_MS = 40 * 60 * 1000; // 40 minutes
+
 export default function AdminLayoutClient({
   children,
   user,
@@ -44,6 +48,7 @@ export default function AdminLayoutClient({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const lastActivityRef = useRef(0);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -51,6 +56,40 @@ export default function AdminLayoutClient({
     router.push("/login");
     router.refresh();
   }
+
+  // Auto-logout on inactivity. A lightweight activity listener only stamps a
+  // timestamp; a 30s interval does the actual idle check, so frequent events
+  // (mousemove/scroll) stay cheap.
+  useEffect(() => {
+    const supabase = createClient();
+    const bump = () => {
+      lastActivityRef.current = Date.now();
+    };
+    bump(); // stamp initial activity on mount
+    const events = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+    events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+
+    const interval = setInterval(async () => {
+      if (Date.now() - lastActivityRef.current < IDLE_LIMIT_MS) return;
+      clearInterval(interval);
+      toast.info("You've been signed out due to inactivity.");
+      await supabase.auth.signOut();
+      router.push("/login");
+      router.refresh();
+    }, 30_000);
+
+    return () => {
+      clearInterval(interval);
+      events.forEach((e) => window.removeEventListener(e, bump));
+    };
+  }, [router]);
 
   const isActive = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
