@@ -236,6 +236,16 @@ h6 {
   outline: none;
 }
 
+/* Hide the scrollbar on horizontally-scrollable rows (category pills, order
+   group tabs) while keeping them scrollable via swipe/trackpad. */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

@@ -9,13 +9,13 @@ export default function SearchBar() {
 
   return (
     <div className="relative">
-      <Search className="size-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+      <Search className="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
       <Input
         type="text"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search by common name, scientific name, category..."
-        className="w-full pl-12 pr-4 h-12 rounded-xl border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
+        placeholder="Search species, scientific name, category…"
+        className="w-full pl-9 pr-3 h-10 rounded-xl border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
       />
     </div>
   );

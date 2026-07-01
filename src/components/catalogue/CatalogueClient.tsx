@@ -87,12 +87,20 @@ export default function CatalogueClient({
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-        <div className="sticky top-20 z-30 bg-white/95 backdrop-blur-xl p-6 rounded-3xl border border-slate-200 shadow-sm">
-          <div className="space-y-4">
-            <SearchBar />
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="sticky top-20 z-30 bg-white/95 backdrop-blur-xl p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+          {/* Search + order group share a row on large screens; categories
+              sit on their own scrollable row. Keeps the sticky bar compact. */}
+          <div className="flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-4">
+            <div className="lg:flex-1">
+              <SearchBar />
+            </div>
+            <div className="lg:shrink-0">
+              <OrderGroupSelector />
+            </div>
+          </div>
+          <div className="mt-2.5">
             <CategoryFilter categories={categories} />
-            <OrderGroupSelector />
           </div>
         </div>
 
