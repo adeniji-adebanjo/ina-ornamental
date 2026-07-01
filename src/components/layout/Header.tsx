@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useStore } from "@/store/useStore";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,23 +15,38 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Menu, MessageCircle } from "lucide-react";
+import {
+  ShoppingCart,
+  Menu,
+  MessageCircle,
+  Home,
+  Fish,
+  Image as ImageIcon,
+  Newspaper,
+  Info,
+  Mail,
+  ChevronRight,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/catalogue", label: "Catalogue" },
-  { href: "/gallery", label: "Gallery" },
-  { href: "/blog", label: "Blog" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
+  { href: "/", label: "Home", icon: Home },
+  { href: "/catalogue", label: "Catalogue", icon: Fish },
+  { href: "/gallery", label: "Gallery", icon: ImageIcon },
+  { href: "/blog", label: "Blog", icon: Newspaper },
+  { href: "/about", label: "About", icon: Info },
+  { href: "/contact", label: "Contact", icon: Mail },
 ];
 
 export default function Header() {
   const { cart } = useStore();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
@@ -131,28 +147,73 @@ export default function Header() {
               >
                 <Menu className="size-6" />
               </SheetTrigger>
-              <SheetContent side="right" className="w-72 p-0 bg-white">
-                <SheetTitle className="px-5 pt-5 text-lg font-bold text-slate-900">
-                  Menu
-                </SheetTitle>
+              <SheetContent
+                side="right"
+                className="w-[17rem] p-0 bg-white flex flex-col"
+              >
+                {/* Branded header */}
+                <div className="flex items-center gap-2 px-5 pt-5 pb-4">
+                  <Image
+                    src="/logo-mark.svg"
+                    alt="INÁ Ornamental Fish"
+                    width={36}
+                    height={36}
+                    className="size-9 object-contain"
+                  />
+                  <SheetTitle className="text-base font-black text-sky-900 leading-tight">
+                    INÁ Ornamental
+                  </SheetTitle>
+                </div>
                 <SheetDescription className="sr-only">
                   Site navigation
                 </SheetDescription>
-                <Separator className="my-2" />
-                <nav className="flex flex-col gap-1 px-3 py-2">
-                  {navLinks.map((link) => (
-                    <SheetClose
-                      key={link.href}
-                      render={<Link href={link.href} />}
-                    >
-                      <span className="block px-3 py-2.5 text-slate-800 hover:bg-sky-50 hover:text-sky-700 rounded-lg font-semibold text-base transition-colors">
-                        {link.label}
-                      </span>
-                    </SheetClose>
-                  ))}
+                <Separator />
+
+                <nav className="flex-1 overflow-y-auto flex flex-col gap-1 px-3 py-3">
+                  {navLinks.map((link) => {
+                    const active = isActive(link.href);
+                    return (
+                      <SheetClose
+                        key={link.href}
+                        render={<Link href={link.href} />}
+                      >
+                        <span
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-[15px] transition-colors",
+                            active
+                              ? "bg-sky-50 text-sky-800"
+                              : "text-slate-700 hover:bg-slate-50 hover:text-sky-700",
+                          )}
+                        >
+                          <link.icon className="size-5 shrink-0" />
+                          {link.label}
+                          {active && (
+                            <span className="ml-auto size-1.5 rounded-full bg-sky-600" />
+                          )}
+                        </span>
+                      </SheetClose>
+                    );
+                  })}
+
+                  <Separator className="my-2" />
+
+                  {/* Cart / order */}
+                  <SheetClose render={<Link href="/order" />}>
+                    <span className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-[15px] text-slate-700 hover:bg-slate-50 hover:text-sky-700 transition-colors">
+                      <ShoppingCart className="size-5 shrink-0" />
+                      Your Order
+                      {itemCount > 0 ? (
+                        <Badge className="ml-auto rounded-full bg-emerald-600 text-white border-0">
+                          {itemCount}
+                        </Badge>
+                      ) : (
+                        <ChevronRight className="ml-auto size-4 text-slate-300" />
+                      )}
+                    </span>
+                  </SheetClose>
                 </nav>
-                <Separator className="my-2" />
-                <div className="px-4 pb-5">
+
+                <div className="px-4 pb-5 pt-2 border-t border-slate-100">
                   <a
                     href="https://wa.me/2348168850307"
                     target="_blank"
