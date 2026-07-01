@@ -440,7 +440,7 @@ export default function ClientOrderClient({
       </header>
 
       <div className="bg-white border-b border-slate-200 sticky top-[65px] z-30">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 flex items-center gap-2 overflow-x-auto py-2">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 flex items-center gap-2 overflow-x-auto no-scrollbar py-2">
           {groups.map((g) => {
             const groupPieces = Object.values(g.items).reduce(
               (s, i) => s + i.pieces,
@@ -450,7 +450,7 @@ export default function ClientOrderClient({
               return (
                 <div
                   key={g.id}
-                  className="flex items-center gap-1 rounded-full border border-sky-300 bg-white pl-3 pr-1 py-1 whitespace-nowrap"
+                  className="flex shrink-0 items-center gap-1 rounded-full border border-sky-300 bg-white pl-3 pr-1 py-1 whitespace-nowrap"
                 >
                   <input
                     autoFocus
@@ -488,7 +488,7 @@ export default function ClientOrderClient({
                 onClick={() => setActiveGroupId(g.id)}
                 onDoubleClick={() => startRename(g.id, g.name)}
                 title="Double-click to rename"
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                   g.id === activeGroupId
                     ? "bg-sky-800 text-white"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -506,7 +506,7 @@ export default function ClientOrderClient({
           <button
             type="button"
             onClick={addGroup}
-            className="px-3 py-2 rounded-full text-sm font-medium text-sky-700 hover:bg-sky-50"
+            className="shrink-0 px-3 py-2 rounded-full text-sm font-medium text-sky-700 hover:bg-sky-50 whitespace-nowrap"
           >
             + New Group
           </button>
@@ -516,7 +516,7 @@ export default function ClientOrderClient({
               const g = groups.find((x) => x.id === activeGroupId);
               if (g) startRename(g.id, g.name);
             }}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100 whitespace-nowrap"
           >
             <Pencil className="size-3.5" />
             Rename
@@ -525,7 +525,7 @@ export default function ClientOrderClient({
             <button
               type="button"
               onClick={() => removeGroup(activeGroupId)}
-              className="px-3 py-2 rounded-full text-sm text-red-500 hover:bg-red-50"
+              className="shrink-0 px-3 py-2 rounded-full text-sm text-red-500 hover:bg-red-50 whitespace-nowrap"
             >
               Remove
             </button>
