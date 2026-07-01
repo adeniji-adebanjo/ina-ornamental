@@ -54,6 +54,20 @@ export default function OrderClient() {
   const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
   const countryRef = useRef<HTMLDivElement>(null);
   const phoneCodeRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const [summaryVisible, setSummaryVisible] = useState(false);
+
+  // Hide the sticky mobile action bar once the order form is on screen.
+  useEffect(() => {
+    const el = summaryRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setSummaryVisible(entry.isIntersecting),
+      { rootMargin: "-30% 0px -30% 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -530,7 +544,7 @@ export default function OrderClient() {
             })}
           </div>
 
-          <div className="xl:col-span-1">
+          <div ref={summaryRef} id="order-summary" className="xl:col-span-1 scroll-mt-24">
             <Card className="sticky top-24 border-slate-100 rounded-2xl shadow-sm">
               <CardContent className="p-5 md:p-6">
                 <h2 className="text-xl font-bold text-slate-900 mb-2">
@@ -781,6 +795,35 @@ export default function OrderClient() {
           </div>
         </div>
       </section>
+
+      {/* Sticky mobile action bar — reach the order form without scrolling
+          past the whole species list. Hidden once the form is on screen. */}
+      {totalItems > 0 && !summaryVisible && (
+        <div className="xl:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-2.5 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] leading-tight text-slate-500">
+                Your order
+              </p>
+              <p className="text-sm font-semibold leading-tight text-slate-900">
+                {totalItems} {totalItems === 1 ? "item" : "items"}
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() =>
+                summaryRef.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                })
+              }
+              className="ml-auto h-10 rounded-full px-5"
+            >
+              Review &amp; Complete
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

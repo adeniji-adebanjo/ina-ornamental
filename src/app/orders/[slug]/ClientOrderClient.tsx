@@ -71,6 +71,7 @@ export default function ClientOrderClient({
   const [activeGroupId, setActiveGroupId] = useState(1);
   const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
+  const summaryRef = useRef<HTMLDivElement>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderRef, setOrderRef] = useState("");
@@ -532,7 +533,7 @@ export default function ClientOrderClient({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-28 lg:pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2">
           <div className="mb-4 sticky top-[115px] z-30 bg-white border-b border-slate-200 py-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -732,7 +733,7 @@ export default function ClientOrderClient({
         </div>
 
         {/* Order Summary & Form */}
-        <div>
+        <div ref={summaryRef} id="order-summary" className="scroll-mt-28">
           <Card className="rounded-xl sticky top-[120px]">
             <CardContent className="p-4 sm:p-5">
               <h2 className="font-bold text-slate-900 text-lg mb-2">
@@ -1016,6 +1017,35 @@ export default function ClientOrderClient({
           </Card>
         </div>
       </div>
+
+      {/* Sticky mobile action bar — jump straight to the order form without
+          scrolling past the whole species list. */}
+      {totalPieces > 0 && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-2.5 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] leading-tight text-slate-500">
+                Your order
+              </p>
+              <p className="text-sm font-semibold leading-tight text-slate-900">
+                {totalPieces} pcs · {totalBoxes.toFixed(2)} boxes
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() =>
+                summaryRef.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                })
+              }
+              className="ml-auto h-10 rounded-full px-5"
+            >
+              Review &amp; Complete
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
     // </div>
   );
