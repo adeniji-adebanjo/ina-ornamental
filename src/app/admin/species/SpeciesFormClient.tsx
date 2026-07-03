@@ -12,9 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Trash2, Plus, ArrowLeft } from "lucide-react";
-import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import ImageUploader from "@/components/admin/ImageUploader";
 
 interface Props {
   species?: SpeciesWithImages;
@@ -53,7 +53,6 @@ export default function SpeciesFormClient({ species, categories }: Props) {
   const [imageUrls, setImageUrls] = useState<string[]>(
     species?.images?.map((i) => i.image_url) ?? [],
   );
-  const [newImageUrl, setNewImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
 
   function slugify(text: string): string {
@@ -69,16 +68,6 @@ export default function SpeciesFormClient({ species, categories }: Props) {
       common_name: name,
       slug: isEdit ? f.slug : slugify(name),
     }));
-  }
-
-  function addImage() {
-    if (!newImageUrl.trim()) return;
-    setImageUrls((prev) => [...prev, newImageUrl.trim()]);
-    setNewImageUrl("");
-  }
-
-  function removeImage(index: number) {
-    setImageUrls((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -278,57 +267,7 @@ export default function SpeciesFormClient({ species, categories }: Props) {
           <Card className="rounded-xl">
             <CardContent className="p-4 sm:p-5 space-y-4">
               <h2 className="font-semibold text-slate-900">Images</h2>
-
-              {imageUrls.map((url, i) => (
-                <div key={i} className="flex items-center gap-2 sm:gap-3">
-                  <div className="relative w-10 h-10 sm:w-16 sm:h-16 rounded-lg overflow-hidden border shrink-0">
-                    {url ? (
-                      <Image
-                        src={url}
-                        alt=""
-                        fill
-                        sizes="64px"
-                        unoptimized
-                        className="object-cover"
-                      />
-                    ) : null}
-                  </div>
-                  <Input
-                    value={url}
-                    onChange={(e) => {
-                      const updated = [...imageUrls];
-                      updated[i] = e.target.value;
-                      setImageUrls(updated);
-                    }}
-                    className="flex-1 min-w-0 rounded-xl text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => removeImage(i)}
-                  >
-                    <Trash2 className="size-4 text-red-500" />
-                  </Button>
-                </div>
-              ))}
-
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Paste image URL..."
-                  value={newImageUrl}
-                  onChange={(e) => setNewImageUrl(e.target.value)}
-                  className="rounded-xl text-sm"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addImage}
-                  className="rounded-xl"
-                >
-                  <Plus className="size-4" />
-                </Button>
-              </div>
+              <ImageUploader value={imageUrls} onChange={setImageUrls} />
             </CardContent>
           </Card>
         </div>

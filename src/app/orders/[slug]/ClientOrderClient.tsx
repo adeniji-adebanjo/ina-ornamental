@@ -141,9 +141,7 @@ export default function ClientOrderClient({
     const setOpts = new Set<string>();
     for (const it of priceList.items) {
       const cls =
-        it.species?.class_order ||
-        it.species?.category?.name ||
-        "Unspecified";
+        it.species?.class_order || it.species?.category?.name || "Unspecified";
       setOpts.add(cls);
     }
     return Array.from(setOpts);
@@ -381,10 +379,14 @@ export default function ClientOrderClient({
         });
       } else {
         const err = await res.json().catch(() => null);
-        toast.error(err?.error || "We couldn't submit your order. Please try again.");
+        toast.error(
+          err?.error || "We couldn't submit your order. Please try again.",
+        );
       }
     } catch {
-      toast.error("Network error — please check your connection and try again.");
+      toast.error(
+        "Network error — please check your connection and try again.",
+      );
     }
     setSubmitting(false);
   }
@@ -405,9 +407,8 @@ export default function ClientOrderClient({
             </p>
             <p className="text-sm text-slate-500 mt-2">
               Thanks for trusting us; we&apos;re currently verifying your order
-              and
-              prepping for a safe journey to ensure your new arrivals reach you
-              in peak condition.
+              and prepping for a safe journey to ensure your new arrivals reach
+              you in peak condition.
             </p>
             <p className="text-xs text-slate-500 mt-3">
               By submitting this form, an Excel invoice will be automatically
@@ -743,7 +744,7 @@ export default function ClientOrderClient({
               <h2 className="font-bold text-slate-900 text-lg mb-2">
                 Order Summary
               </h2>
-<div className="flex flex-wrap gap-3 text-sm mb-4">
+              <div className="flex flex-wrap gap-3 text-sm mb-4">
                 <span className="text-slate-600">
                   <strong className="text-sky-800">{totalPieces}</strong> pieces
                 </span>
