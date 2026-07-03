@@ -18,10 +18,10 @@ import {
   Settings,
   Upload,
   Newspaper,
+  Clock,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { toast } from "sonner";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -35,8 +35,10 @@ const navItems = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
-// Sign an admin out after this long with no interaction.
-const IDLE_LIMIT_MS = 40 * 60 * 1000; // 40 minutes
+// After this long with no interaction, warn the admin (rather than signing
+// them out immediately) and give them a grace period to stay signed in.
+const IDLE_WARN_MS = 40 * 60 * 1000; // 40 minutes
+const LOGOUT_COUNTDOWN_S = 60; // grace period before auto sign-out
 
 export default function AdminLayoutClient({
   children,
@@ -48,7 +50,10 @@ export default function AdminLayoutClient({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showIdleWarning, setShowIdleWarning] = useState(false);
+  const [countdown, setCountdown] = useState(LOGOUT_COUNTDOWN_S);
   const lastActivityRef = useRef(0);
+  const warningRef = useRef(false);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -57,13 +62,28 @@ export default function AdminLayoutClient({
     router.refresh();
   }
 
-  // Auto-logout on inactivity. A lightweight activity listener only stamps a
-  // timestamp; a 30s interval does the actual idle check, so frequent events
-  // (mousemove/scroll) stay cheap.
-  useEffect(() => {
+  const performIdleLogout = useCallback(async () => {
+    warningRef.current = false;
+    setShowIdleWarning(false);
     const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }, [router]);
+
+  const staySignedIn = useCallback(() => {
+    warningRef.current = false;
+    setShowIdleWarning(false);
+    lastActivityRef.current = Date.now();
+  }, []);
+
+  // Idle detection. A lightweight activity listener stamps a timestamp; a short
+  // interval does the actual idle check, so frequent events stay cheap. Once
+  // idle past the threshold we show a warning overlay instead of signing out.
+  useEffect(() => {
     const bump = () => {
-      lastActivityRef.current = Date.now();
+      // Ignore activity while the warning is up — the admin must acknowledge it.
+      if (!warningRef.current) lastActivityRef.current = Date.now();
     };
     bump(); // stamp initial activity on mount
     const events = [
@@ -76,20 +96,38 @@ export default function AdminLayoutClient({
     ];
     events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
 
-    const interval = setInterval(async () => {
-      if (Date.now() - lastActivityRef.current < IDLE_LIMIT_MS) return;
-      clearInterval(interval);
-      toast.info("You've been signed out due to inactivity.");
-      await supabase.auth.signOut();
-      router.push("/login");
-      router.refresh();
-    }, 30_000);
+    const interval = setInterval(() => {
+      if (warningRef.current) return;
+      if (Date.now() - lastActivityRef.current >= IDLE_WARN_MS) {
+        warningRef.current = true;
+        setCountdown(LOGOUT_COUNTDOWN_S);
+        setShowIdleWarning(true);
+      }
+    }, 10_000);
 
     return () => {
       clearInterval(interval);
       events.forEach((e) => window.removeEventListener(e, bump));
     };
-  }, [router]);
+  }, []);
+
+  // Run the grace-period countdown while the warning is showing. A local
+  // counter drives the interval so no setState happens in the effect body.
+  useEffect(() => {
+    if (!showIdleWarning) return;
+    let remaining = LOGOUT_COUNTDOWN_S;
+    const interval = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        setCountdown(0);
+        performIdleLogout();
+      } else {
+        setCountdown(remaining);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showIdleWarning, performIdleLogout]);
 
   const isActive = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
@@ -187,6 +225,41 @@ export default function AdminLayoutClient({
         </header>
         <div className="p-4 lg:p-8">{children}</div>
       </main>
+
+      {/* Idle warning — gives a grace period before auto sign-out */}
+      {showIdleWarning && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl ring-1 ring-slate-900/10">
+            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <Clock className="size-6" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Are you still there?
+            </h2>
+            <p className="mt-1.5 text-sm text-slate-600">
+              You&apos;ve been inactive for a while. For security, you&apos;ll be
+              signed out in{" "}
+              <span className="font-semibold text-slate-900">{countdown}s</span>.
+            </p>
+            <div className="mt-5 flex flex-col-reverse sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={performIdleLogout}
+                className="flex-1 rounded-xl"
+              >
+                Log out now
+              </Button>
+              <Button
+                onClick={staySignedIn}
+                className="flex-1 rounded-xl"
+                autoFocus
+              >
+                Stay signed in
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
