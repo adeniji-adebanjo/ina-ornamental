@@ -1,6 +1,8 @@
 "use client";
 
+import InstagramSidebar from "@/components/blog/InstagramSidebar";
 import type { BlogCategory, BlogPost } from "@/types";
+import type { InstagramPost } from "@/types/database";
 import { CalendarDays, Newspaper, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +11,7 @@ import { useMemo, useState } from "react";
 interface Props {
   posts: BlogPost[];
   categories: BlogCategory[];
+  instagramPosts: InstagramPost[];
 }
 
 function formatDate(iso: string) {
@@ -24,7 +27,11 @@ function formatDate(iso: string) {
   }
 }
 
-export default function BlogIndexClient({ posts, categories }: Props) {
+export default function BlogIndexClient({
+  posts,
+  categories,
+  instagramPosts,
+}: Props) {
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState<number | "all">("all");
 
@@ -66,6 +73,8 @@ export default function BlogIndexClient({ posts, categories }: Props) {
       </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8 lg:items-start">
+          <div>
         {posts.length > 0 && (
           <div className="flex flex-col md:flex-row md:items-center gap-4 mb-10">
             <div className="relative flex-1 max-w-md">
@@ -123,7 +132,7 @@ export default function BlogIndexClient({ posts, categories }: Props) {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             {filtered.map((post) => (
               <Link
                 key={post.id}
@@ -168,6 +177,14 @@ export default function BlogIndexClient({ posts, categories }: Props) {
             ))}
           </div>
         )}
+          </div>
+
+          {instagramPosts.length > 0 && (
+            <aside className="mt-10 lg:mt-0 lg:sticky lg:top-24">
+              <InstagramSidebar posts={instagramPosts} />
+            </aside>
+          )}
+        </div>
       </section>
     </div>
   );

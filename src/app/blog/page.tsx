@@ -1,4 +1,5 @@
 import { fetchCategories, fetchPosts } from "@/lib/blog";
+import { getInstagramPosts } from "@/lib/queries/instagram";
 import BlogIndexClient from "./BlogIndexClient";
 
 export const metadata = {
@@ -12,10 +13,17 @@ export const metadata = {
 export const revalidate = 300;
 
 export default async function BlogPage() {
-  const [{ posts }, categories] = await Promise.all([
+  const [{ posts }, categories, instagramPosts] = await Promise.all([
     fetchPosts({ perPage: 24 }),
     fetchCategories(),
+    getInstagramPosts(9),
   ]);
 
-  return <BlogIndexClient posts={posts} categories={categories} />;
+  return (
+    <BlogIndexClient
+      posts={posts}
+      categories={categories}
+      instagramPosts={instagramPosts}
+    />
+  );
 }

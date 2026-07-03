@@ -79,15 +79,24 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-slate-700 hover:text-sky-700 font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-sky-700 after:transition-all hover:after:w-full"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-sky-700 after:transition-all",
+                    active
+                      ? "text-sky-700 after:w-full"
+                      : "text-slate-700 hover:text-sky-700 after:w-0 hover:after:w-full",
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Desktop Actions */}

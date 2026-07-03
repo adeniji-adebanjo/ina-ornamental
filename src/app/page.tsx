@@ -2,6 +2,7 @@ import Hero from "@/components/home/Hero";
 import Stats from "@/components/home/Stats";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
 import FeaturedSpecies from "@/components/home/FeaturedSpecies";
+import GalleryPreview from "@/components/home/GalleryPreview";
 import CtaBanner from "@/components/home/CtaBanner";
 
 const SITE_URL =
@@ -60,6 +61,7 @@ export default function Home() {
       <Stats />
       <WhyChooseUs />
       <FeaturedSpecies />
+      <GalleryPreview />
       <CtaBanner />
     </>
   );
