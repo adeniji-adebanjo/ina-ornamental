@@ -543,18 +543,23 @@ export default function ClientOrderClient({
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-28 lg:pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2">
-          <div className="mb-4 sticky top-[115px] z-30 bg-white/95 backdrop-blur border-b border-slate-200 py-3">
-            <div className="relative mb-2 w-full lg:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search species by name…"
-                className="w-full pl-9 pr-3 h-9 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/40"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full lg:max-w-md">
+          <div className="mb-4 sticky top-[115px] z-30 bg-white/95 backdrop-blur border-b border-slate-200 py-3 px-3 sm:px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-[1.4fr_1fr_1fr] gap-2 sm:gap-3 w-full lg:max-w-2xl">
+              <div className="col-span-2 sm:col-span-1">
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Search
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search species…"
+                    className="w-full pl-9 pr-3 h-9 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/40"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   Availability
