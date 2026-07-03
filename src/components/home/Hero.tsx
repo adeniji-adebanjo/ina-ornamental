@@ -1,10 +1,22 @@
 import Link from "next/link";
+import Image from "next/image";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-linear-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">
+    <section className="relative overflow-hidden bg-slate-900 text-white">
+      {/* Background photo */}
+      <Image
+        src="/landing-hero.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+      />
+      {/* Dark brand overlay keeps the white copy legible over the photo */}
+      <div className="absolute inset-0 bg-linear-to-br from-slate-900/90 via-sky-900/75 to-emerald-900/70" />
       <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,#d4a85f_0,transparent_45%),radial-gradient(circle_at_bottom_left,#3b655d_0,transparent_40%)]" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <p className="text-xs uppercase tracking-[0.25em] text-sky-200 font-semibold mb-4">

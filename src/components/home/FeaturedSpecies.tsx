@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { Package } from "lucide-react";
 import { fishProducts } from "@/data/products";
 import { getSpecies, getCategories } from "@/lib/queries/species";
 import { getSetting } from "@/lib/queries/settings";
@@ -66,8 +68,26 @@ export default async function FeaturedSpecies() {
         {featured.map((fish) => (
           <Card
             key={fish.id}
-            className="border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+            className="group border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow pt-0"
           >
+            <div className="relative aspect-4/3 bg-linear-to-br from-sky-50 to-emerald-50">
+              {fish.imageUrl !== "/images/fish-placeholder.svg" ? (
+                <Image
+                  src={fish.imageUrl}
+                  alt={fish.commonName}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-sky-300">
+                  <Package className="size-12 mb-2 opacity-50" />
+                  <span className="text-xs font-medium text-sky-400 px-2 text-center">
+                    {fish.commonName}
+                  </span>
+                </div>
+              )}
+            </div>
             <CardHeader>
               <Badge
                 variant="secondary"

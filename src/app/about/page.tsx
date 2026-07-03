@@ -1,4 +1,7 @@
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
+import { getSpecies } from "@/lib/queries/species";
+import { fishProducts } from "@/data/products";
 import {
   Flame,
   ShieldCheck,
@@ -12,6 +15,7 @@ import {
   Building2,
   Mail,
   Globe,
+  Fish,
 } from "lucide-react";
 
 const SITE_URL =
@@ -275,7 +279,33 @@ function SectionHeading({
   );
 }
 
-export default function AboutPage() {
+// Build a scientific-name → image map so the portfolio can show real photos.
+// Uploaded catalogue images take priority; the static dataset fills gaps.
+async function getPortfolioImages(): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const PLACEHOLDER = "/images/fish-placeholder.svg";
+  for (const p of fishProducts) {
+    if (p.scientificName && p.imageUrl && p.imageUrl !== PLACEHOLDER) {
+      map.set(p.scientificName.toLowerCase().trim(), p.imageUrl);
+    }
+  }
+  try {
+    const species = await getSpecies();
+    for (const s of species) {
+      const img = s.images?.[0]?.image_url;
+      if (s.scientific_name && img && img !== PLACEHOLDER) {
+        map.set(s.scientific_name.toLowerCase().trim(), img);
+      }
+    }
+  } catch {
+    // Fall back to whatever the static dataset provided.
+  }
+  return map;
+}
+
+export default async function AboutPage() {
+  const imageBySci = await getPortfolioImages();
+
   return (
     <>
       <script
@@ -284,8 +314,17 @@ export default function AboutPage() {
       />
 
       {/* Hero */}
-      <section className="bg-linear-to-br from-slate-900 via-sky-900 to-emerald-900 text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+      <section className="relative overflow-hidden bg-slate-900 text-white">
+        <Image
+          src="/about-hero.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-linear-to-br from-slate-900/90 via-sky-900/75 to-emerald-900/70" />
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <p className="text-xs uppercase tracking-[0.2em] text-sky-200 font-semibold mb-3">
             About INÁ Ornamental Fish
           </p>
@@ -377,15 +416,37 @@ export default function AboutPage() {
             {`To help your procurement and inventory managers plan their next season, we maintain stable, high-volume access to these highly demanded West African freshwater species:`}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {portfolio.map((p) => (
-              <div
-                key={p.sci}
-                className="rounded-xl bg-white border border-slate-100 px-4 py-3"
-              >
-                <p className="font-semibold text-slate-800 italic">{p.sci}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{p.common}</p>
-              </div>
-            ))}
+            {portfolio.map((p) => {
+              const img = imageBySci.get(p.sci.toLowerCase().trim());
+              return (
+                <div
+                  key={p.sci}
+                  className="rounded-xl bg-white border border-slate-100 overflow-hidden"
+                >
+                  <div className="relative aspect-4/3 bg-linear-to-br from-sky-50 to-emerald-50">
+                    {img ? (
+                      <Image
+                        src={img}
+                        alt={p.common}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-sky-300">
+                        <Fish className="size-10 opacity-50" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="font-semibold text-slate-800 italic">
+                      {p.sci}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">{p.common}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
