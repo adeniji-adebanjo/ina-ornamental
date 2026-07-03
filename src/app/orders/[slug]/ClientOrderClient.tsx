@@ -134,6 +134,7 @@ export default function ClientOrderClient({
   );
 
   // Filters
+  const [search, setSearch] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
   const [classFilter, setClassFilter] = useState<string>("all");
 
@@ -215,6 +216,7 @@ export default function ClientOrderClient({
   const canContactViaWhatsApp = whatsappBlockReason === "";
 
   const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return priceList.items.filter((item) => {
       const sp = item.species;
       const avail = sp?.availability || "on_request";
@@ -222,9 +224,14 @@ export default function ClientOrderClient({
       if (availabilityFilter !== "all" && availabilityFilter !== avail)
         return false;
       if (classFilter !== "all" && classFilter !== cls) return false;
+      if (q) {
+        const haystack =
+          `${sp?.common_name ?? ""} ${sp?.scientific_name ?? ""}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
       return true;
     });
-  }, [priceList.items, availabilityFilter, classFilter]);
+  }, [priceList.items, availabilityFilter, classFilter, search]);
 
   function setPieces(speciesId: string, pieces: number, qtyPerBox: number) {
     setGroups((prev) =>
@@ -537,6 +544,16 @@ export default function ClientOrderClient({
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-28 lg:pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2">
           <div className="mb-4 sticky top-[115px] z-30 bg-white/95 backdrop-blur border-b border-slate-200 py-3">
+            <div className="relative mb-2 w-full lg:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search species by name…"
+                className="w-full pl-9 pr-3 h-9 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/40"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full lg:max-w-md">
               <div>
                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">

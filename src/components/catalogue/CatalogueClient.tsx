@@ -9,6 +9,7 @@ import ProductCard from "@/components/catalogue/ProductCard";
 import ProductModal from "@/components/catalogue/ProductModal";
 import OrderGroupSelector from "@/components/catalogue/OrderGroupSelector";
 import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
 
 interface CatalogueClientProps {
   products: FishProduct[];
@@ -45,15 +46,24 @@ export default function CatalogueClient({
 
   return (
     <>
-      <section className="bg-linear-to-b from-sky-50 to-white border-b border-sky-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-          <p className="text-xs font-semibold tracking-[0.18em] text-sky-700 uppercase mb-3">
+      <section className="relative overflow-hidden bg-slate-900 text-white border-b border-sky-900/40">
+        <Image
+          src="/catalog-hero.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-linear-to-br from-slate-900/90 via-sky-900/75 to-emerald-900/70" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+          <p className="text-xs font-semibold tracking-[0.18em] text-sky-200 uppercase mb-3">
             B2B GLOBAL EXPORT • LAGOS, NIGERIA
           </p>
-          <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-slate-900 leading-tight max-w-3xl">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-white leading-tight max-w-3xl">
             Premium West African Ornamental Fish
           </h1>
-          <p className="mt-4 text-slate-600 max-w-3xl text-sm md:text-base leading-relaxed">
+          <p className="mt-4 text-sky-100 max-w-3xl text-sm md:text-base leading-relaxed">
             Sustainably sourced. Expertly quarantined. Delivered worldwide with
             a live arrival guarantee. Explore our current inventory and request
             a custom B2B quote.

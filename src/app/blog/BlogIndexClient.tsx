@@ -57,15 +57,24 @@ export default function BlogIndexClient({
   return (
     <div className="bg-[#fdfbf7]">
       {/* Hero */}
-      <section className="bg-gradient-to-b from-sky-50 to-[#fdfbf7] border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600 mb-3">
+      <section className="relative overflow-hidden bg-slate-900 text-white">
+        <Image
+          src="/blog-hero.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-linear-to-br from-slate-900/90 via-sky-900/75 to-emerald-900/70" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-emerald-300 mb-3">
             From the team
           </p>
-          <h1 className="text-3xl md:text-5xl font-black text-sky-900 mb-4">
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4">
             The INA Journal
           </h1>
-          <p className="text-slate-600 max-w-2xl mx-auto md:text-lg">
+          <p className="text-sky-100 max-w-2xl mx-auto md:text-lg">
             Care guides, species spotlights and stories from the world of West
             African ornamental fish.
           </p>
