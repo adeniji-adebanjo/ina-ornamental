@@ -10,6 +10,8 @@ import {
   normalizeAvailability,
   applyAvailabilityUpdates,
 } from "@/lib/excel";
+import { CATALOG_TAG } from "@/lib/queries/species";
+import { revalidateTag } from "next/cache";
 
 // Parse an uploaded Excel file and return species_id + price pairs
 // Supports either a simple two-column sheet (Name + Price) or a location pricing template
@@ -211,6 +213,8 @@ export async function POST(request: NextRequest) {
     admin,
     availabilityById,
   );
+  // Availability is part of the cached catalogue data.
+  if (availabilityUpdated > 0) revalidateTag(CATALOG_TAG, "max");
 
   return NextResponse.json({ items: dedupedItems, errors, availabilityUpdated });
 }

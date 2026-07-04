@@ -2,6 +2,8 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { CATALOG_TAG } from "@/lib/queries/species";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 const GOOGLE_SHEET_URL =
@@ -185,6 +187,7 @@ export async function POST() {
     }
   }
 
+  revalidateTag(CATALOG_TAG, "max");
   return NextResponse.json({
     success: true,
     categories: categoryNames.size,

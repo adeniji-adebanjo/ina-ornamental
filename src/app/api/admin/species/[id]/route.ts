@@ -2,6 +2,8 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { CATALOG_TAG } from "@/lib/queries/species";
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
@@ -43,6 +45,7 @@ export async function PUT(
     }
   }
 
+  revalidateTag(CATALOG_TAG, "max");
   return NextResponse.json(data);
 }
 
@@ -63,5 +66,6 @@ export async function DELETE(
   if (error)
     return NextResponse.json({ error: error.message }, { status: 400 });
 
+  revalidateTag(CATALOG_TAG, "max");
   return NextResponse.json({ success: true });
 }

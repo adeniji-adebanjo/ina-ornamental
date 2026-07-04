@@ -33,3 +33,15 @@ export async function createAdminSupabaseClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 }
+
+// A cookie-free anon client for cacheable public reads. It reads no request
+// state (no cookies/headers), so it can safely run inside `unstable_cache`
+// (which forbids dynamic APIs). RLS still applies — only use it for data with
+// a public read policy (species, categories, site settings).
+export async function createPublicSupabaseClient() {
+  const { createClient } = await import("@supabase/supabase-js");
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+}

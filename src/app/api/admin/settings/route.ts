@@ -3,6 +3,8 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { SETTINGS_TAG } from "@/lib/queries/settings";
+import { revalidateTag } from "next/cache";
 
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -42,5 +44,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  revalidateTag(SETTINGS_TAG, "max");
   return NextResponse.json({ success: true });
 }

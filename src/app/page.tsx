@@ -8,6 +8,9 @@ import CtaBanner from "@/components/home/CtaBanner";
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://inaornamentalfish.com";
 
+// ISR — species/settings reads are served from the tagged data cache.
+export const revalidate = 60;
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [

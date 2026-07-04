@@ -3,6 +3,8 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { CATALOG_TAG } from "@/lib/queries/species";
+import { revalidateTag } from "next/cache";
 import { loadWorkbook, cellText } from "@/lib/excel";
 
 // ExcelJS needs Node APIs (stream/Buffer), and a large sheet shouldn't be cut
@@ -294,6 +296,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  revalidateTag(CATALOG_TAG, "max");
   return NextResponse.json({
     success: true,
     created,

@@ -1,9 +1,28 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createPublicSupabaseClient,
+  createServerSupabaseClient,
+} from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
 import type {
   SpeciesWithImages,
   Category,
   AvailabilityStatus,
 } from "@/types/database";
+
+// Shared cache tag for the public catalogue data (species + categories). Write
+// routes call revalidateTag("catalog") to drop these caches on change. A 60s
+// TTL bounds staleness even if a write path forgets to revalidate.
+export const CATALOG_TAG = "catalog";
+const CATALOG_TTL_S = 60;
+
+interface GetSpeciesOptions {
+  categorySlug?: string;
+  search?: string;
+  availability?: AvailabilityStatus;
+  featured?: boolean;
+  bestSeller?: boolean;
+  limit?: number;
+}
 
 // Categories matching one of these (case-insensitive slug substring) are pinned
 // to the front of the list, in this order, regardless of their stored
@@ -17,8 +36,8 @@ function categoryRank(slug: string): number {
   return i === -1 ? PINNED_CATEGORY_SLUGS.length : i;
 }
 
-export async function getCategories(): Promise<Category[]> {
-  const supabase = await createServerSupabaseClient();
+async function queryCategories(): Promise<Category[]> {
+  const supabase = await createPublicSupabaseClient();
   const { data } = await supabase
     .from("categories")
     .select("*")
@@ -33,15 +52,17 @@ export async function getCategories(): Promise<Category[]> {
   });
 }
 
-export async function getSpecies(options?: {
-  categorySlug?: string;
-  search?: string;
-  availability?: AvailabilityStatus;
-  featured?: boolean;
-  bestSeller?: boolean;
-  limit?: number;
-}): Promise<SpeciesWithImages[]> {
-  const supabase = await createServerSupabaseClient();
+// Cached public read — served from the data cache unless "catalog" is
+// revalidated or the 60s TTL lapses.
+export const getCategories = unstable_cache(queryCategories, ["categories"], {
+  tags: [CATALOG_TAG],
+  revalidate: CATALOG_TTL_S,
+});
+
+async function querySpecies(
+  options?: GetSpeciesOptions,
+): Promise<SpeciesWithImages[]> {
+  const supabase = await createPublicSupabaseClient();
 
   const categorySlug =
     options?.categorySlug && options.categorySlug !== "all"
@@ -86,6 +107,13 @@ export async function getSpecies(options?: {
   const { data } = await query;
   return (data as SpeciesWithImages[]) ?? [];
 }
+
+// Cached public read. unstable_cache keys on the serialized options, so each
+// filter combination is cached (and tagged) independently.
+export const getSpecies = unstable_cache(querySpecies, ["species"], {
+  tags: [CATALOG_TAG],
+  revalidate: CATALOG_TTL_S,
+});
 
 export async function getSpeciesBySlug(
   slug: string,

@@ -28,6 +28,9 @@ export const metadata = {
   alternates: { canonical: "/about" },
 };
 
+// ISR — the portfolio species images come from the tagged data cache.
+export const revalidate = 60;
+
 // ── Content ──────────────────────────────────────────────────────────────────
 
 const advantages = [

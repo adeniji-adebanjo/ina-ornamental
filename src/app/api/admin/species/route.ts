@@ -2,6 +2,8 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { CATALOG_TAG } from "@/lib/queries/species";
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -35,5 +37,6 @@ export async function POST(request: NextRequest) {
     await admin.from("species_images").insert(images);
   }
 
+  revalidateTag(CATALOG_TAG, "max");
   return NextResponse.json(data);
 }

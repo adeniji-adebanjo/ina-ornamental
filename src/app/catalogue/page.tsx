@@ -10,6 +10,10 @@ export const metadata = {
   alternates: { canonical: "/catalogue" },
 };
 
+// ISR: re-render at most once a minute; species reads come from the tagged data
+// cache, so a normal request rarely touches the database.
+export const revalidate = 60;
+
 export default async function CataloguePage() {
   let products;
   let categoryNames: string[] = [];
