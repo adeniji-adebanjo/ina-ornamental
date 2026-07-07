@@ -24,6 +24,11 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+// Draft of the Upload Order form, persisted so a refresh doesn't lose typed
+// customer/shipment details. The chosen file can't be persisted (browser
+// security), so it must be re-selected.
+const DRAFT_KEY = "ina-order-upload-draft-v1";
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -59,6 +64,7 @@ export default function OrderUploadDialog({
   const [errors, setErrors] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const countryRef = useRef<HTMLDivElement>(null);
+  const draftLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!countryOpen) return;
@@ -69,6 +75,51 @@ export default function OrderUploadDialog({
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [countryOpen]);
+
+  // Restore a saved draft once on mount.
+  useEffect(() => {
+    const load = () => {
+      try {
+        const raw = window.localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const draft = JSON.parse(raw) as {
+          form?: Partial<typeof EMPTY>;
+          countryCode?: string;
+          phoneNumber?: string;
+        };
+        if (draft.form) setForm({ ...EMPTY, ...draft.form });
+        if (draft.countryCode) {
+          const c = COUNTRIES.find((x) => x.code === draft.countryCode);
+          if (c) setCountry(c);
+        }
+        if (draft.phoneNumber) setPhoneNumber(draft.phoneNumber);
+      } catch {
+        /* ignore corrupt drafts */
+      }
+    };
+    load();
+    draftLoadedRef.current = true;
+  }, []);
+
+  // Save the typed fields (never the file) whenever they change; clear the
+  // draft once everything is empty (e.g. after submit/cancel reset).
+  useEffect(() => {
+    if (!draftLoadedRef.current) return;
+    const hasContent =
+      Object.values(form).some((v) => v.trim()) || phoneNumber.trim();
+    try {
+      if (hasContent) {
+        window.localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ form, countryCode: country.code, phoneNumber }),
+        );
+      } else {
+        window.localStorage.removeItem(DRAFT_KEY);
+      }
+    } catch {
+      /* storage unavailable — non-fatal */
+    }
+  }, [form, country, phoneNumber]);
 
   function set<K extends keyof typeof EMPTY>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));

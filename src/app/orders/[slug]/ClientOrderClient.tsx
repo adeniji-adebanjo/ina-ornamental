@@ -69,6 +69,51 @@ export default function ClientOrderClient({
     { id: 1, name: "Order A", items: {} },
   ]);
   const [activeGroupId, setActiveGroupId] = useState(1);
+
+  // Persist the client's in-progress selection to localStorage (keyed per
+  // price-list link) so a refresh doesn't wipe what they've built.
+  const STORAGE_KEY = `ina-client-order-v1-${priceList.id}`;
+  const draftLoadedRef = useRef(false);
+
+  // Restore a saved draft once on mount (in an effect, post-hydration).
+  useEffect(() => {
+    const load = () => {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const draft = JSON.parse(raw) as {
+          groups?: OrderGroup[];
+          activeGroupId?: number;
+        };
+        if (draft.groups?.length) {
+          setGroups(draft.groups);
+          const stillExists = draft.groups.some(
+            (g) => g.id === draft.activeGroupId,
+          );
+          setActiveGroupId(
+            stillExists ? (draft.activeGroupId as number) : draft.groups[0].id,
+          );
+        }
+      } catch {
+        /* ignore corrupt drafts */
+      }
+    };
+    load();
+    draftLoadedRef.current = true;
+  }, [STORAGE_KEY]);
+
+  // Save on change (only after the initial restore, so we don't clobber it).
+  useEffect(() => {
+    if (!draftLoadedRef.current) return;
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ groups, activeGroupId }),
+      );
+    } catch {
+      /* storage full / unavailable — non-fatal */
+    }
+  }, [groups, activeGroupId, STORAGE_KEY]);
   const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
   const summaryRef = useRef<HTMLDivElement>(null);
@@ -381,6 +426,12 @@ export default function ClientOrderClient({
         const data = await res.json();
         setOrderRef(data.order_reference);
         setSubmitted(true);
+        // Order placed — clear the saved draft so it doesn't resurface.
+        try {
+          window.localStorage.removeItem(STORAGE_KEY);
+        } catch {
+          /* non-fatal */
+        }
         toast.success("Order submitted!", {
           description: `Reference: ${data.order_reference}`,
         });
