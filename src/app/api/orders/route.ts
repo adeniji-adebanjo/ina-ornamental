@@ -53,8 +53,32 @@ export async function POST(request: NextRequest) {
     // Honeypot: a hidden field real users never fill. Bots that autofill it get
     // a success-shaped response but nothing is created or emailed.
     website,
-  } = body as Record<string, string> & {
-    groups?: { name?: string; items?: { quantity?: unknown; unit_price?: unknown }[] }[];
+  } = body as {
+    customer_name?: string;
+    company_name?: string;
+    email?: string;
+    phone?: string;
+    country?: string;
+    delivery_address?: string;
+    notes?: string;
+    proposed_shipment_date?: string;
+    consignee_name?: string;
+    consignee_phone?: string;
+    consignee_address?: string;
+    price_list_id?: string;
+    client_id?: string;
+    website?: string;
+    groups?: {
+      name?: string;
+      items?: {
+        species_id: string;
+        species_name: string;
+        scientific_name?: string;
+        size?: string;
+        quantity: number;
+        unit_price?: number;
+      }[];
+    }[];
   };
 
   if (typeof website === "string" && website.trim() !== "") {
@@ -281,21 +305,16 @@ export async function POST(request: NextRequest) {
     consignee_name: consignee_name || null,
     consignee_phone: consignee_phone || null,
     consignee_address: consignee_address || null,
-    groups: groups.map(
-      (g: {
-        name: string;
-        items: {
-          species_name: string;
-          scientific_name?: string;
-          size?: string;
-          quantity: number;
-          unit_price?: number;
-        }[];
-      }) => ({
-        name: g.name,
-        items: g.items,
-      }),
-    ),
+    groups: groups.map((g) => ({
+      name: g.name || "Order",
+      items: (g.items ?? []).map((it) => ({
+        species_name: it.species_name,
+        scientific_name: it.scientific_name,
+        size: it.size,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+      })),
+    })),
   }).catch((err) => {
     console.error("Order email failed:", err);
   });

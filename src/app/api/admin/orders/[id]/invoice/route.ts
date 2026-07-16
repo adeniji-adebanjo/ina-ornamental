@@ -136,7 +136,8 @@ export async function GET(
       doc.text(item.size || "-", 330, y, { width: 60 });
       doc.text(String(item.quantity), 390, y, { width: 40, align: "right" });
 
-      const price = item.unit_price || 0;
+      // unit_price is a decimal string from the DB — coerce before .toFixed().
+      const price = Number(item.unit_price) || 0;
       const total = price * item.quantity;
       doc.text(price ? `$${price.toFixed(2)}` : "-", 440, y, {
         width: 50,
