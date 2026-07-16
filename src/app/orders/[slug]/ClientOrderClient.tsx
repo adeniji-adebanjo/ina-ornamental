@@ -222,7 +222,7 @@ export default function ClientOrderClient({
         const item = priceList.items.find((pi) => pi.species_id === speciesId);
         const name = item?.species?.common_name ?? speciesId;
         const price = item?.custom_price
-          ? ` @ $${item.custom_price.toFixed(2)}`
+          ? ` @ $${Number(item.custom_price).toFixed(2)}`
           : "";
         lines.push(`- ${name}: ${pieces} pcs / ${boxes.toFixed(2)} bx${price}`);
       });

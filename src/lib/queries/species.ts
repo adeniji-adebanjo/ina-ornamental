@@ -3,6 +3,7 @@ import {
   createServerSupabaseClient,
 } from "@/lib/supabase/server";
 import { unstable_cache } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   SpeciesWithImages,
   Category,
@@ -36,8 +37,7 @@ function categoryRank(slug: string): number {
   return i === -1 ? PINNED_CATEGORY_SLUGS.length : i;
 }
 
-async function queryCategories(): Promise<Category[]> {
-  const supabase = await createPublicSupabaseClient();
+async function queryCategories(supabase: SupabaseClient): Promise<Category[]> {
   const { data } = await supabase
     .from("categories")
     .select("*")
@@ -54,16 +54,21 @@ async function queryCategories(): Promise<Category[]> {
 
 // Cached public read — served from the data cache unless "catalog" is
 // revalidated or the 60s TTL lapses.
-export const getCategories = unstable_cache(queryCategories, ["categories"], {
-  tags: [CATALOG_TAG],
-  revalidate: CATALOG_TTL_S,
-});
+export const getCategories = unstable_cache(
+  async () => queryCategories(await createPublicSupabaseClient()),
+  ["categories"],
+  { tags: [CATALOG_TAG], revalidate: CATALOG_TTL_S },
+);
+
+// Fresh (uncached) read for admin pages, which must reflect edits immediately.
+export async function getCategoriesUncached(): Promise<Category[]> {
+  return queryCategories(await createServerSupabaseClient());
+}
 
 async function querySpecies(
+  supabase: SupabaseClient,
   options?: GetSpeciesOptions,
 ): Promise<SpeciesWithImages[]> {
-  const supabase = await createPublicSupabaseClient();
-
   const categorySlug =
     options?.categorySlug && options.categorySlug !== "all"
       ? options.categorySlug
@@ -87,9 +92,14 @@ async function querySpecies(
     query = query.eq("category.slug", categorySlug);
   }
   if (options?.search) {
-    query = query.or(
-      `common_name.ilike.%${options.search}%,scientific_name.ilike.%${options.search}%`,
-    );
+    // Strip PostgREST-structural characters so the term can't break out of the
+    // intended `or(...)` filter (comma/parens/wildcards/quotes/backslash).
+    const safe = options.search.replace(/[,()*%"'\\]/g, " ").trim();
+    if (safe) {
+      query = query.or(
+        `common_name.ilike.%${safe}%,scientific_name.ilike.%${safe}%`,
+      );
+    }
   }
   if (options?.availability) {
     query = query.eq("availability", options.availability);
@@ -110,10 +120,19 @@ async function querySpecies(
 
 // Cached public read. unstable_cache keys on the serialized options, so each
 // filter combination is cached (and tagged) independently.
-export const getSpecies = unstable_cache(querySpecies, ["species"], {
-  tags: [CATALOG_TAG],
-  revalidate: CATALOG_TTL_S,
-});
+export const getSpecies = unstable_cache(
+  async (options?: GetSpeciesOptions) =>
+    querySpecies(await createPublicSupabaseClient(), options),
+  ["species"],
+  { tags: [CATALOG_TAG], revalidate: CATALOG_TTL_S },
+);
+
+// Fresh (uncached) read for admin pages, which must reflect edits immediately.
+export async function getSpeciesUncached(
+  options?: GetSpeciesOptions,
+): Promise<SpeciesWithImages[]> {
+  return querySpecies(await createServerSupabaseClient(), options);
+}
 
 export async function getSpeciesBySlug(
   slug: string,

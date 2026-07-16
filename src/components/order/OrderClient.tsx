@@ -206,6 +206,8 @@ export default function OrderClient() {
       country: selectedCountry.name,
       delivery_address: formData.get("delivery_address") as string,
       notes: formData.get("notes") as string,
+      // Honeypot — real users leave this blank; bots that autofill it are dropped.
+      website: (formData.get("website") as string) || "",
       groups,
     };
 
@@ -582,6 +584,15 @@ export default function OrderClient() {
                   </Card>
                 ) : (
                   <form className="space-y-3" onSubmit={handleSubmit}>
+                    {/* Honeypot: hidden from users; bots that fill it are dropped. */}
+                    <input
+                      type="text"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                      className="hidden"
+                    />
                     <Input
                       required
                       name="customer_name"

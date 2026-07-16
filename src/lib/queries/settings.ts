@@ -3,11 +3,14 @@ import {
   createServerSupabaseClient,
 } from "@/lib/supabase/server";
 import { unstable_cache } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const SETTINGS_TAG = "settings";
 
-async function querySetting(key: string): Promise<string | null> {
-  const supabase = await createPublicSupabaseClient();
+async function querySetting(
+  supabase: SupabaseClient,
+  key: string,
+): Promise<string | null> {
   const { data } = await supabase
     .from("site_settings")
     .select("value")
@@ -21,10 +24,16 @@ async function querySetting(key: string): Promise<string | null> {
 
 // Cached public read — invalidated by revalidateTag("settings") on write, with
 // a 60s TTL safety net.
-export const getSetting = unstable_cache(querySetting, ["site-setting"], {
-  tags: [SETTINGS_TAG],
-  revalidate: 60,
-});
+export const getSetting = unstable_cache(
+  async (key: string) => querySetting(await createPublicSupabaseClient(), key),
+  ["site-setting"],
+  { tags: [SETTINGS_TAG], revalidate: 60 },
+);
+
+// Fresh (uncached) read for admin pages.
+export async function getSettingUncached(key: string): Promise<string | null> {
+  return querySetting(await createServerSupabaseClient(), key);
+}
 
 export async function getAllSettings(): Promise<Record<string, unknown>> {
   const supabase = await createServerSupabaseClient();

@@ -1,11 +1,11 @@
-import { getCategories } from "@/lib/queries/species";
-import { getSetting } from "@/lib/queries/settings";
+import { getCategoriesUncached } from "@/lib/queries/species";
+import { getSettingUncached } from "@/lib/queries/settings";
 import SettingsClient from "./SettingsClient";
 
 export default async function AdminSettingsPage() {
   const [categories, featuredCategoryId] = await Promise.all([
-    getCategories(),
-    getSetting("featured_category_id"),
+    getCategoriesUncached(),
+    getSettingUncached("featured_category_id"),
   ]);
 
   return (

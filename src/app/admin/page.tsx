@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getSpecies, getCategories } from "@/lib/queries/species";
+import {
+  getSpeciesUncached,
+  getCategoriesUncached,
+} from "@/lib/queries/species";
 import { getOrders } from "@/lib/queries/orders";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -37,9 +40,9 @@ function orderTotals(order: OrderWithGroups) {
 
 export default async function AdminDashboard() {
   const [species, orders, categories] = await Promise.all([
-    getSpecies(),
+    getSpeciesUncached(),
     getOrders(),
-    getCategories(),
+    getCategoriesUncached(),
   ]);
 
   const featuredCount = species.filter((s) => s.featured).length;

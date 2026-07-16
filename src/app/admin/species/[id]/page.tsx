@@ -1,4 +1,4 @@
-import { getSpeciesById, getCategories } from "@/lib/queries/species";
+import { getSpeciesById, getCategoriesUncached } from "@/lib/queries/species";
 import { notFound } from "next/navigation";
 import SpeciesFormClient from "../SpeciesFormClient";
 
@@ -10,7 +10,7 @@ export default async function EditSpeciesPage({
   const { id } = await params;
   const [species, categories] = await Promise.all([
     getSpeciesById(id),
-    getCategories(),
+    getCategoriesUncached(),
   ]);
 
   if (!species) notFound();

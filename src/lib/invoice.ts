@@ -140,7 +140,9 @@ function addItemsTable(
 
   // Data rows
   for (const item of items) {
-    const price = item.unit_price ?? 0;
+    // Coerce decimal-string prices to numbers so the cell is numeric (formatted
+    // + arithmetic), not text.
+    const price = Number(item.unit_price ?? 0) || 0;
     const values: (string | number)[] = [
       rowNum++,
       item.species_name,
@@ -240,9 +242,30 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
   // summary can reference them (index-aligned with data.groups).
   const groupSheetRefs: (RefSource | null)[] = [];
 
+  // Group names are client-editable — Excel rejects duplicates and the chars
+  // \ / ? * [ ] :  (and the summary sheet name "Performa Invoice"). Produce a
+  // safe, unique worksheet name so buildInvoiceExcel can't throw.
+  const usedSheetNames = new Set<string>(["Performa Invoice"]);
+  const safeSheetName = (raw: string): string => {
+    const base =
+      (raw || "Order")
+        .replace(/[\\/?*[\]:]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 31) || "Order";
+    let name = base;
+    let n = 2;
+    while (usedSheetNames.has(name)) {
+      const suffix = ` (${n++})`;
+      name = base.slice(0, 31 - suffix.length) + suffix;
+    }
+    usedSheetNames.add(name);
+    return name;
+  };
+
   // --- Create a sheet per order group ---
   for (const group of data.groups) {
-    const sheetName = group.name.slice(0, 31); // Excel max 31 chars
+    const sheetName = safeSheetName(group.name);
     const ws = workbook.addWorksheet(sheetName, {
       pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true },
     });

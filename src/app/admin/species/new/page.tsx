@@ -1,8 +1,8 @@
-import { getCategories } from "@/lib/queries/species";
+import { getCategoriesUncached } from "@/lib/queries/species";
 import SpeciesFormClient from "../SpeciesFormClient";
 
 export default async function NewSpeciesPage() {
-  const categories = await getCategories();
+  const categories = await getCategoriesUncached();
 
   return (
     <div>

@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import type {
   BlogCategory,
   BlogPost,
@@ -76,7 +77,8 @@ function mapPost(wp: WPPost): BlogPost {
     id: wp.id,
     slug: wp.slug,
     title: stripHtml(wp.title?.rendered || "Untitled"),
-    content: wp.content?.rendered || "",
+    // Sanitize on output — the body is rendered via dangerouslySetInnerHTML.
+    content: sanitizeHtml(wp.content?.rendered || ""),
     excerpt: stripHtml(wp.excerpt?.rendered || ""),
     status: mapStatus(wp.status),
     date: wp.date,

@@ -25,6 +25,49 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || "alfred@inaornamentalfish.com")
   .split(",")
   .map((e) => e.trim());
 
+// Escape user-supplied values before interpolating them into email HTML — order
+// fields come from an unauthenticated form and are read in customer + admin
+// inboxes.
+function esc(v: unknown): string {
+  if (v == null) return "";
+  return String(v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escOrderData(data: OrderEmailData): OrderEmailData {
+  const opt = (v?: string | null) => (v ? esc(v) : v);
+  return {
+    ...data,
+    order_reference: esc(data.order_reference),
+    customer_name: esc(data.customer_name),
+    company_name: opt(data.company_name) ?? undefined,
+    email: esc(data.email),
+    phone: opt(data.phone) ?? undefined,
+    country: opt(data.country) ?? undefined,
+    delivery_address: opt(data.delivery_address) ?? undefined,
+    notes: opt(data.notes) ?? undefined,
+    proposed_shipment_date: opt(data.proposed_shipment_date),
+    consignee_name: opt(data.consignee_name),
+    consignee_phone: opt(data.consignee_phone),
+    consignee_address: opt(data.consignee_address),
+    groups: data.groups.map((g) => ({
+      name: esc(g.name),
+      items: g.items.map((it) => ({
+        ...it,
+        species_name: esc(it.species_name),
+        scientific_name: it.scientific_name
+          ? esc(it.scientific_name)
+          : it.scientific_name,
+        size: it.size ? esc(it.size) : it.size,
+      })),
+    })),
+  };
+}
+
 // Shared <head> for all emails. The viewport meta stops mobile clients from
 // rendering at desktop width (which made the order table overflow); the media
 // query is honoured by Apple Mail, iOS Mail and the Gmail app, and ignored
@@ -108,11 +151,13 @@ function buildOrderItemsHTML(data: OrderEmailData) {
     .join("");
 }
 
-function buildEmailHTML(data: OrderEmailData, isAdmin: boolean) {
-  const totalItems = data.groups.reduce(
+function buildEmailHTML(rawData: OrderEmailData, isAdmin: boolean) {
+  const totalItems = rawData.groups.reduce(
     (sum, g) => sum + g.items.reduce((s, i) => s + i.quantity, 0),
     0,
   );
+  // All user-supplied strings escaped before templating.
+  const data = escOrderData(rawData);
 
   return `
 <!DOCTYPE html>
@@ -260,12 +305,12 @@ export async function sendOrderStatusUpdate(data: {
       <p style="color:#c7e2dc;margin:4px 0 0;font-size:13px;">Order Update</p>
     </div>
     <div class="ina-card" style="background:white;padding:24px;border:1px solid #e2d8c8;border-top:none;border-radius:0 0 12px 12px;">
-      <p style="font-size:15px;color:#38322a;">Dear ${data.customer_name},</p>
+      <p style="font-size:15px;color:#38322a;">Dear ${esc(data.customer_name)},</p>
       <p style="font-size:15px;color:#38322a;">${message}.</p>
       <div style="background:#faf7f2;padding:16px;border-radius:8px;margin:16px 0;">
         <table style="width:100%;font-size:14px;">
-          <tr><td style="color:#8e8270;">Reference</td><td style="font-weight:bold;color:#3b655d;">${data.order_reference}</td></tr>
-          <tr><td style="color:#8e8270;">Status</td><td style="font-weight:bold;text-transform:capitalize;">${data.status}</td></tr>
+          <tr><td style="color:#8e8270;">Reference</td><td style="font-weight:bold;color:#3b655d;">${esc(data.order_reference)}</td></tr>
+          <tr><td style="color:#8e8270;">Status</td><td style="font-weight:bold;text-transform:capitalize;">${esc(data.status)}</td></tr>
         </table>
       </div>
       <p style="font-size:13px;color:#8e8270;">If you have questions, reply to this email or contact us on WhatsApp.</p>
