@@ -19,6 +19,7 @@ import {
   Pencil,
   Check,
   X,
+  Trash2,
 } from "lucide-react";
 import { COUNTRIES } from "@/data/countries";
 import Image from "next/image";
@@ -278,10 +279,17 @@ export default function ClientOrderClient({
     });
   }, [priceList.items, availabilityFilter, classFilter, search]);
 
-  function setPieces(speciesId: string, pieces: number, qtyPerBox: number) {
+  // groupId defaults to the active group (catalogue grid), but the order
+  // summary passes each item's own group so it can be edited from there.
+  function setPieces(
+    speciesId: string,
+    pieces: number,
+    qtyPerBox: number,
+    groupId: number = activeGroupId,
+  ) {
     setGroups((prev) =>
       prev.map((g) => {
-        if (g.id !== activeGroupId) return g;
+        if (g.id !== groupId) return g;
         if (pieces <= 0) {
           const rest = { ...g.items };
           delete rest[speciesId];
@@ -301,10 +309,15 @@ export default function ClientOrderClient({
     );
   }
 
-  function setBoxes(speciesId: string, boxes: number, qtyPerBox: number) {
+  function setBoxes(
+    speciesId: string,
+    boxes: number,
+    qtyPerBox: number,
+    groupId: number = activeGroupId,
+  ) {
     setGroups((prev) =>
       prev.map((g) => {
-        if (g.id !== activeGroupId) return g;
+        if (g.id !== groupId) return g;
         const pieces = Math.round(boxes * qtyPerBox);
         if (pieces <= 0) {
           const rest = { ...g.items };
@@ -318,6 +331,17 @@ export default function ClientOrderClient({
             [speciesId]: { pieces, boxes: parseFloat(boxes.toFixed(2)) },
           },
         };
+      }),
+    );
+  }
+
+  function removeItem(groupId: number, speciesId: string) {
+    setGroups((prev) =>
+      prev.map((g) => {
+        if (g.id !== groupId) return g;
+        const rest = { ...g.items };
+        delete rest[speciesId];
+        return { ...g, items: rest };
       }),
     );
   }
@@ -835,33 +859,91 @@ export default function ClientOrderClient({
                 </p>
               ) : (
                 <>
-                  <div className="space-y-1 mb-4 max-h-48 overflow-y-auto border-t border-slate-100 pt-2">
+                  <div className="space-y-1.5 mb-4 max-h-56 overflow-y-auto border-t border-slate-100 pt-2">
                     {groups.map((g) =>
                       Object.entries(g.items).map(
                         ([speciesId, { pieces: pcs, boxes: bx }]) => {
                           const pi = priceList.items.find(
                             (i) => i.species_id === speciesId,
                           );
+                          const qtyPerBox = pi?.species?.qty_per_box || 1;
                           const lineTotal = pcs * Number(pi?.custom_price ?? 0);
                           return (
                             <div
                               key={`${g.id}-${speciesId}`}
-                              className="flex justify-between text-xs py-1 border-b border-slate-50 gap-1"
+                              className="flex items-center gap-2 py-1 border-b border-slate-50"
                             >
-                              <span className="truncate flex-1">
-                                {groups.length > 1 && (
-                                  <span className="text-slate-400">
-                                    [{g.name}]{" "}
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-medium text-slate-800">
+                                  {groups.length > 1 && (
+                                    <span className="text-slate-400">
+                                      [{g.name}]{" "}
+                                    </span>
+                                  )}
+                                  {pi?.species?.common_name}
+                                </p>
+                                <p className="text-[10px] text-slate-400">
+                                  {bx.toFixed(2)} bx ·{" "}
+                                  <span className="font-semibold text-sky-800">
+                                    ${lineTotal.toFixed(2)}
                                   </span>
-                                )}
-                                {pi?.species?.common_name}
-                              </span>
-                              <span className="font-medium text-slate-600 whitespace-nowrap">
-                                {pcs}pcs / {bx.toFixed(2)}bx
-                              </span>
-                              <span className="font-bold text-sky-800 whitespace-nowrap ml-1">
-                                ${lineTotal.toFixed(2)}
-                              </span>
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-0.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPieces(
+                                      speciesId,
+                                      pcs - 1,
+                                      qtyPerBox,
+                                      g.id,
+                                    )
+                                  }
+                                  className="flex size-6 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100"
+                                  aria-label="Decrease"
+                                >
+                                  <Minus className="size-3" />
+                                </button>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={pcs}
+                                  onChange={(e) =>
+                                    setPieces(
+                                      speciesId,
+                                      parseInt(e.target.value) || 0,
+                                      qtyPerBox,
+                                      g.id,
+                                    )
+                                  }
+                                  className="w-11 h-6 rounded-md border border-slate-200 text-center text-xs outline-none focus:border-sky-400"
+                                  aria-label="Pieces"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPieces(
+                                      speciesId,
+                                      pcs + 1,
+                                      qtyPerBox,
+                                      g.id,
+                                    )
+                                  }
+                                  className="flex size-6 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100"
+                                  aria-label="Increase"
+                                >
+                                  <Plus className="size-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeItem(g.id, speciesId)}
+                                  className="flex size-6 items-center justify-center rounded-md text-red-400 hover:bg-red-50 hover:text-red-600"
+                                  aria-label="Remove item"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              </div>
                             </div>
                           );
                         },
