@@ -29,6 +29,18 @@ const BRAND_GREEN = "3B655D";
 const BRAND_GOLD = "D4A85F";
 const HEADER_BG = "F5F3EE";
 
+// Quote a sheet name for a cross-sheet formula reference (e.g. 'Order A'!E5).
+function sheetRefName(name: string): string {
+  return `'${name.replace(/'/g, "''")}'`;
+}
+
+// Where the Performa summary should pull an item's Qty/Unit Price from, so its
+// totals track edits made on the individual group sheets.
+interface RefSource {
+  sheetRef: string;
+  firstRow: number;
+}
+
 function addInfoSection(ws: ExcelJS.Worksheet, data: InvoiceData) {
   // Company header
   const titleRow = ws.addRow(["INÁ Ornamental Fish"]);
@@ -86,12 +98,21 @@ function addInfoSection(ws: ExcelJS.Worksheet, data: InvoiceData) {
   ws.addRow([]);
 }
 
+interface ItemsTableResult {
+  // Running item counter (the "#" column), so the summary can continue numbering.
+  counter: number;
+  // Sheet row numbers of the first/last data row, used to build SUM formulas.
+  firstRow: number | null;
+  lastRow: number | null;
+}
+
 function addItemsTable(
   ws: ExcelJS.Worksheet,
   items: InvoiceData["groups"][0]["items"],
   hasAnyPrice: boolean,
   startRowNum: number = 1,
-): number {
+  refSource?: RefSource,
+): ItemsTableResult {
   let rowNum = startRowNum;
 
   // Table header
@@ -114,8 +135,12 @@ function addItemsTable(
   headerRow.getCell(2).alignment = { vertical: "middle", horizontal: "left" };
   headerRow.getCell(3).alignment = { vertical: "middle", horizontal: "left" };
 
+  let firstRow: number | null = null;
+  let lastRow: number | null = null;
+
   // Data rows
   for (const item of items) {
+    const price = item.unit_price ?? 0;
     const values: (string | number)[] = [
       rowNum++,
       item.species_name,
@@ -124,11 +149,29 @@ function addItemsTable(
       item.quantity,
     ];
     if (hasAnyPrice) {
-      const price = item.unit_price ?? 0;
       values.push(price, price * item.quantity);
     }
 
     const row = ws.addRow(values);
+    if (firstRow === null) firstRow = row.number;
+    lastRow = row.number;
+
+    // On the Performa summary, pull Qty/Unit Price from the matching row on the
+    // group sheet, so edits there flow through to the summary's totals.
+    if (refSource) {
+      const srcRow = refSource.firstRow + (row.number - firstRow);
+      row.getCell(5).value = {
+        formula: `${refSource.sheetRef}!E${srcRow}`,
+        result: item.quantity,
+      };
+      if (hasAnyPrice) {
+        row.getCell(6).value = {
+          formula: `${refSource.sheetRef}!F${srcRow}`,
+          result: price,
+        };
+      }
+    }
+
     row.getCell(1).alignment = { horizontal: "center" };
     row.getCell(2).font = { bold: true, size: 10 };
     row.getCell(3).font = {
@@ -140,6 +183,13 @@ function addItemsTable(
     row.getCell(5).alignment = { horizontal: "center" };
 
     if (hasAnyPrice) {
+      // Live total: Qty (col E) × Unit Price (col F). Editing either in the
+      // downloaded sheet recalculates this cell. `result` is the cached value
+      // so previews that don't recalculate still show the right number.
+      row.getCell(7).value = {
+        formula: `E${row.number}*F${row.number}`,
+        result: price * item.quantity,
+      };
       row.getCell(6).numFmt = "$#,##0.00";
       row.getCell(6).alignment = { horizontal: "right" };
       row.getCell(7).numFmt = "$#,##0.00";
@@ -162,7 +212,7 @@ function addItemsTable(
     });
   }
 
-  return rowNum;
+  return { counter: rowNum, firstRow, lastRow };
 }
 
 function setupColumns(ws: ExcelJS.Worksheet) {
@@ -186,6 +236,10 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     g.items.some((i) => i.unit_price),
   );
 
+  // Records where each group's items live on its own sheet, so the Performa
+  // summary can reference them (index-aligned with data.groups).
+  const groupSheetRefs: (RefSource | null)[] = [];
+
   // --- Create a sheet per order group ---
   for (const group of data.groups) {
     const sheetName = group.name.slice(0, 31); // Excel max 31 chars
@@ -205,13 +259,25 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     ws.mergeCells(groupTitle.number, 1, groupTitle.number, 7);
     ws.addRow([]);
 
-    addItemsTable(ws, group.items, hasAnyPrice);
+    const table = addItemsTable(ws, group.items, hasAnyPrice);
+    groupSheetRefs.push(
+      table.firstRow !== null
+        ? { sheetRef: sheetRefName(sheetName), firstRow: table.firstRow }
+        : null,
+    );
 
     ws.addRow([]);
     const groupQty = group.items.reduce((s, i) => s + i.quantity, 0);
     const totRow = ws.addRow(["", "", "", "Total Qty:", groupQty]);
     totRow.getCell(4).font = { bold: true, size: 11 };
     totRow.getCell(4).alignment = { horizontal: "right" };
+    // Live SUM over the group's Qty cells.
+    if (table.firstRow && table.lastRow) {
+      totRow.getCell(5).value = {
+        formula: `SUM(E${table.firstRow}:E${table.lastRow})`,
+        result: groupQty,
+      };
+    }
     totRow.getCell(5).font = {
       bold: true,
       size: 11,
@@ -227,7 +293,14 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
       totRow.getCell(6).value = "Total:";
       totRow.getCell(6).font = { bold: true, size: 11 };
       totRow.getCell(6).alignment = { horizontal: "right" };
-      totRow.getCell(7).value = groupTotal;
+      // Live SUM over the group's Total cells (which are themselves formulas).
+      totRow.getCell(7).value =
+        table.firstRow && table.lastRow
+          ? {
+              formula: `SUM(G${table.firstRow}:G${table.lastRow})`,
+              result: groupTotal,
+            }
+          : groupTotal;
       totRow.getCell(7).numFmt = "$#,##0.00";
       totRow.getCell(7).font = {
         bold: true,
@@ -281,7 +354,9 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
   summaryWs.addRow([]);
 
   let rowNum = 1;
-  for (const group of data.groups) {
+  let summaryFirstRow: number | null = null;
+  let summaryLastRow: number | null = null;
+  data.groups.forEach((group, gi) => {
     if (data.groups.length > 1) {
       const gRow = summaryWs.addRow([group.name]);
       gRow.getCell(1).font = {
@@ -292,9 +367,23 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
       summaryWs.mergeCells(gRow.number, 1, gRow.number, 7);
       summaryWs.addRow([]);
     }
-    rowNum = addItemsTable(summaryWs, group.items, hasAnyPrice, rowNum);
+    const table = addItemsTable(
+      summaryWs,
+      group.items,
+      hasAnyPrice,
+      rowNum,
+      groupSheetRefs[gi] ?? undefined,
+    );
+    rowNum = table.counter;
+    if (table.firstRow !== null) {
+      if (summaryFirstRow === null) summaryFirstRow = table.firstRow;
+      summaryLastRow = table.lastRow;
+    }
     summaryWs.addRow([]);
-  }
+  });
+  // Item rows sit contiguously (group titles/blank rows have empty Qty/Total
+  // cells, so a single SUM range still totals only the line items).
+  const summaryHasRange = summaryFirstRow !== null && summaryLastRow !== null;
 
   const totalItems = data.groups.reduce(
     (sum, g) => sum + g.items.reduce((s, i) => s + i.quantity, 0),
@@ -311,6 +400,13 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
   ]);
   grandRow.getCell(4).font = { bold: true, size: 12 };
   grandRow.getCell(4).alignment = { horizontal: "right" };
+  // Live SUM across every line item's Qty.
+  if (summaryHasRange) {
+    grandRow.getCell(5).value = {
+      formula: `SUM(E${summaryFirstRow}:E${summaryLastRow})`,
+      result: totalItems,
+    };
+  }
   grandRow.getCell(5).font = {
     bold: true,
     size: 12,
@@ -327,7 +423,13 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     grandRow.getCell(6).value = "Grand Total:";
     grandRow.getCell(6).font = { bold: true, size: 12 };
     grandRow.getCell(6).alignment = { horizontal: "right" };
-    grandRow.getCell(7).value = grandTotal;
+    // Live SUM across every line item's Total.
+    grandRow.getCell(7).value = summaryHasRange
+      ? {
+          formula: `SUM(G${summaryFirstRow}:G${summaryLastRow})`,
+          result: grandTotal,
+        }
+      : grandTotal;
     grandRow.getCell(7).numFmt = "$#,##0.00";
     grandRow.getCell(7).font = {
       bold: true,
