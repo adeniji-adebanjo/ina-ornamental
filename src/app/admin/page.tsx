@@ -14,7 +14,14 @@ import {
   AlertTriangle,
   ArrowRight,
 } from "lucide-react";
-import type { OrderStatus, OrderWithGroups } from "@/types/database";
+import type {
+  OrderStatus,
+  OrderWithGroups,
+  AvailabilityStatus,
+} from "@/types/database";
+import { ChartCard } from "@/components/admin/charts/ChartCard";
+import { BarList } from "@/components/admin/charts/BarList";
+import { TrendChart } from "@/components/admin/charts/TrendChart";
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   draft: "bg-slate-100 text-slate-600",
@@ -51,6 +58,89 @@ export default async function AdminDashboard() {
   ).length;
   const pendingCount = orders.filter((o) => o.status === "submitted").length;
   const recentOrders = orders.slice(0, 6);
+
+  // ── Analytics aggregation (server-side) ──
+  // Orders per day over the last 30 days.
+  const DAYS = 30;
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const dayIndex = new Map<string, number>();
+  const ordersPerDay: { label: string; value: number }[] = [];
+  for (let i = DAYS - 1; i >= 0; i--) {
+    const d = new Date(startOfToday);
+    d.setDate(startOfToday.getDate() - i);
+    dayIndex.set(d.toISOString().slice(0, 10), ordersPerDay.length);
+    ordersPerDay.push({
+      label: d.toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+      }),
+      value: 0,
+    });
+  }
+  let orders30 = 0;
+  let value30 = 0;
+  for (const o of orders) {
+    const key = new Date(o.submitted_at).toISOString().slice(0, 10);
+    const idx = dayIndex.get(key);
+    if (idx !== undefined) {
+      ordersPerDay[idx].value += 1;
+      orders30 += 1;
+      value30 += orderTotals(o).value;
+    }
+  }
+
+  // Orders by status (fixed order).
+  const STATUS_ORDER: OrderStatus[] = [
+    "submitted",
+    "confirmed",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ];
+  const statusItems = STATUS_ORDER.map((s) => ({
+    label: s.charAt(0).toUpperCase() + s.slice(1),
+    value: orders.filter((o) => o.status === s).length,
+  }));
+
+  // Species per category (top 8).
+  const catCount = new Map<string, number>();
+  for (const s of species) {
+    const name = s.category?.name ?? "Uncategorized";
+    catCount.set(name, (catCount.get(name) ?? 0) + 1);
+  }
+  const categoryItems = [...catCount.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8);
+
+  // Stock availability breakdown (fixed order).
+  const AVAILABILITY: { key: AvailabilityStatus; label: string }[] = [
+    { key: "available", label: "In Stock" },
+    { key: "limited_stock", label: "Limited" },
+    { key: "out_of_stock", label: "Out of Stock" },
+    { key: "seasonal", label: "Seasonal" },
+    { key: "on_request", label: "On Request" },
+  ];
+  const availabilityItems = AVAILABILITY.map((a) => ({
+    label: a.label,
+    value: species.filter((s) => s.availability === a.key).length,
+  }));
+
+  // Top ordered species by total quantity (top 6).
+  const qtyBySpecies = new Map<string, number>();
+  for (const o of orders)
+    for (const g of o.order_groups ?? [])
+      for (const it of g.order_items ?? [])
+        qtyBySpecies.set(
+          it.species_name,
+          (qtyBySpecies.get(it.species_name) ?? 0) + (it.quantity ?? 0),
+        );
+  const topSpeciesItems = [...qtyBySpecies.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6);
 
   const stats = [
     {
@@ -125,6 +215,43 @@ export default async function AdminDashboard() {
             </Card>
           </Link>
         ))}
+      </div>
+
+      {/* Analytics */}
+      <div className="mb-8 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <ChartCard
+            title="Orders — last 30 days"
+            subtitle={`${orders30} order${orders30 === 1 ? "" : "s"}${
+              value30 > 0
+                ? ` · $${value30.toLocaleString(undefined, {
+                    maximumFractionDigits: 0,
+                  })} est. value`
+                : ""
+            }`}
+            className="lg:col-span-2"
+          >
+            <TrendChart data={ordersPerDay} valueLabel="orders" />
+          </ChartCard>
+          <ChartCard title="Orders by status">
+            <BarList items={statusItems} emptyLabel="No orders yet." />
+          </ChartCard>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <ChartCard title="Species by category">
+            <BarList items={categoryItems} emptyLabel="No species yet." />
+          </ChartCard>
+          <ChartCard title="Stock availability">
+            <BarList items={availabilityItems} emptyLabel="No species yet." />
+          </ChartCard>
+          <ChartCard title="Top species ordered" subtitle="By total quantity">
+            <BarList
+              items={topSpeciesItems}
+              format={(n) => `${n.toLocaleString()} pcs`}
+              emptyLabel="No orders yet."
+            />
+          </ChartCard>
+        </div>
       </div>
 
       {/* Recent orders */}
