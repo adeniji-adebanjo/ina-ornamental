@@ -91,7 +91,8 @@ export async function GET(
     rows,
   });
 
-  return new NextResponse(buffer, {
+  // Uint8Array (not Buffer) so the body type matches BodyInit.
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
