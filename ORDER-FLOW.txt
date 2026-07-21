@@ -1,0 +1,363 @@
+===============================================================================
+ INÁ ORNAMENTAL FISH — ORDER LIFECYCLE
+ How a customer places an order, and how the admin team processes it.
+ (Reflects the implementation as built. Paths are repo-relative.)
+===============================================================================
+
+CONTENTS
+  1. Overview — the three ways an order is created
+  2. PATH A — Public quote request (anonymous visitor)
+  3. PATH B — Client price-list link (invited client, priced)
+  4. PATH C — Admin uploads an order (back office)
+  5. Shared server pipeline (what happens on submit)
+  6. Notifications — who gets emailed, when
+  7. Admin processing — the order lifecycle
+  8. Turning a one-off buyer into a repeat client
+  9. Data model
+ 10. Safeguards & edge cases
+ 11. Quick file/route reference
+
+
+-------------------------------------------------------------------------------
+ 1. OVERVIEW — THE THREE WAYS AN ORDER IS CREATED
+-------------------------------------------------------------------------------
+
+  (A) PUBLIC QUOTE      Anyone browses the catalogue, builds a cart, submits.
+                        Usually NO prices (it is a request for a quote).
+
+  (B) CLIENT PRICE LINK Admin issues a private, token-protected link to a named
+                        client. Prices ARE shown (that client's custom prices).
+
+  (C) ADMIN UPLOAD      Admin creates the order themselves from a spreadsheet
+                        (phone/WhatsApp/email orders, or historical data).
+
+  All three converge on the same database shape:
+        ORDER  ->  ORDER GROUPS  ->  ORDER ITEMS
+  and all appear together in Admin > Orders.
+
+
+-------------------------------------------------------------------------------
+ 2. PATH A — PUBLIC QUOTE REQUEST
+-------------------------------------------------------------------------------
+
+  CUSTOMER SIDE
+    1. Visits /catalogue
+       - Species load from Supabase (cached ~60s; public pages are ISR).
+       - Filters: search, category. Sticky filter bar.
+
+    2. Adds species to the cart
+       - Picks a size, taps "Add to Quote".
+       - Cart lives in the browser (Zustand + localStorage key
+         "ina-ornamental-cart") -> SURVIVES A REFRESH / crash.
+
+    3. Optionally organises items into ORDER GROUPS
+       - Default "Order A"; can add "Order B", rename, remove.
+       - Groups model separate shipments/consignments.
+
+    4. Goes to /order to review
+       - Adjust quantities, move/remove items, rename groups.
+       - Sees running totals (pieces / boxes).
+
+    5. Fills the request form
+       - Required: Full name, Email.
+       - Optional: Company, Phone (country dial-code prefix), Country
+         (searchable), Delivery address, Notes.
+       - A hidden "honeypot" field is present (invisible to humans).
+
+    6. Submits  ->  POST /api/orders
+       - Alternative: "Send on WhatsApp" builds a prefilled message instead
+         (no order record is created in that case).
+
+    7. Sees a confirmation screen with the ORDER REFERENCE (INA-YYYYMMDD-NNN).
+
+  RESULT: order.status = "submitted", usually with no unit prices.
+
+
+-------------------------------------------------------------------------------
+ 3. PATH B — CLIENT PRICE-LIST LINK (PRICED)
+-------------------------------------------------------------------------------
+
+  ADMIN SETS IT UP FIRST
+    1. Admin > Clients  -> create the client (name, company, email, country).
+
+    2. Admin > Custom Pricing -> "New Price List"
+       - Choose client, title, optional Valid From / Valid Until.
+       - Add species + custom price, by any of:
+           * manual rows,
+           * "Auto-fill from location" (pulls Location Pricing),
+           * upload an Excel/CSV sheet.
+       - System generates a slug + a 24-byte random access token.
+
+    3. Admin shares the list
+       - "Copy link"  -> /orders/<slug>?token=<token>
+       - "Open"       -> preview it exactly as the client sees it
+       - "Download"   -> Excel (.xlsx) or CSV order form to email out
+                         * The EXCEL version is a FILLABLE ORDER FORM with LIVE
+                           FORMULAS: client types Qty, and Line Total
+                           (= Unit Price x Qty) and the Totals row (=SUM)
+                           recalculate on their machine.
+                         * CSV is plain values (no formulas, by design).
+       - Prices can be edited later inline; species added/removed. Edits are
+         live on the shared link immediately (the page is uncached).
+
+  CLIENT SIDE
+    4. Opens the link. Access is granted only if:
+         slug matches AND token matches AND list is active AND not expired.
+       Otherwise -> 404 (the link is unguessable; the token is 192-bit).
+
+    5. Builds the order
+       - Search box + Availability and Class filters.
+       - Enters PIECES or BOXES per species (boxes derive from qty_per_box).
+       - Multiple named groups (add / rename / remove).
+       - Order Summary is editable: change quantity or delete any line.
+       - Selections AUTO-SAVE to that browser (localStorage, keyed to the price
+         list) -> a refresh does not lose the build-up.
+
+    6. Fills customer + shipment details
+       - Name, email, company, phone (dial code), country.
+       - Proposed shipment date, consignee name / phone / address.
+
+    7. Submits -> POST /api/orders  (carries price_list_id + client_id, and
+       each line's unit_price from that client's custom price).
+       The saved draft is cleared on success.
+
+  RESULT: order.status = "submitted", WITH prices -> invoice totals are real.
+
+
+-------------------------------------------------------------------------------
+ 4. PATH C — ADMIN UPLOADS AN ORDER
+-------------------------------------------------------------------------------
+
+    1. Admin > Orders -> "Upload Order".
+
+    2. "Template" downloads an .xlsx with columns:
+         Group | Species | Scientific Name | Size | Quantity | Unit Price
+       plus an Instructions sheet.
+
+    3. Admin fills the CUSTOMER/SHIPMENT details in the dialog (country
+       selector with dial-code phone, date picker) and attaches the sheet
+       (.xlsx / .xls / .csv).
+       - Typed details are drafted to localStorage; a refresh keeps them.
+         (The chosen FILE cannot be persisted - browsers forbid it - so the
+         file must be re-selected after a refresh.)
+
+    4. POST /api/admin/orders/import  (admin auth required)
+       - Species are matched by common name, slug, or scientific name.
+       - VALIDATION IS ALL-OR-NOTHING: any unknown species or bad quantity
+         returns row-numbered errors and creates NOTHING. Fix the sheet and
+         re-upload.
+       - Rows are grouped by the "Group" column (blank -> "Order A").
+
+    5. One order is created per upload, with a fresh unique reference.
+
+  IMPORTANT: NO EMAIL IS SENT for an admin upload (it is back-office
+  creation, not a customer-submitted request).
+
+
+-------------------------------------------------------------------------------
+ 5. SHARED SERVER PIPELINE (POST /api/orders)
+-------------------------------------------------------------------------------
+
+  Every customer submission (Paths A and B) runs this sequence:
+
+    1. RATE LIMIT      max 6 submissions per minute per IP -> 429 if exceeded.
+    2. HONEYPOT        if the hidden field is filled, return a success-shaped
+                       response and create NOTHING (bot silently dropped).
+    3. PARSE           malformed JSON -> clean 400 (never a 500).
+    4. VALIDATE        name + email + at least one group required;
+                       email format checked;
+                       every quantity must be a whole number 1..100,000;
+                       any unit_price must be a non-negative number.
+    5. IDEMPOTENCY     fingerprint = hash(email + items). An identical repeat
+                       within 60s returns the ORIGINAL reference instead of
+                       creating a duplicate order/email. (Guards double-taps,
+                       network retries, two tabs.)
+    6. REFERENCE       generate INA-YYYYMMDD-NNN, verified free in the DB,
+                       with a retry if the unique index still rejects it.
+    7. INSERT          orders -> order_groups -> order_items.
+                       Species slugs resolve to UUIDs.
+                       Shipment/consignee details are appended to order notes.
+                       Species name/scientific name/size are DENORMALISED onto
+                       the line item, so the order stays historically accurate
+                       even if the catalogue changes later.
+    8. ROLLBACK        if any group/item insert fails, the partially-created
+                       order is deleted -> no orphan records.
+    9. EMAIL           see section 6. Email failure NEVER fails the order.
+   10. RESPOND         { success, order_reference, order_id }.
+
+
+-------------------------------------------------------------------------------
+ 6. NOTIFICATIONS — WHO GETS EMAILED, WHEN
+-------------------------------------------------------------------------------
+
+  EVENT                        CUSTOMER        ADMIN TEAM      ATTACHMENT
+  ---------------------------  --------------  --------------  --------------
+  Public/client order placed   Confirmation    New-order alert Excel performa
+  Admin uploads an order       (none)          (none)          -
+  Admin changes order status   Status update   (none)          -
+
+  The Excel performa invoice (attached to both mails on creation):
+    - One sheet per order group + a "Performa Invoice" summary sheet.
+    - LIVE FORMULAS: each line total = Qty x Unit Price; group totals and the
+      grand total are SUM formulas; the Performa sheet REFERENCES the group
+      sheets - so editing a quantity or price on any group sheet flows through
+      to the grand total automatically.
+    - All customer-supplied text is HTML-escaped in the emails.
+
+  If SMTP is not configured, emails are skipped with a warning; the order is
+  still recorded.
+
+
+-------------------------------------------------------------------------------
+ 7. ADMIN PROCESSING — THE ORDER LIFECYCLE
+-------------------------------------------------------------------------------
+
+  STEP 1 — SEE IT
+    Admin > Dashboard
+      - KPI tiles: species, categories, featured, total orders, PENDING
+        orders, out of stock.
+      - Analytics: 30-day order trend, orders by status, species by category,
+        stock availability, top species ordered.
+      - Recent orders list.
+      (Admin reads are uncached - always current.)
+
+  STEP 2 — OPEN IT
+    Admin > Orders
+      - Search by reference, customer name, or company.
+      - Expand a row to see: email, phone, country, delivery address, notes
+        (including proposed shipment + consignee details), and every group
+        with its line items, quantities and prices.
+
+  STEP 3 — WORK THE STATUS
+    Status flow:
+
+        submitted -> confirmed -> processing -> shipped -> delivered
+              \
+               -> cancelled   (available at any point)
+
+      submitted   Just arrived. Needs review/pricing.
+      confirmed   Order accepted; prices/stock agreed with the customer.
+      processing  Being packed / quarantined / documentation prepared.
+      shipped     Handed to the airline/freight forwarder.
+      delivered   Received by the customer.
+      cancelled   Not proceeding.
+
+    Changing the status emails the CUSTOMER automatically.
+
+  STEP 4 — PAPERWORK
+    - The performa invoice was emailed on creation (Paths A/B).
+    - Orders > Export CSV pulls all orders (with their groups/items as JSON)
+      for accounting or reporting.
+
+  STEP 5 — FULFIL & CLOSE
+    - Update stock reality in Admin > Species (availability can be changed
+      inline). Catalogue changes propagate to the public site promptly
+      (public pages refresh on a ~60s cycle; admin sees changes instantly).
+    - Mark shipped, then delivered.
+
+  STEP 6 — REMOVE (if needed)
+    - Delete order (with confirmation). Groups and line items are removed too.
+
+
+-------------------------------------------------------------------------------
+ 8. TURNING A ONE-OFF BUYER INTO A REPEAT CLIENT
+-------------------------------------------------------------------------------
+
+  From an expanded order, "Create Client & Price List" pre-fills a new client
+  from that order's details. Then:
+
+      order (Path A)  ->  create client  ->  build custom price list
+                      ->  send the private link / download the Excel form
+                      ->  all future orders arrive via Path B, already priced.
+
+  This is the intended path from an anonymous quote request to a managed
+  account.
+
+
+-------------------------------------------------------------------------------
+ 9. DATA MODEL
+-------------------------------------------------------------------------------
+
+  orders
+    order_reference (UNIQUE, "INA-YYYYMMDD-NNN")
+    customer_name, company_name, email, phone, country, delivery_address
+    notes            (shipment + consignee details are appended here)
+    status           (submitted | confirmed | processing | shipped |
+                      delivered | cancelled)
+    client_id        -> clients            (set when ordered via a price list)
+    price_list_id    -> client_price_lists (same)
+    submitted_at
+        |
+        +-- order_groups          (group_name e.g. "Order A", sort_order)
+                |
+                +-- order_items   (species_id -> species,
+                                   species_name / scientific_name / size
+                                   DENORMALISED for history,
+                                   quantity, unit_price)
+
+  Supporting:
+    clients, client_price_lists (slug + access_token + validity),
+    client_price_items (species + custom_price),
+    species / categories / species_images, location_pricing, site_settings.
+
+
+-------------------------------------------------------------------------------
+ 10. SAFEGUARDS & EDGE CASES
+-------------------------------------------------------------------------------
+
+  - Cart and client-order drafts survive a browser refresh (localStorage).
+  - Duplicate submits within 60s return the original reference (no double
+    order, no double email).
+  - A failed order insert rolls back completely - no half-created orders.
+  - Price-list links expire on Valid Until and 404 after that.
+  - Editing a price list is live on the shared link (no re-send needed).
+  - Admin session shows an "Are you still there?" warning after 40 minutes
+    idle, with a 60-second countdown, instead of logging out abruptly.
+  - Every admin API route requires authentication.
+  - Public order endpoint is rate-limited and honeypot-protected.
+  - Species deleted later do NOT corrupt past orders (names are stored on the
+    line item).
+
+  KNOWN OPERATIONAL NOTES
+  - Admin uploads intentionally send no email; notify the customer manually if
+    they expect a confirmation.
+  - "Send on WhatsApp" does NOT create an order record - it is a message only.
+  - Public pages may lag catalogue edits by up to ~60 seconds.
+
+
+-------------------------------------------------------------------------------
+ 11. QUICK FILE / ROUTE REFERENCE
+-------------------------------------------------------------------------------
+
+  CUSTOMER
+    /catalogue                        src/components/catalogue/CatalogueClient.tsx
+    /order                            src/components/order/OrderClient.tsx
+    /orders/[slug]?token=             src/app/orders/[slug]/ClientOrderClient.tsx
+    POST /api/orders                  src/app/api/orders/route.ts
+
+  ADMIN UI
+    /admin (dashboard + analytics)    src/app/admin/page.tsx
+    /admin/orders                     src/app/admin/orders/OrdersListClient.tsx
+    /admin/orders (upload dialog)     src/app/admin/orders/OrderUploadDialog.tsx
+    /admin/pricing                    src/app/admin/pricing/PricingListClient.tsx
+    /admin/clients, /admin/species    src/app/admin/...
+
+  ADMIN API
+    PATCH/DELETE order                src/app/api/admin/orders/[id]/route.ts
+    Orders export CSV                 src/app/api/admin/orders/export/route.ts
+    Order upload template             src/app/api/admin/orders/template/route.ts
+    Order import                      src/app/api/admin/orders/import/route.ts
+    Price list export (xlsx/csv)      src/app/api/admin/pricing/[id]/export/route.ts
+    Price list items (add/edit/del)   src/app/api/admin/pricing/[id]/items/...
+
+  SUPPORTING LIBRARIES
+    Invoice (Excel, live formulas)    src/lib/invoice.ts
+    Price-list order form             src/lib/price-list-export.ts
+    Email templates + sending         src/lib/email.ts
+    Order reference generation        src/lib/queries/orders.ts
+    Rate limit / idempotency          src/lib/rate-limit.ts
+    Spreadsheet parsing helpers       src/lib/excel.ts
+
+===============================================================================
+ End of document.
+===============================================================================
