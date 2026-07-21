@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,8 @@ import {
   Check,
   X,
   Loader2,
+  FileSpreadsheet,
+  FileText,
 } from "lucide-react";
 import {
   ConfirmDialog,
@@ -110,6 +112,20 @@ export default function PricingListClient({
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
+
+  // Download (Excel/CSV) menu — holds the id of the list whose menu is open.
+  const [downloadFor, setDownloadFor] = useState<string | null>(null);
+  const downloadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!downloadFor) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (downloadRef.current && !downloadRef.current.contains(e.target as Node))
+        setDownloadFor(null);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [downloadFor]);
 
   // Add-species control for the currently expanded list.
   const [addSpeciesId, setAddSpeciesId] = useState("");
@@ -674,6 +690,46 @@ export default function PricingListClient({
                       <ExternalLink className="size-4" />
                     </Button>
                   </a>
+
+                  {/* Download as an order form (Excel carries live formulas) */}
+                  <div
+                    className="relative"
+                    ref={downloadFor === pl.id ? downloadRef : undefined}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      title="Download price list"
+                      onClick={() =>
+                        setDownloadFor(downloadFor === pl.id ? null : pl.id)
+                      }
+                    >
+                      <Download className="size-4" />
+                    </Button>
+                    {downloadFor === pl.id && (
+                      <div className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                        <a
+                          href={`/api/admin/pricing/${pl.id}/export?format=xlsx`}
+                          download
+                          onClick={() => setDownloadFor(null)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-sky-50"
+                        >
+                          <FileSpreadsheet className="size-4 text-sky-700" />
+                          Excel (.xlsx)
+                        </a>
+                        <a
+                          href={`/api/admin/pricing/${pl.id}/export?format=csv`}
+                          download
+                          onClick={() => setDownloadFor(null)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-sky-50"
+                        >
+                          <FileText className="size-4 text-slate-500" />
+                          CSV (.csv)
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
                   <Button
                     variant="ghost"
                     size="icon-sm"
@@ -707,8 +763,12 @@ export default function PricingListClient({
                           Scientific Name
                         </th>
                         <th className="pb-2">Availability</th>
-                        <th className="pb-2 text-right">Price</th>
-                        <th className="pb-2 text-right w-px">Actions</th>
+                        <th className="pb-2 text-right lg:w-44 lg:pl-8">
+                          Price
+                        </th>
+                        <th className="pb-2 text-right w-px lg:w-40 lg:pl-6">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -734,7 +794,7 @@ export default function PricingListClient({
                                 {badge.label}
                               </span>
                             </td>
-                            <td className="py-2 text-right font-medium">
+                            <td className="py-2 text-right font-medium lg:pl-8">
                               {editingItemId === item.id ? (
                                 <Input
                                   type="number"
@@ -761,7 +821,7 @@ export default function PricingListClient({
                                 </button>
                               )}
                             </td>
-                            <td className="py-2 text-right whitespace-nowrap">
+                            <td className="py-2 text-right whitespace-nowrap lg:pl-6">
                               {editingItemId === item.id ? (
                                 <span className="inline-flex items-center gap-0.5">
                                   <Button
