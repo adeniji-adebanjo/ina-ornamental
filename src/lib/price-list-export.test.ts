@@ -8,8 +8,22 @@ import {
 } from "@/lib/price-list-export";
 
 const ROWS: PriceListRow[] = [
-  { name: "Bichir", scientific: "Polypterus", availability: "In Stock", price: 5 },
-  { name: "Puffer", scientific: "Tetraodon", availability: "Limited", price: 12.5 },
+  {
+    name: "Bichir",
+    scientific: "Polypterus",
+    size: "Small, Medium",
+    availability: "In Stock",
+    qtyPerBox: 50,
+    price: 5,
+  },
+  {
+    name: "Puffer",
+    scientific: "Tetraodon",
+    size: "Large",
+    availability: "Limited",
+    qtyPerBox: 30,
+    price: 12.5,
+  },
 ];
 
 async function load(rows: PriceListRow[] = ROWS) {
@@ -25,62 +39,92 @@ async function load(rows: PriceListRow[] = ROWS) {
   return wb.getWorksheet("Price List")!;
 }
 
+/** Data rows are the ones whose first cell is the row index number. */
+function dataRows(ws: ExcelJS.Worksheet) {
+  const out: ExcelJS.Row[] = [];
+  ws.eachRow((row) => {
+    if (typeof row.getCell(1).value === "number") out.push(row);
+  });
+  return out;
+}
+
 describe("buildPriceListExcel", () => {
-  test("line total is a live =UnitPrice*Qty formula on every row", async () => {
+  test("emits one info row per species with Size, Qty/Box and Unit Price", async () => {
     const ws = await load();
-    // Find the data rows by their Line Total formulas.
-    const formulas: string[] = [];
-    ws.eachRow((row) => {
-      const g = row.getCell(7).value as { formula?: string } | null;
-      if (g && typeof g === "object" && g.formula && !g.formula.startsWith("SUM"))
-        formulas.push(g.formula);
+    const rows = dataRows(ws);
+    assert.equal(rows.length, ROWS.length);
+    rows.forEach((row, i) => {
+      assert.equal(row.getCell(2).value, ROWS[i].name);
+      assert.equal(row.getCell(3).value, ROWS[i].scientific);
+      assert.equal(row.getCell(4).value, ROWS[i].size);
+      assert.equal(row.getCell(5).value, ROWS[i].availability);
+      assert.equal(row.getCell(6).value, ROWS[i].qtyPerBox);
+      assert.equal(row.getCell(7).value, ROWS[i].price);
     });
-    assert.equal(formulas.length, ROWS.length);
-    for (const f of formulas) assert.match(f, /^E\d+\*F\d+$/);
   });
 
-  test("totals row sums the Qty and Line Total columns", async () => {
+  test("Qty/Box and Unit Price cells stay numeric", async () => {
     const ws = await load();
-    let qtySum: string | undefined;
-    let totalSum: string | undefined;
-    ws.eachRow((row) => {
-      const f = row.getCell(6).value as { formula?: string } | null;
-      const g = row.getCell(7).value as { formula?: string } | null;
-      if (f && typeof f === "object" && String(f.formula).startsWith("SUM"))
-        qtySum = f.formula;
-      if (g && typeof g === "object" && String(g.formula).startsWith("SUM"))
-        totalSum = g.formula;
-    });
-    assert.match(String(qtySum), /^SUM\(F\d+:F\d+\)$/);
-    assert.match(String(totalSum), /^SUM\(G\d+:G\d+\)$/);
+    for (const row of dataRows(ws)) {
+      assert.equal(typeof row.getCell(6).value, "number");
+      assert.equal(typeof row.getCell(7).value, "number");
+    }
+    assert.ok(dataRows(ws).length > 0, "expected at least one data row");
   });
 
-  test("unit price cells are numeric and Qty starts empty", async () => {
+  test("contains no formulas — it is a price list, not an order form", async () => {
     const ws = await load();
-    let checked = false;
     ws.eachRow((row) => {
-      const g = row.getCell(7).value as { formula?: string } | null;
-      if (g && typeof g === "object" && g.formula && !g.formula.startsWith("SUM")) {
-        assert.equal(typeof row.getCell(5).value, "number");
-        assert.ok(row.getCell(6).value == null, "Qty should start blank");
-        checked = true;
-      }
+      row.eachCell((cell) => {
+        const v = cell.value as { formula?: string } | null;
+        assert.ok(
+          !(v && typeof v === "object" && "formula" in v),
+          `unexpected formula at ${cell.address}`,
+        );
+      });
     });
-    assert.ok(checked, "expected at least one data row");
+  });
+
+  test("headers describe the info-only layout", async () => {
+    const ws = await load();
+    let header: ExcelJS.Row | undefined;
+    ws.eachRow((row) => {
+      if (row.getCell(1).value === "#") header = row;
+    });
+    assert.ok(header, "expected a header row");
+    assert.deepEqual(
+      [2, 3, 4, 5, 6, 7].map((c) => header!.getCell(c).value),
+      [
+        "Species",
+        "Scientific Name",
+        "Size",
+        "Availability",
+        "Qty/Box",
+        "Unit Price",
+      ],
+    );
   });
 
   test("handles an empty price list without throwing", async () => {
     const ws = await load([]);
     assert.ok(ws.rowCount > 0);
+    assert.equal(dataRows(ws).length, 0);
   });
 });
 
 describe("buildPriceListCsv", () => {
-  test("emits plain values with headers and no formulas", () => {
+  test("emits plain values with the info-only headers", () => {
     const csv = buildPriceListCsv(ROWS);
-    assert.ok(csv.includes("Species,Scientific Name,Availability,Unit Price,Qty,Line Total"));
+    assert.ok(
+      csv.includes(
+        "Species,Scientific Name,Size,Availability,Qty/Box,Unit Price",
+      ),
+    );
     assert.ok(csv.includes("Bichir"));
+    // A multi-size cell contains a comma — it must be quoted, not split.
+    assert.ok(csv.includes('"Small, Medium"'));
     assert.ok(csv.includes("12.50"));
+    assert.ok(!csv.includes("Line Total"), "no order-form columns");
     assert.ok(!csv.includes("="), "CSV must not contain formulas");
   });
 });

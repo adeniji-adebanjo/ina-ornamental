@@ -691,7 +691,7 @@ export default function PricingListClient({
                     </Button>
                   </a>
 
-                  {/* Download as an order form (Excel carries live formulas) */}
+                  {/* Download this client's price list (info only, no order fields) */}
                   <div
                     className="relative"
                     ref={downloadFor === pl.id ? downloadRef : undefined}

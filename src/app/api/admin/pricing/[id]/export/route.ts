@@ -23,12 +23,15 @@ interface PriceItemRow {
   species: {
     common_name: string | null;
     scientific_name: string | null;
+    sizes: string[] | null;
     availability: string | null;
+    qty_per_box: number | string | null;
   } | null;
 }
 
-// Download a client price list as a fillable order form. The Excel version
-// carries live formulas (Qty × Unit Price, SUM totals); CSV is plain values.
+// Download a client price list as an informational document: species details and
+// Qty/Box are the same for every client, only the Unit Price is client-specific.
+// Deliberately not an order form — no fillable quantity or total columns.
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -44,7 +47,7 @@ export async function GET(
   const { data: list, error } = await admin
     .from("client_price_lists")
     .select(
-      "*, client:clients(*), items:client_price_items(*, species:species(common_name, scientific_name, availability))",
+      "*, client:clients(*), items:client_price_items(*, species:species(common_name, scientific_name, sizes, availability, qty_per_box))",
     )
     .eq("id", id)
     .single();
@@ -59,10 +62,13 @@ export async function GET(
   const rows: PriceListRow[] = items.map((it) => ({
     name: it.species?.common_name ?? "",
     scientific: it.species?.scientific_name ?? "",
+    // Same join the client order page uses to render species sizes.
+    size: it.species?.sizes?.join(", ") ?? "",
     availability:
       AVAILABILITY_LABELS[it.species?.availability ?? ""] ??
       it.species?.availability ??
       "",
+    qtyPerBox: Number(it.species?.qty_per_box) || 1,
     // Postgres decimals arrive as strings — coerce so the cell stays numeric.
     price: Number(it.custom_price) || 0,
   }));
