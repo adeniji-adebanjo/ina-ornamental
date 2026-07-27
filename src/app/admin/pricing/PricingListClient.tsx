@@ -86,6 +86,84 @@ interface PriceList {
   items: PriceItem[];
 }
 
+// Inline editor for a price list's validity window. Self-contained so it can
+// initialise its own state from the list without an effect-driven sync.
+function ValidityEditor({
+  id,
+  validFrom,
+  validUntil,
+}: {
+  id: string;
+  validFrom: string | null;
+  validUntil: string | null;
+}) {
+  const router = useRouter();
+  const [from, setFrom] = useState(validFrom ?? "");
+  const [until, setUntil] = useState(validUntil ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const dirty = (from || null) !== validFrom || (until || null) !== validUntil;
+
+  async function save() {
+    if (from && until && until < from) {
+      toast.error("Valid-until cannot be before valid-from.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/pricing/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          valid_from: from || null,
+          valid_until: until || null,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok) {
+        toast.success("Validity dates updated");
+        router.refresh();
+      } else {
+        toast.error(data?.error || "Failed to update dates");
+      }
+    } catch {
+      toast.error("Network error — please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mb-4 flex flex-col sm:flex-row sm:items-end gap-3 rounded-xl bg-slate-50 p-3">
+      <div>
+        <label className="text-xs font-medium text-slate-600 mb-1 block">
+          Valid from
+        </label>
+        <DatePicker
+          value={from}
+          onChange={setFrom}
+          placeholder="No start date"
+        />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-slate-600 mb-1 block">
+          Valid until
+        </label>
+        <DatePicker value={until} onChange={setUntil} placeholder="No expiry" />
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        onClick={save}
+        disabled={!dirty || saving}
+        className="rounded-xl"
+      >
+        {saving ? "Saving…" : "Save dates"}
+      </Button>
+    </div>
+  );
+}
+
 export default function PricingListClient({
   priceLists,
   clients,
@@ -755,6 +833,11 @@ export default function PricingListClient({
 
               {expanded === pl.id && (
                 <div className="mt-4 border-t pt-4 overflow-x-auto">
+                  <ValidityEditor
+                    id={pl.id}
+                    validFrom={pl.valid_from}
+                    validUntil={pl.valid_until}
+                  />
                   <table className="w-full text-sm sm:min-w-[400px]">
                     <thead>
                       <tr className="text-left text-slate-500">

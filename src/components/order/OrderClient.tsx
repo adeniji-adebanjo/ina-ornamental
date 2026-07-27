@@ -42,8 +42,11 @@ export default function OrderClient() {
   const [orderRef, setOrderRef] = useState("");
   const [editingGroup, setEditingGroup] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  // "none" keeps the add-to-cart order; "az"/"za" sort items by species name.
-  const [sortOrder, setSortOrder] = useState<"none" | "az" | "za">("none");
+  // "none" keeps the add-to-cart order; the rest sort by the fish (common) name
+  // or the scientific name, ascending or descending.
+  const [sortOrder, setSortOrder] = useState<
+    "none" | "name-az" | "name-za" | "sci-az" | "sci-za"
+  >("none");
   const [selectedCountry, setSelectedCountry] = useState(
     COUNTRIES.find((c) => c.code === "NG") ?? COUNTRIES[0],
   );
@@ -373,16 +376,20 @@ export default function OrderClient() {
                 (item) => item.group === groupName,
               );
               // Copy before sorting so the cart order itself is left untouched.
+              const byScientific = sortOrder.startsWith("sci-");
+              const descending = sortOrder.endsWith("-za");
               const displayItems =
                 sortOrder === "none"
                   ? groupItems
                   : [...groupItems].sort((a, b) => {
-                      const cmp = a.product.commonName.localeCompare(
-                        b.product.commonName,
-                        undefined,
-                        { sensitivity: "base" },
-                      );
-                      return sortOrder === "az" ? cmp : -cmp;
+                      const key = (i: (typeof groupItems)[number]) =>
+                        (byScientific
+                          ? i.product.scientificName
+                          : i.product.commonName) ?? "";
+                      const cmp = key(a).localeCompare(key(b), undefined, {
+                        sensitivity: "base",
+                      });
+                      return descending ? -cmp : cmp;
                     });
 
               return (
@@ -465,14 +472,21 @@ export default function OrderClient() {
                         value={sortOrder}
                         onChange={(e) =>
                           setSortOrder(
-                            e.target.value as "none" | "az" | "za",
+                            e.target.value as
+                              | "none"
+                              | "name-az"
+                              | "name-za"
+                              | "sci-az"
+                              | "sci-za",
                           )
                         }
                         className="rounded-lg border border-slate-200 bg-white h-8 px-2 text-xs outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/40"
                       >
                         <option value="none">Default</option>
-                        <option value="az">Name A–Z</option>
-                        <option value="za">Name Z–A</option>
+                        <option value="name-az">Name A–Z</option>
+                        <option value="name-za">Name Z–A</option>
+                        <option value="sci-az">Sci. name A–Z</option>
+                        <option value="sci-za">Sci. name Z–A</option>
                       </select>
                     </div>
                   )}

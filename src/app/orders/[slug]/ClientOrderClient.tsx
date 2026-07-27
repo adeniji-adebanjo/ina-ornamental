@@ -183,8 +183,11 @@ export default function ClientOrderClient({
   const [search, setSearch] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
   const [classFilter, setClassFilter] = useState<string>("all");
-  // "none" preserves the price-list order; "az"/"za" sort by species name.
-  const [sortOrder, setSortOrder] = useState<"none" | "az" | "za">("none");
+  // "none" preserves the price-list order; the rest sort by the fish (common)
+  // name or the scientific name, ascending or descending.
+  const [sortOrder, setSortOrder] = useState<
+    "none" | "name-az" | "name-za" | "sci-az" | "sci-za"
+  >("none");
 
   const classOptions = useMemo(() => {
     const setOpts = new Set<string>();
@@ -280,14 +283,18 @@ export default function ClientOrderClient({
       return true;
     });
     if (sortOrder !== "none") {
+      const byScientific = sortOrder.startsWith("sci-");
+      const desc = sortOrder.endsWith("-za");
       // Copy first — never mutate the priceList.items array in place.
       items.sort((a, b) => {
-        const cmp = (a.species?.common_name ?? "").localeCompare(
-          b.species?.common_name ?? "",
-          undefined,
-          { sensitivity: "base" },
-        );
-        return sortOrder === "az" ? cmp : -cmp;
+        const key = (it: (typeof items)[number]) =>
+          (byScientific
+            ? it.species?.scientific_name
+            : it.species?.common_name) ?? "";
+        const cmp = key(a).localeCompare(key(b), undefined, {
+          sensitivity: "base",
+        });
+        return desc ? -cmp : cmp;
       });
     }
     return items;
@@ -691,13 +698,22 @@ export default function ClientOrderClient({
                 <select
                   value={sortOrder}
                   onChange={(e) =>
-                    setSortOrder(e.target.value as "none" | "az" | "za")
+                    setSortOrder(
+                      e.target.value as
+                        | "none"
+                        | "name-az"
+                        | "name-za"
+                        | "sci-az"
+                        | "sci-za",
+                    )
                   }
                   className="w-full rounded-xl border border-slate-200 bg-white h-9 px-2.5 text-sm outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/40"
                 >
                   <option value="none">Default</option>
-                  <option value="az">Name A–Z</option>
-                  <option value="za">Name Z–A</option>
+                  <option value="name-az">Name A–Z</option>
+                  <option value="name-za">Name Z–A</option>
+                  <option value="sci-az">Sci. name A–Z</option>
+                  <option value="sci-za">Sci. name Z–A</option>
                 </select>
               </div>
             </div>
