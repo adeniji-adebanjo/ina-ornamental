@@ -183,6 +183,8 @@ export default function ClientOrderClient({
   const [search, setSearch] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
   const [classFilter, setClassFilter] = useState<string>("all");
+  // "none" preserves the price-list order; "az"/"za" sort by species name.
+  const [sortOrder, setSortOrder] = useState<"none" | "az" | "za">("none");
 
   const classOptions = useMemo(() => {
     const setOpts = new Set<string>();
@@ -263,7 +265,7 @@ export default function ClientOrderClient({
 
   const filteredItems = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return priceList.items.filter((item) => {
+    const items = priceList.items.filter((item) => {
       const sp = item.species;
       const avail = sp?.availability || "on_request";
       const cls = sp?.class_order || sp?.category?.name || "Unspecified";
@@ -277,7 +279,19 @@ export default function ClientOrderClient({
       }
       return true;
     });
-  }, [priceList.items, availabilityFilter, classFilter, search]);
+    if (sortOrder !== "none") {
+      // Copy first — never mutate the priceList.items array in place.
+      items.sort((a, b) => {
+        const cmp = (a.species?.common_name ?? "").localeCompare(
+          b.species?.common_name ?? "",
+          undefined,
+          { sensitivity: "base" },
+        );
+        return sortOrder === "az" ? cmp : -cmp;
+      });
+    }
+    return items;
+  }, [priceList.items, availabilityFilter, classFilter, search, sortOrder]);
 
   // groupId defaults to the active group (catalogue grid), but the order
   // summary passes each item's own group so it can be edited from there.
@@ -418,6 +432,7 @@ export default function ClientOrderClient({
             scientific_name: priceItem?.species?.scientific_name ?? "",
             size: priceItem?.species?.sizes?.join(", ") ?? "",
             quantity: pieces,
+            qty_per_box: priceItem?.species?.qty_per_box ?? 1,
             unit_price: priceItem?.custom_price ?? null,
           };
         }),
@@ -619,7 +634,7 @@ export default function ClientOrderClient({
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-28 lg:pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2">
           <div className="mb-4 sticky top-[115px] z-30 bg-white/95 backdrop-blur border-b border-slate-200 py-3 px-3 sm:px-4">
-            <div className="grid grid-cols-2 sm:grid-cols-[1.4fr_1fr_1fr] gap-2 sm:gap-3 w-full lg:max-w-2xl">
+            <div className="grid grid-cols-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr] gap-2 sm:gap-3 w-full lg:max-w-3xl">
               <div className="col-span-2 sm:col-span-1">
                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   Search
@@ -667,6 +682,22 @@ export default function ClientOrderClient({
                       {c}
                     </option>
                   ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Sort
+                </label>
+                <select
+                  value={sortOrder}
+                  onChange={(e) =>
+                    setSortOrder(e.target.value as "none" | "az" | "za")
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white h-9 px-2.5 text-sm outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/40"
+                >
+                  <option value="none">Default</option>
+                  <option value="az">Name A–Z</option>
+                  <option value="za">Name Z–A</option>
                 </select>
               </div>
             </div>

@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
         scientific_name?: string;
         size?: string;
         quantity: number;
+        qty_per_box?: number;
         unit_price?: number;
       }[];
     }[];
@@ -312,6 +313,7 @@ export async function POST(request: NextRequest) {
         scientific_name: it.scientific_name,
         size: it.size,
         quantity: it.quantity,
+        qty_per_box: it.qty_per_box,
         unit_price: it.unit_price,
       })),
     })),

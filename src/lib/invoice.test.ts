@@ -23,11 +23,16 @@ const PRICED = {
     {
       name: "Order A",
       items: [
-        { species_name: "Bichir", quantity: 10, unit_price: 5 },
-        { species_name: "Puffer", quantity: 4, unit_price: 12 },
+        { species_name: "Bichir", quantity: 10, qty_per_box: 5, unit_price: 5 },
+        { species_name: "Puffer", quantity: 4, qty_per_box: 2, unit_price: 12 },
       ],
     },
-    { name: "Order B", items: [{ species_name: "Tetra", quantity: 20, unit_price: 1.5 }] },
+    {
+      name: "Order B",
+      items: [
+        { species_name: "Tetra", quantity: 20, qty_per_box: 10, unit_price: 1.5 },
+      ],
+    },
   ],
 };
 
@@ -40,21 +45,35 @@ describe("buildInvoiceExcel", () => {
     assert.ok(names.includes("Performa Invoice"));
   });
 
-  test("per-item total is a =Qty*UnitPrice formula with the correct cached result", async () => {
+  test("Box Qty is a live =Qty/qtyPerBox formula with the correct result", async () => {
     const wb = await loadInvoice(PRICED);
     const ws = wb.getWorksheet("Order A")!;
     // First data row is 12 (info block + headers precede it).
-    const g12 = cell(ws, "G12");
-    assert.equal(g12.formula, "E12*F12");
-    assert.equal(g12.result, 50);
+    const f12 = cell(ws, "F12");
+    assert.equal(f12.formula, "E12/5");
+    assert.equal(f12.result, 2); // 10 / 5
+    const f13 = cell(ws, "F13");
+    assert.equal(f13.result, 2); // 4 / 2
+  });
+
+  test("per-item total is a =Qty*UnitPrice formula with the correct cached result", async () => {
+    const wb = await loadInvoice(PRICED);
+    const ws = wb.getWorksheet("Order A")!;
+    const h12 = cell(ws, "H12");
+    assert.equal(h12.formula, "E12*G12");
+    assert.equal(h12.result, 50);
   });
 
   test("group total is a =SUM formula equal to the sum of line items", async () => {
     const wb = await loadInvoice(PRICED);
     const ws = wb.getWorksheet("Order A")!;
-    const total = cell(ws, "G15");
+    const total = cell(ws, "H15");
     assert.ok(String(total.formula).startsWith("SUM("));
     assert.equal(total.result, 98); // 10*5 + 4*12
+    // Box Qty column also gets a SUM total.
+    const boxTotal = cell(ws, "F15");
+    assert.ok(String(boxTotal.formula).startsWith("SUM("));
+    assert.equal(boxTotal.result, 4); // 2 + 2
   });
 
   test("Performa grand total references flow from the group sheets", async () => {
@@ -66,9 +85,9 @@ describe("buildInvoiceExcel", () => {
     perf.eachRow((row) => {
       const e = row.getCell(5).value as { formula?: string } | null;
       if (e && typeof e === "object" && /!E\d+$/.test(e.formula ?? "")) sawRef = true;
-      const g = row.getCell(7).value as { formula?: string; result?: number } | null;
-      if (g && typeof g === "object" && String(g.formula).startsWith("SUM("))
-        grand = g.result ?? 0;
+      const h = row.getCell(8).value as { formula?: string; result?: number } | null;
+      if (h && typeof h === "object" && String(h.formula).startsWith("SUM("))
+        grand = h.result ?? 0;
     });
     assert.ok(sawRef, "expected a cross-sheet Qty reference");
     assert.equal(grand, 128); // 50 + 48 + 30
@@ -82,12 +101,13 @@ describe("buildInvoiceExcel", () => {
       groups: [{ name: "Order A", items: [{ species_name: "Bichir", quantity: 3 }] }],
     });
     const ws = wb.getWorksheet("Order A")!;
-    // Header row is the 5-column form: no "Unit Price"/"Total".
+    // Header row is the 6-column form: # Species Scientific Size Qty Box Qty
+    // (no "Unit Price"/"Total").
     let headerCols = 0;
     ws.eachRow((row) => {
       if (row.getCell(1).value === "#") headerCols = row.cellCount;
     });
-    assert.equal(headerCols, 5);
+    assert.equal(headerCols, 6);
   });
 
   test("sanitizes and de-duplicates illegal / colliding sheet names", async () => {
@@ -122,6 +142,21 @@ describe("buildInvoiceExcel", () => {
       ],
     });
     const ws = wb.getWorksheet("Order A")!;
-    assert.equal(typeof cell(ws, "F12"), "number");
+    // Unit Price now sits in column G.
+    assert.equal(typeof cell(ws, "G12"), "number");
+  });
+
+  test("defaults Box Qty to the ordered quantity when qty_per_box is missing", async () => {
+    const wb = await loadInvoice({
+      order_reference: "INA-T5",
+      customer_name: "X",
+      email: "x@y.com",
+      groups: [{ name: "Order A", items: [{ species_name: "A", quantity: 7 }] }],
+    });
+    const ws = wb.getWorksheet("Order A")!;
+    const f12 = cell(ws, "F12");
+    // qtyPerBox falls back to 1 → Box Qty equals Qty.
+    assert.equal(f12.formula, "E12/1");
+    assert.equal(f12.result, 7);
   });
 });

@@ -20,6 +20,8 @@ interface InvoiceData {
       scientific_name?: string;
       size?: string;
       quantity: number;
+      // Pieces per box (species packing constant). Box Qty = quantity / this.
+      qty_per_box?: number | null;
       unit_price?: number | null;
     }[];
   }[];
@@ -49,7 +51,7 @@ function addInfoSection(ws: ExcelJS.Worksheet, data: InvoiceData) {
     bold: true,
     color: { argb: BRAND_GREEN },
   };
-  ws.mergeCells(titleRow.number, 1, titleRow.number, 7);
+  ws.mergeCells(titleRow.number, 1, titleRow.number, 8);
 
   const tagRow = ws.addRow(["Premium West African Ornamental Fish Export"]);
   tagRow.getCell(1).font = {
@@ -57,7 +59,7 @@ function addInfoSection(ws: ExcelJS.Worksheet, data: InvoiceData) {
     italic: true,
     color: { argb: "8E8270" },
   };
-  ws.mergeCells(tagRow.number, 1, tagRow.number, 7);
+  ws.mergeCells(tagRow.number, 1, tagRow.number, 8);
 
   ws.addRow([]);
 
@@ -92,7 +94,7 @@ function addInfoSection(ws: ExcelJS.Worksheet, data: InvoiceData) {
     const row = ws.addRow([label, value]);
     row.getCell(1).font = { bold: true, size: 10, color: { argb: "8E8270" } };
     row.getCell(2).font = { size: 10 };
-    ws.mergeCells(row.number, 2, row.number, 7);
+    ws.mergeCells(row.number, 2, row.number, 8);
   }
 
   ws.addRow([]);
@@ -116,7 +118,7 @@ function addItemsTable(
   let rowNum = startRowNum;
 
   // Table header
-  const headers = ["#", "Species", "Scientific Name", "Size", "Qty"];
+  const headers = ["#", "Species", "Scientific Name", "Size", "Qty", "Box Qty"];
   if (hasAnyPrice) headers.push("Unit Price", "Total");
 
   const headerRow = ws.addRow(headers);
@@ -143,12 +145,16 @@ function addItemsTable(
     // Coerce decimal-string prices to numbers so the cell is numeric (formatted
     // + arithmetic), not text.
     const price = Number(item.unit_price ?? 0) || 0;
+    // Pieces per box; Box Qty = Qty / qtyPerBox (matches the order form's boxes).
+    const qtyPerBox = Number(item.qty_per_box) > 0 ? Number(item.qty_per_box) : 1;
+    const boxQty = parseFloat((item.quantity / qtyPerBox).toFixed(2));
     const values: (string | number)[] = [
       rowNum++,
       item.species_name,
       item.scientific_name || "",
       item.size || "-",
       item.quantity,
+      boxQty,
     ];
     if (hasAnyPrice) {
       values.push(price, price * item.quantity);
@@ -167,12 +173,19 @@ function addItemsTable(
         result: item.quantity,
       };
       if (hasAnyPrice) {
-        row.getCell(6).value = {
-          formula: `${refSource.sheetRef}!F${srcRow}`,
+        row.getCell(7).value = {
+          formula: `${refSource.sheetRef}!G${srcRow}`,
           result: price,
         };
       }
     }
+
+    // Box Qty is a live formula off the Qty cell, so editing Qty recalculates it.
+    row.getCell(6).value = {
+      formula: `E${row.number}/${qtyPerBox}`,
+      result: boxQty,
+    };
+    row.getCell(6).numFmt = "0.00";
 
     row.getCell(1).alignment = { horizontal: "center" };
     row.getCell(2).font = { bold: true, size: 10 };
@@ -183,19 +196,20 @@ function addItemsTable(
     };
     row.getCell(4).alignment = { horizontal: "center" };
     row.getCell(5).alignment = { horizontal: "center" };
+    row.getCell(6).alignment = { horizontal: "center" };
 
     if (hasAnyPrice) {
-      // Live total: Qty (col E) × Unit Price (col F). Editing either in the
+      // Live total: Qty (col E) × Unit Price (col G). Editing either in the
       // downloaded sheet recalculates this cell. `result` is the cached value
       // so previews that don't recalculate still show the right number.
-      row.getCell(7).value = {
-        formula: `E${row.number}*F${row.number}`,
+      row.getCell(8).value = {
+        formula: `E${row.number}*G${row.number}`,
         result: price * item.quantity,
       };
-      row.getCell(6).numFmt = "$#,##0.00";
-      row.getCell(6).alignment = { horizontal: "right" };
       row.getCell(7).numFmt = "$#,##0.00";
       row.getCell(7).alignment = { horizontal: "right" };
+      row.getCell(8).numFmt = "$#,##0.00";
+      row.getCell(8).alignment = { horizontal: "right" };
     }
 
     // Alternating row fill
@@ -221,9 +235,10 @@ function setupColumns(ws: ExcelJS.Worksheet) {
   ws.columns = [
     { key: "num", width: 5 },
     { key: "species", width: 30 },
-    { key: "scientific", width: 28 },
+    { key: "scientific", width: 26 },
     { key: "size", width: 12 },
     { key: "qty", width: 8 },
+    { key: "boxqty", width: 9 },
     { key: "price", width: 12 },
     { key: "total", width: 14 },
   ];
@@ -279,7 +294,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
       bold: true,
       color: { argb: BRAND_GREEN },
     };
-    ws.mergeCells(groupTitle.number, 1, groupTitle.number, 7);
+    ws.mergeCells(groupTitle.number, 1, groupTitle.number, 8);
     ws.addRow([]);
 
     const table = addItemsTable(ws, group.items, hasAnyPrice);
@@ -308,29 +323,50 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     };
     totRow.getCell(5).alignment = { horizontal: "center" };
 
+    // Live SUM over the group's Box Qty cells.
+    const groupBoxQty = group.items.reduce(
+      (s, i) =>
+        s +
+        i.quantity / (Number(i.qty_per_box) > 0 ? Number(i.qty_per_box) : 1),
+      0,
+    );
+    if (table.firstRow && table.lastRow) {
+      totRow.getCell(6).value = {
+        formula: `SUM(F${table.firstRow}:F${table.lastRow})`,
+        result: parseFloat(groupBoxQty.toFixed(2)),
+      };
+    }
+    totRow.getCell(6).numFmt = "0.00";
+    totRow.getCell(6).font = {
+      bold: true,
+      size: 11,
+      color: { argb: BRAND_GREEN },
+    };
+    totRow.getCell(6).alignment = { horizontal: "center" };
+
     if (hasAnyPrice) {
       const groupTotal = group.items.reduce(
         (s, i) => s + i.quantity * (i.unit_price ?? 0),
         0,
       );
-      totRow.getCell(6).value = "Total:";
-      totRow.getCell(6).font = { bold: true, size: 11 };
-      totRow.getCell(6).alignment = { horizontal: "right" };
+      totRow.getCell(7).value = "Total:";
+      totRow.getCell(7).font = { bold: true, size: 11 };
+      totRow.getCell(7).alignment = { horizontal: "right" };
       // Live SUM over the group's Total cells (which are themselves formulas).
-      totRow.getCell(7).value =
+      totRow.getCell(8).value =
         table.firstRow && table.lastRow
           ? {
-              formula: `SUM(G${table.firstRow}:G${table.lastRow})`,
+              formula: `SUM(H${table.firstRow}:H${table.lastRow})`,
               result: groupTotal,
             }
           : groupTotal;
-      totRow.getCell(7).numFmt = "$#,##0.00";
-      totRow.getCell(7).font = {
+      totRow.getCell(8).numFmt = "$#,##0.00";
+      totRow.getCell(8).font = {
         bold: true,
         size: 12,
         color: { argb: BRAND_GREEN },
       };
-      totRow.getCell(7).alignment = { horizontal: "right" };
+      totRow.getCell(8).alignment = { horizontal: "right" };
     }
 
     if (data.notes) {
@@ -343,7 +379,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
       };
       const notesRow = ws.addRow([data.notes]);
       notesRow.getCell(1).font = { size: 10 };
-      ws.mergeCells(notesRow.number, 1, notesRow.number, 7);
+      ws.mergeCells(notesRow.number, 1, notesRow.number, 8);
       notesRow.getCell(1).alignment = { wrapText: true };
     }
 
@@ -356,7 +392,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
       italic: true,
       color: { argb: "B0A48E" },
     };
-    ws.mergeCells(footerRow.number, 1, footerRow.number, 7);
+    ws.mergeCells(footerRow.number, 1, footerRow.number, 8);
     footerRow.getCell(1).alignment = { horizontal: "center" };
   }
 
@@ -373,7 +409,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     bold: true,
     color: { argb: BRAND_GREEN },
   };
-  summaryWs.mergeCells(sumTitle.number, 1, sumTitle.number, 7);
+  summaryWs.mergeCells(sumTitle.number, 1, sumTitle.number, 8);
   summaryWs.addRow([]);
 
   let rowNum = 1;
@@ -387,7 +423,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
         bold: true,
         color: { argb: BRAND_GOLD },
       };
-      summaryWs.mergeCells(gRow.number, 1, gRow.number, 7);
+      summaryWs.mergeCells(gRow.number, 1, gRow.number, 8);
       summaryWs.addRow([]);
     }
     const table = addItemsTable(
@@ -437,29 +473,55 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
   };
   grandRow.getCell(5).alignment = { horizontal: "center" };
 
+  // Live SUM across every line item's Box Qty.
+  const totalBoxes = data.groups.reduce(
+    (sum, g) =>
+      sum +
+      g.items.reduce(
+        (s, i) =>
+          s +
+          i.quantity / (Number(i.qty_per_box) > 0 ? Number(i.qty_per_box) : 1),
+        0,
+      ),
+    0,
+  );
+  if (summaryHasRange) {
+    grandRow.getCell(6).value = {
+      formula: `SUM(F${summaryFirstRow}:F${summaryLastRow})`,
+      result: parseFloat(totalBoxes.toFixed(2)),
+    };
+  }
+  grandRow.getCell(6).numFmt = "0.00";
+  grandRow.getCell(6).font = {
+    bold: true,
+    size: 12,
+    color: { argb: BRAND_GREEN },
+  };
+  grandRow.getCell(6).alignment = { horizontal: "center" };
+
   if (hasAnyPrice) {
     const grandTotal = data.groups.reduce(
       (sum, g) =>
         sum + g.items.reduce((s, i) => s + i.quantity * (i.unit_price ?? 0), 0),
       0,
     );
-    grandRow.getCell(6).value = "Grand Total:";
-    grandRow.getCell(6).font = { bold: true, size: 12 };
-    grandRow.getCell(6).alignment = { horizontal: "right" };
+    grandRow.getCell(7).value = "Grand Total:";
+    grandRow.getCell(7).font = { bold: true, size: 12 };
+    grandRow.getCell(7).alignment = { horizontal: "right" };
     // Live SUM across every line item's Total.
-    grandRow.getCell(7).value = summaryHasRange
+    grandRow.getCell(8).value = summaryHasRange
       ? {
-          formula: `SUM(G${summaryFirstRow}:G${summaryLastRow})`,
+          formula: `SUM(H${summaryFirstRow}:H${summaryLastRow})`,
           result: grandTotal,
         }
       : grandTotal;
-    grandRow.getCell(7).numFmt = "$#,##0.00";
-    grandRow.getCell(7).font = {
+    grandRow.getCell(8).numFmt = "$#,##0.00";
+    grandRow.getCell(8).font = {
       bold: true,
       size: 14,
       color: { argb: BRAND_GREEN },
     };
-    grandRow.getCell(7).alignment = { horizontal: "right" };
+    grandRow.getCell(8).alignment = { horizontal: "right" };
   }
 
   if (data.notes) {
@@ -472,7 +534,7 @@ export async function buildInvoiceExcel(data: InvoiceData): Promise<Buffer> {
     };
     const notesRow = summaryWs.addRow([data.notes]);
     notesRow.getCell(1).font = { size: 10 };
-    summaryWs.mergeCells(notesRow.number, 1, notesRow.number, 7);
+    summaryWs.mergeCells(notesRow.number, 1, notesRow.number, 8);
     notesRow.getCell(1).alignment = { wrapText: true };
   }
 

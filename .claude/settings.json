@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm test *)",
       "Bash(node scripts/validate_palette.js \"#d97706,#0284c7,#7c3aed,#4f46e5,#16a34a,#dc2626\" --mode light)",
-      "Bash(node scripts/validate_palette.js \"#16a34a,#d97706,#dc2626,#0284c7,#64748b\" --mode light)"
+      "Bash(node scripts/validate_palette.js \"#16a34a,#d97706,#dc2626,#0284c7,#64748b\" --mode light)",
+      "Bash(npx tsx *)"
     ]
   }
 }

@@ -104,6 +104,8 @@ interface OrderEmailData {
       scientific_name?: string;
       size?: string;
       quantity: number;
+      // Pieces per box; carried through to the Excel invoice's Box Qty column.
+      qty_per_box?: number | null;
       unit_price?: number | null;
     }[];
   }[];

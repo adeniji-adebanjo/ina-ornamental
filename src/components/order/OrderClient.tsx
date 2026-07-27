@@ -42,6 +42,8 @@ export default function OrderClient() {
   const [orderRef, setOrderRef] = useState("");
   const [editingGroup, setEditingGroup] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  // "none" keeps the add-to-cart order; "az"/"za" sort items by species name.
+  const [sortOrder, setSortOrder] = useState<"none" | "az" | "za">("none");
   const [selectedCountry, setSelectedCountry] = useState(
     COUNTRIES.find((c) => c.code === "NG") ?? COUNTRIES[0],
   );
@@ -193,6 +195,7 @@ export default function OrderClient() {
             scientific_name: item.product.scientificName,
             size: item.selectedSize,
             quantity: item.quantity,
+            qty_per_box: item.product.qtyPerBox ?? 1,
           })),
         };
       })
@@ -369,6 +372,18 @@ export default function OrderClient() {
               const groupItems = cart.filter(
                 (item) => item.group === groupName,
               );
+              // Copy before sorting so the cart order itself is left untouched.
+              const displayItems =
+                sortOrder === "none"
+                  ? groupItems
+                  : [...groupItems].sort((a, b) => {
+                      const cmp = a.product.commonName.localeCompare(
+                        b.product.commonName,
+                        undefined,
+                        { sensitivity: "base" },
+                      );
+                      return sortOrder === "az" ? cmp : -cmp;
+                    });
 
               return (
                 <div key={groupName} className="space-y-3">
@@ -437,6 +452,31 @@ export default function OrderClient() {
                     )}
                   </div>
 
+                  {groupItems.length > 1 && (
+                    <div className="flex items-center justify-end gap-2">
+                      <label
+                        htmlFor="order-sort"
+                        className="text-xs font-medium text-slate-500"
+                      >
+                        Sort
+                      </label>
+                      <select
+                        id="order-sort"
+                        value={sortOrder}
+                        onChange={(e) =>
+                          setSortOrder(
+                            e.target.value as "none" | "az" | "za",
+                          )
+                        }
+                        className="rounded-lg border border-slate-200 bg-white h-8 px-2 text-xs outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/40"
+                      >
+                        <option value="none">Default</option>
+                        <option value="az">Name A–Z</option>
+                        <option value="za">Name Z–A</option>
+                      </select>
+                    </div>
+                  )}
+
                   {groupItems.length === 0 ? (
                     <Card className="border-slate-100 bg-slate-50 rounded-2xl">
                       <CardContent className="p-6 text-center">
@@ -456,7 +496,7 @@ export default function OrderClient() {
                       </CardContent>
                     </Card>
                   ) : (
-                    groupItems.map((item) => (
+                    displayItems.map((item) => (
                       <Card
                         key={`${item.product.id}-${item.selectedSize}-${groupName}`}
                         className="border-slate-100 rounded-2xl shadow-sm"
