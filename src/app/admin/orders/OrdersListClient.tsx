@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import OrderUploadDialog from "./OrderUploadDialog";
+import ShipmentTrackingEditor from "./ShipmentTrackingEditor";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-slate-50 text-slate-600",
@@ -165,6 +166,12 @@ export default function OrdersListClient({
                       >
                         {order.status}
                       </span>
+                      {order.awb_number && (
+                        <span className="rounded-full bg-sky-50 px-2 py-0.5 font-mono text-xs font-medium text-sky-700">
+                          {order.awb_number}
+                          {order.manual_status && ` · ${order.manual_status}`}
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-slate-600">
                       {order.customer_name}
@@ -246,6 +253,11 @@ export default function OrdersListClient({
                         </div>
                       </div>
                     ))}
+
+                    <ShipmentTrackingEditor
+                      order={order}
+                      onSaved={() => router.refresh()}
+                    />
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-slate-100">
                       <div className="flex flex-wrap gap-2 items-center">

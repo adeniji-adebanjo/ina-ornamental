@@ -10,6 +10,7 @@ const quickLinks = [
   { href: "/blog", label: "Blog" },
   { href: "/contact", label: "Contact" },
   { href: "/order", label: "Request Quote" },
+  { href: "/track", label: "Track Shipment" },
 ];
 
 const speciesLinks = [

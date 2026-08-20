@@ -38,6 +38,9 @@ export async function GET() {
     "phone",
     "country",
     "delivery_address",
+    "awb_number",
+    "airline_name",
+    "manual_status",
     "submitted_at",
     "groups_json",
   ];
@@ -65,6 +68,9 @@ export async function GET() {
       o.phone || "",
       o.country || "",
       (o.delivery_address || "").replace(/\n/g, " ").replace(/,/g, ";"),
+      o.awb_number || "",
+      o.airline_name || "",
+      o.manual_status || "",
       o.submitted_at,
       JSON.stringify(groups).replace(/"/g, '"'),
     ];

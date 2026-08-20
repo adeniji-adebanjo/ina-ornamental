@@ -278,9 +278,26 @@ export async function sendOrderStatusUpdate(data: {
   customer_name: string;
   email: string;
   status: string;
+  awb_number?: string | null;
+  airline_name?: string | null;
 }) {
   const transport = getTransporter();
   if (!transport || !data.email) return;
+
+  // Once a waybill exists, point the customer at the self-service tracking page
+  // so they can follow the flight on the airline's own portal.
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://inaornamentalfish.com";
+  const trackingBlock = data.awb_number
+    ? `
+      <div style="background:#faf7f2;padding:16px;border-radius:8px;margin:16px 0;">
+        <table style="width:100%;font-size:14px;">
+          <tr><td style="color:#8e8270;">Air Waybill</td><td style="font-weight:bold;color:#3b655d;">${esc(data.awb_number)}</td></tr>
+          ${data.airline_name ? `<tr><td style="color:#8e8270;">Airline</td><td style="font-weight:bold;">${esc(data.airline_name)}</td></tr>` : ""}
+        </table>
+        <a href="${esc(siteUrl)}/track" style="display:inline-block;margin-top:12px;background:#3b655d;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:bold;">Track your shipment</a>
+      </div>`
+    : "";
 
   const statusLabels: Record<string, string> = {
     confirmed: "Your order has been confirmed",
@@ -315,6 +332,7 @@ export async function sendOrderStatusUpdate(data: {
           <tr><td style="color:#8e8270;">Status</td><td style="font-weight:bold;text-transform:capitalize;">${esc(data.status)}</td></tr>
         </table>
       </div>
+      ${trackingBlock}
       <p style="font-size:13px;color:#8e8270;">If you have questions, reply to this email or contact us on WhatsApp.</p>
     </div>
     <p style="text-align:center;margin:16px 0 0;font-size:11px;color:#b0a48e;">© ${new Date().getFullYear()} INÁ Ornamental Fish</p>

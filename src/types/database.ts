@@ -18,6 +18,15 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
+// Physical progress of the air freight, advanced manually by the INÁ team.
+// Distinct from OrderStatus, which tracks the commercial lifecycle.
+export type ShipmentStatus =
+  | "BOOKED"
+  | "DEPARTED"
+  | "IN_TRANSIT"
+  | "ARRIVED"
+  | "DELIVERED";
+
 // ─── Database Row Types ─────────────────────────────────────────────────────
 
 export interface Category {
@@ -107,6 +116,12 @@ export interface Order {
   delivery_address: string | null;
   notes: string | null;
   status: OrderStatus;
+  // Air cargo tracking. Optional rather than merely nullable so existing
+  // inserts (which never set them) still satisfy OrderInsert.
+  awb_number?: string | null; // canonical hyphenated form: "071-12345678"
+  carrier_prefix?: string | null; // 3-digit IATA prefix, denormalized from the AWB
+  airline_name?: string | null; // resolved at write time; survives registry changes
+  manual_status?: ShipmentStatus | null;
   submitted_at: string;
   created_at: string;
   updated_at: string;

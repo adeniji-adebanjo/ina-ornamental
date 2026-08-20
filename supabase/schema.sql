@@ -96,6 +96,11 @@ create type order_status as enum (
   'draft', 'submitted', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'
 );
 
+-- Physical progress of the air freight, advanced manually by the INÁ team.
+create type shipment_status as enum (
+  'BOOKED', 'DEPARTED', 'IN_TRANSIT', 'ARRIVED', 'DELIVERED'
+);
+
 create table orders (
   id uuid primary key default uuid_generate_v4(),
   order_reference text not null unique,
@@ -110,10 +115,17 @@ create table orders (
   delivery_address text,
   notes text,
   status order_status default 'submitted',
+  -- Air cargo tracking (see migration 0004)
+  awb_number text check (awb_number is null or awb_number ~ '^\d{3}-\d{8}$'),
+  carrier_prefix text check (carrier_prefix is null or carrier_prefix ~ '^\d{3}$'),
+  airline_name text,
+  manual_status shipment_status,
   submitted_at timestamptz default now(),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+create index idx_orders_awb_number on orders(awb_number) where awb_number is not null;
 
 create table order_groups (
   id uuid primary key default uuid_generate_v4(),
