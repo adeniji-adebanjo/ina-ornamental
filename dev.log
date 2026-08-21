@@ -74,3 +74,52 @@ https://react.dev/link/hydration-mismatch
 [browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
  POST /api/track 200 in 561ms (next.js: 20ms, application-code: 541ms)
  POST /api/track 200 in 1435ms (next.js: 111ms, application-code: 1323ms)
+ GET /track 200 in 11.8s (next.js: 5.4s, application-code: 6.5s)
+ GET /manifest.webmanifest 200 in 858ms (next.js: 353ms, application-code: 505ms)
+ GET /track 200 in 48s (next.js: 4.1s, application-code: 44s)
+ GET /manifest.webmanifest 200 in 635ms (next.js: 332ms, application-code: 303ms)
+ GET /track 200 in 1243ms (next.js: 280ms, application-code: 963ms)
+ GET /manifest.webmanifest 200 in 11.2s (next.js: 5.7s, application-code: 5.5s)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/track" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <script>
+                      <script>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html lang="en" className="h-full ant...">
+                          <body
+                            className="min-h-full flex flex-col"
+-                           data-new-gr-c-s-check-loaded="14.1322.0"
+-                           data-gr-ext-installed=""
+                          >
+                  ...
+ 
+ GET /manifest.webmanifest 200 in 160ms (next.js: 89ms, application-code: 71ms)
+ GET /track 200 in 1723ms (next.js: 216ms, application-code: 1506ms)
