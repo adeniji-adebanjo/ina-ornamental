@@ -25,43 +25,49 @@ export interface AirCarrier {
   urlTemplate: string;
 }
 
+// URLs verified against each carrier's live portal. None of the seven accept
+// the waybill as a query parameter today, so every link lands on the tracking
+// page and the customer enters the number — the UI and emails say so rather
+// than implying a prefill that never happens. If a carrier later exposes a
+// deep-link parameter, add the placeholders here and everything downstream
+// (card, email copy, admin preview) follows automatically.
 export const AIR_CARRIERS: Record<string, AirCarrier> = {
   "020": {
     prefix: "020",
     name: "Lufthansa Cargo",
-    urlTemplate: "https://lufthansa-cargo.com/tracking?awb={prefix}-{serial}",
+    urlTemplate: "https://www.lufthansa-cargo.com/en/eservices/etracking",
   },
   "235": {
     prefix: "235",
     name: "Turkish Cargo",
-    urlTemplate:
-      "https://www.turkishcargo.com.tr/en/online-services/shipment-tracking",
+    urlTemplate: "https://www.turkishcargo.com/en/cargo-tracking",
   },
   "071": {
     prefix: "071",
     name: "Ethiopian Cargo",
-    urlTemplate: "https://www.cargo.ethiopianairlines.com/tracking",
+    urlTemplate:
+      "https://ethiopiancargo.azurewebsites.net/my-cargo/track-your-shipment",
   },
   "157": {
     prefix: "157",
     name: "Qatar Airways Cargo",
-    urlTemplate:
-      "https://www.qrcargo.com/s/track-your-shipment?awb={prefix}-{serial}",
+    urlTemplate: "https://www.qrcargo.com/s/track-your-shipment",
   },
   "176": {
     prefix: "176",
     name: "Emirates SkyCargo",
-    urlTemplate: "https://www.skycargo.com/tracking?awb={prefix}-{serial}",
+    urlTemplate:
+      "https://eskycargo.emirates.com/app/offerandorder/#/home/find-offer",
   },
   "006": {
     prefix: "006",
     name: "Delta Cargo",
-    urlTemplate: "https://www.deltacargo.com/Cargo/catalog/tracking",
+    urlTemplate: "https://www.deltacargo.com/Cargo/trackShipment",
   },
   "706": {
     prefix: "706",
     name: "Kenya Airways Cargo",
-    urlTemplate: "https://www.kqcargo.com/",
+    urlTemplate: "https://www.kqcargo.com/en/#4",
   },
 };
 
@@ -80,6 +86,32 @@ export interface AirlineTracking {
   prefilled: boolean;
   /** IATA modulus-7 check digit result — a cheap typo guard for data entry. */
   checkDigitValid: boolean;
+}
+
+// Matched with .match()/.replace() rather than .test() — a global regex keeps
+// lastIndex between .test() calls, which would make detection alternate.
+const AWB_PLACEHOLDER = /\{(prefix|serial|awb)\}/g;
+
+/**
+ * Substitute the waybill parts into a carrier URL template, reporting whether
+ * the template carried the waybill at all. Every occurrence is replaced, so a
+ * template may reference a placeholder more than once.
+ */
+export function applyAwbTemplate(
+  template: string,
+  parts: { prefix: string; serial: string; formattedAwb: string },
+): { url: string; prefilled: boolean } {
+  const values: Record<string, string> = {
+    prefix: parts.prefix,
+    serial: parts.serial,
+    awb: parts.formattedAwb,
+  };
+  return {
+    url: template.replace(AWB_PLACEHOLDER, (_match, key: string) =>
+      encodeURIComponent(values[key]),
+    ),
+    prefilled: template.match(AWB_PLACEHOLDER) !== null,
+  };
 }
 
 /** Strip formatting (spaces, hyphens, dots) down to bare digits. */
@@ -127,11 +159,10 @@ export function getAirlineTrackingUrl(awb: string): AirlineTracking | null {
     };
   }
 
-  const prefilled = /\{(prefix|serial|awb)\}/.test(carrier.urlTemplate);
-  const trackingUrl = carrier.urlTemplate
-    .replace("{prefix}", encodeURIComponent(prefix))
-    .replace("{serial}", encodeURIComponent(serial))
-    .replace("{awb}", encodeURIComponent(formattedAwb));
+  const { url: trackingUrl, prefilled } = applyAwbTemplate(
+    carrier.urlTemplate,
+    { prefix, serial, formattedAwb },
+  );
 
   return {
     airlineName: carrier.name,
