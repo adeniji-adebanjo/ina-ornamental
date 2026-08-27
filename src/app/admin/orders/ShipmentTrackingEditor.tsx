@@ -6,15 +6,8 @@ import { AlertTriangle, Check, ExternalLink, Plane } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getAirlineTrackingUrl } from "@/lib/tracking/airlines";
-import type { OrderWithGroups, ShipmentStatus } from "@/types/database";
-
-const SHIPMENT_STATUSES: { value: ShipmentStatus; label: string }[] = [
-  { value: "BOOKED", label: "Booked" },
-  { value: "DEPARTED", label: "Departed" },
-  { value: "IN_TRANSIT", label: "In Transit" },
-  { value: "ARRIVED", label: "Arrived" },
-  { value: "DELIVERED", label: "Delivered" },
-];
+import { SHIPMENT_STAGES } from "@/lib/tracking/shipment-stages";
+import type { OrderWithGroups } from "@/types/database";
 
 export default function ShipmentTrackingEditor({
   order,
@@ -138,7 +131,7 @@ export default function ShipmentTrackingEditor({
       {/* Shipment stage */}
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3">
         <p className="mr-1 text-xs font-medium text-slate-500">Shipment:</p>
-        {SHIPMENT_STATUSES.map((s) => (
+        {SHIPMENT_STAGES.map((s) => (
           <Button
             key={s.value}
             size="sm"
@@ -146,7 +139,10 @@ export default function ShipmentTrackingEditor({
             className="rounded-lg text-xs"
             disabled={saving || order.manual_status === s.value}
             onClick={() =>
-              patch({ manual_status: s.value }, `Shipment marked ${s.label}`)
+              patch(
+                { manual_status: s.value },
+                `Marked ${s.label} — ${order.email} notified`,
+              )
             }
           >
             {s.label}
@@ -164,6 +160,11 @@ export default function ShipmentTrackingEditor({
           </Button>
         )}
       </div>
+      <p className="mt-2 text-xs text-slate-400">
+        Setting a stage emails the customer automatically with the waybill and a
+        direct link to the airline&apos;s tracking portal. Save the waybill
+        first so it&apos;s included.
+      </p>
     </div>
   );
 }

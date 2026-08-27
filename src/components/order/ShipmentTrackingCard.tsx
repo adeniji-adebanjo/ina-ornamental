@@ -14,13 +14,7 @@ import { getAirlineTrackingUrl } from "@/lib/tracking/airlines";
 import type { ShipmentStatus } from "@/types/database";
 import { cn } from "@/lib/utils";
 
-const SHIPMENT_STAGES: { value: ShipmentStatus; label: string }[] = [
-  { value: "BOOKED", label: "Booked" },
-  { value: "DEPARTED", label: "Departed" },
-  { value: "IN_TRANSIT", label: "In Transit" },
-  { value: "ARRIVED", label: "Arrived" },
-  { value: "DELIVERED", label: "Delivered" },
-];
+import { SHIPMENT_STAGES } from "@/lib/tracking/shipment-stages";
 
 export interface ShipmentTrackingCardProps {
   /** Human-facing order reference, e.g. "INA-20260819-417". */

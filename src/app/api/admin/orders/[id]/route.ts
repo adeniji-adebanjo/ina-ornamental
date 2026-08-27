@@ -2,7 +2,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
-import { sendOrderStatusUpdate } from "@/lib/email";
+import { sendOrderStatusUpdate, sendShipmentUpdate } from "@/lib/email";
 import { getAirlineTrackingUrl } from "@/lib/tracking/airlines";
 import type { ShipmentStatus } from "@/types/database";
 import { NextRequest, NextResponse } from "next/server";
@@ -99,6 +99,19 @@ export async function PATCH(
   }
 
   const admin = await createAdminSupabaseClient();
+
+  // Read the stage before writing so we can tell a real advance from a re-save
+  // — the customer should get one email per actual change, not per click.
+  let previousStage: ShipmentStatus | null = null;
+  if (updates.manual_status !== undefined) {
+    const { data: before } = await admin
+      .from("orders")
+      .select("manual_status")
+      .eq("id", id)
+      .maybeSingle();
+    previousStage = (before?.manual_status as ShipmentStatus | null) ?? null;
+  }
+
   const { data, error } = await admin
     .from("orders")
     .update(updates)
@@ -108,6 +121,20 @@ export async function PATCH(
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 400 });
+
+  // Shipment progress email — fires on every genuine stage change, so the
+  // customer is kept informed without ever having to look anything up.
+  const newStage = data.manual_status as ShipmentStatus | null;
+  if (data.email && newStage && newStage !== previousStage) {
+    sendShipmentUpdate({
+      order_reference: data.order_reference,
+      customer_name: data.customer_name,
+      email: data.email,
+      manual_status: newStage,
+      awb_number: data.awb_number,
+      airline_name: data.airline_name,
+    }).catch(console.error);
+  }
 
   // Send status update email if order has customer email
   if (data.email && status) {
