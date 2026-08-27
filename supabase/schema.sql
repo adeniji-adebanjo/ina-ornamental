@@ -120,6 +120,9 @@ create table orders (
   carrier_prefix text check (carrier_prefix is null or carrier_prefix ~ '^\d{3}$'),
   airline_name text,
   manual_status shipment_status,
+  -- What the customer's last shipment email said (see migration 0005)
+  awb_notified_value text,
+  awb_notified_at timestamptz,
   submitted_at timestamptz default now(),
   created_at timestamptz default now(),
   updated_at timestamptz default now()

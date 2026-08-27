@@ -122,6 +122,10 @@ export interface Order {
   carrier_prefix?: string | null; // 3-digit IATA prefix, denormalized from the AWB
   airline_name?: string | null; // resolved at write time; survives registry changes
   manual_status?: ShipmentStatus | null;
+  // What the customer's last shipment email actually said, so a correction is
+  // only owed when it drifts from awb_number. See migration 0005.
+  awb_notified_value?: string | null;
+  awb_notified_at?: string | null;
   submitted_at: string;
   created_at: string;
   updated_at: string;

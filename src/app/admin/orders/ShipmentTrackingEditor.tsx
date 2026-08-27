@@ -27,6 +27,14 @@ export default function ShipmentTrackingEditor({
   );
   const dirty = (order.awb_number ?? "") !== awb.trim();
 
+  // The customer's copy is out of date whenever the waybill has moved on from
+  // what their last email said. The API flushes this on the next write once the
+  // cooldown expires; "Send now" releases it immediately.
+  const correctionPending =
+    !!order.manual_status &&
+    !!order.awb_number &&
+    order.awb_number !== (order.awb_notified_value ?? null);
+
   async function patch(payload: Record<string, unknown>, message: string) {
     setSaving(true);
     const res = await fetch(`/api/admin/orders/${order.id}`, {
@@ -36,7 +44,18 @@ export default function ShipmentTrackingEditor({
     });
     setSaving(false);
     if (res.ok) {
-      toast.success(message);
+      // Report what the server actually did rather than what we hoped — a
+      // correction inside the cooldown is held, not sent.
+      const result = await res.json().catch(() => null);
+      const notice = result?.shipment_notification;
+      if (notice?.kind === "waybill_deferred") {
+        const minutes = Math.max(1, Math.round(notice.retryAfterMs / 60_000));
+        toast.success(message, {
+          description: `Correction held for ~${minutes} min to batch further edits — use "Send now" to release it immediately.`,
+        });
+      } else {
+        toast.success(message);
+      }
       onSaved();
     } else {
       const err = await res.json().catch(() => null);
@@ -169,12 +188,41 @@ export default function ShipmentTrackingEditor({
           </Button>
         )}
       </div>
+      {correctionPending && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-800">
+          <AlertTriangle className="size-3.5 shrink-0" />
+          <span>
+            Customer&apos;s last email said{" "}
+            <span className="font-mono font-semibold">
+              {order.awb_notified_value ?? "no waybill"}
+            </span>
+            . A correction for{" "}
+            <span className="font-mono font-semibold">{order.awb_number}</span>{" "}
+            sends on the next update once the cooldown passes.
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto rounded-lg text-xs"
+            disabled={saving}
+            onClick={() =>
+              patch(
+                { force_waybill_notice: true },
+                `Correction sent to ${order.email}`,
+              )
+            }
+          >
+            Send now
+          </Button>
+        </div>
+      )}
+
       <p className="mt-2 text-xs text-slate-400">
         Setting a stage emails the customer automatically with the waybill and a
         direct link to the airline&apos;s tracking portal. Save the waybill
         first so it&apos;s included.{" "}
         {order.manual_status
-          ? "This shipment has been announced, so changing the waybill now sends a correction."
+          ? "This shipment has been announced, so changing the waybill now sends a correction — rapid edits are batched into one email."
           : "Recording a waybill before the first stage is silent."}
       </p>
     </div>
