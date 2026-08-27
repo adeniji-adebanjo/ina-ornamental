@@ -45,18 +45,21 @@ so there are no API keys, quotas, or per-lookup costs.
 
 ### Supported carriers
 
-| Airline | AWB prefix | AWB prefilled in the link |
+| Airline | AWB prefix | Tracking portal |
 | --- | --- | --- |
-| Lufthansa Cargo | `020` | Yes |
-| Turkish Cargo | `235` | No — portal landing page |
-| Ethiopian Cargo | `071` | No — portal landing page |
-| Qatar Airways Cargo | `157` | Yes |
-| Emirates SkyCargo | `176` | Yes |
-| Delta Cargo | `006` | No — portal landing page |
-| Kenya Airways Cargo | `706` | No — portal landing page |
+| Lufthansa Cargo | `020` | `lufthansa-cargo.com/en/eservices/etracking` |
+| Turkish Cargo | `235` | `turkishcargo.com/en/cargo-tracking` |
+| Ethiopian Cargo | `071` | `ethiopiancargo.azurewebsites.net/my-cargo/track-your-shipment` |
+| Qatar Airways Cargo | `157` | `qrcargo.com/s/track-your-shipment` |
+| Emirates SkyCargo | `176` | `eskycargo.emirates.com/app/offerandorder` |
+| Delta Cargo | `006` | `deltacargo.com/Cargo/trackShipment` |
+| Kenya Airways Cargo | `706` | `kqcargo.com/en/#4` |
 
-Carriers that don't accept an AWB query parameter get a "copy the number and
-paste it" affordance in the UI instead of a link that silently doesn't prefill.
+None of the seven accept the waybill as a query parameter, so every link lands
+on the carrier's tracking page and the customer enters the number themselves.
+The UI and the emails say so explicitly — and show the waybill to copy — rather
+than implying a prefill that doesn't happen. The template mechanism supports
+deep links (`{prefix}`, `{serial}`, `{awb}`) for whenever a carrier adds one.
 
 ### How it fits together
 
