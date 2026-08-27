@@ -107,7 +107,16 @@ export default function ShipmentTrackingEditor({
             size="sm"
             className="rounded-lg text-xs"
             disabled={saving || !dirty || (awb.trim() !== "" && !tracking)}
-            onClick={() => patch({ awb_number: awb.trim() }, "Waybill saved")}
+            onClick={() =>
+              patch(
+                { awb_number: awb.trim() },
+                // A waybill change only notifies once the customer has already
+                // been told about this shipment.
+                order.manual_status
+                  ? `Waybill saved — correction sent to ${order.email}`
+                  : "Waybill saved",
+              )
+            }
           >
             Save AWB
           </Button>
@@ -163,7 +172,10 @@ export default function ShipmentTrackingEditor({
       <p className="mt-2 text-xs text-slate-400">
         Setting a stage emails the customer automatically with the waybill and a
         direct link to the airline&apos;s tracking portal. Save the waybill
-        first so it&apos;s included.
+        first so it&apos;s included.{" "}
+        {order.manual_status
+          ? "This shipment has been announced, so changing the waybill now sends a correction."
+          : "Recording a waybill before the first stage is silent."}
       </p>
     </div>
   );

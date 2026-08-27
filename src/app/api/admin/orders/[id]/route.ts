@@ -2,8 +2,14 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
-import { sendOrderStatusUpdate, sendShipmentUpdate } from "@/lib/email";
+import {
+  sendOrderStatusUpdate,
+  sendShipmentUpdate,
+  sendWaybillCorrection,
+} from "@/lib/email";
 import { getAirlineTrackingUrl } from "@/lib/tracking/airlines";
+import { decideShipmentNotification } from "@/lib/tracking/notifications";
+import type { ShipmentSnapshot } from "@/lib/tracking/notifications";
 import type { ShipmentStatus } from "@/types/database";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -100,16 +106,21 @@ export async function PATCH(
 
   const admin = await createAdminSupabaseClient();
 
-  // Read the stage before writing so we can tell a real advance from a re-save
-  // — the customer should get one email per actual change, not per click.
-  let previousStage: ShipmentStatus | null = null;
-  if (updates.manual_status !== undefined) {
-    const { data: before } = await admin
+  // Read the shipment fields before writing so we can tell a real change from a
+  // re-save — the customer should get one email per actual change, not per click.
+  const touchesShipment =
+    updates.manual_status !== undefined || updates.awb_number !== undefined;
+  let before: ShipmentSnapshot = { manual_status: null, awb_number: null };
+  if (touchesShipment) {
+    const { data: prior } = await admin
       .from("orders")
-      .select("manual_status")
+      .select("manual_status, awb_number")
       .eq("id", id)
       .maybeSingle();
-    previousStage = (before?.manual_status as ShipmentStatus | null) ?? null;
+    before = {
+      manual_status: (prior?.manual_status as ShipmentStatus | null) ?? null,
+      awb_number: (prior?.awb_number as string | null) ?? null,
+    };
   }
 
   const { data, error } = await admin
@@ -122,18 +133,35 @@ export async function PATCH(
   if (error)
     return NextResponse.json({ error: error.message }, { status: 400 });
 
-  // Shipment progress email — fires on every genuine stage change, so the
-  // customer is kept informed without ever having to look anything up.
-  const newStage = data.manual_status as ShipmentStatus | null;
-  if (data.email && newStage && newStage !== previousStage) {
-    sendShipmentUpdate({
-      order_reference: data.order_reference,
-      customer_name: data.customer_name,
-      email: data.email,
-      manual_status: newStage,
-      awb_number: data.awb_number,
-      airline_name: data.airline_name,
-    }).catch(console.error);
+  // Shipment emails — the customer is kept informed without ever having to look
+  // anything up. See decideShipmentNotification for which email wins when.
+  if (data.email && touchesShipment) {
+    const after: ShipmentSnapshot = {
+      manual_status: data.manual_status ?? null,
+      awb_number: data.awb_number ?? null,
+    };
+    const notification = decideShipmentNotification(before, after);
+
+    if (notification?.kind === "stage") {
+      sendShipmentUpdate({
+        order_reference: data.order_reference,
+        customer_name: data.customer_name,
+        email: data.email,
+        manual_status: notification.stage,
+        awb_number: data.awb_number,
+        airline_name: data.airline_name,
+      }).catch(console.error);
+    } else if (notification?.kind === "waybill_corrected" && after.awb_number) {
+      sendWaybillCorrection({
+        order_reference: data.order_reference,
+        customer_name: data.customer_name,
+        email: data.email,
+        manual_status: after.manual_status as ShipmentStatus,
+        awb_number: after.awb_number,
+        airline_name: data.airline_name,
+        previous_awb: notification.previousAwb,
+      }).catch(console.error);
+    }
   }
 
   // Send status update email if order has customer email

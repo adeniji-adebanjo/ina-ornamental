@@ -423,3 +423,80 @@ export async function sendShipmentUpdate(data: {
     console.error("Shipment update email error:", err);
   }
 }
+
+// Sent when a waybill is corrected on a shipment the customer has already been
+// told about — the number in their earlier email would otherwise be wrong.
+export async function sendWaybillCorrection(data: {
+  order_reference: string;
+  customer_name: string;
+  email: string;
+  manual_status: ShipmentStatus;
+  awb_number: string;
+  airline_name?: string | null;
+  previous_awb?: string | null;
+}) {
+  const transport = getTransporter();
+  if (!transport || !data.email) return;
+
+  const stage = getShipmentStage(data.manual_status);
+  const tracking = getAirlineTrackingUrl(data.awb_number);
+  const carrier = data.airline_name || tracking?.airlineName || null;
+
+  const trackButton =
+    tracking?.trackingUrl && carrier
+      ? `
+      <p style="margin:20px 0;">
+        <a href="${esc(tracking.trackingUrl)}" style="display:inline-block;background:#3b655d;color:#ffffff;text-decoration:none;padding:13px 24px;border-radius:8px;font-size:15px;font-weight:bold;">Track on Official ${esc(carrier)} Portal</a>
+      </p>
+      <p style="font-size:12px;color:#8e8270;margin:0 0 8px;">${
+        tracking.prefilled
+          ? "This link opens live flight status for the corrected waybill."
+          : `${esc(carrier)} does not accept the waybill in a link — enter <strong>${esc(tracking.formattedAwb)}</strong> in the tracking box on their page.`
+      }</p>`
+      : "";
+
+  const previousRow = data.previous_awb
+    ? `<tr><td style="color:#8e8270;padding:3px 0;">Previous waybill</td><td style="color:#8e8270;text-decoration:line-through;">${esc(data.previous_awb)}</td></tr>`
+    : "";
+
+  try {
+    await transport.sendMail({
+      from: `"INÁ Ornamental Fish" <${FROM_EMAIL}>`,
+      to: data.email,
+      subject: `Updated Air Waybill — ${data.order_reference} | INÁ Ornamental Fish`,
+      html: `
+<!DOCTYPE html>
+<html><head>${EMAIL_HEAD}</head>
+<body style="margin:0;padding:0;background:#faf7f2;font-family:Arial,sans-serif;">
+  <div class="ina-container" style="max-width:600px;margin:0 auto;padding:24px;">
+    <div style="background:#3b655d;padding:24px;border-radius:12px 12px 0 0;">
+      <h1 style="color:white;margin:0;font-size:22px;">INÁ Ornamental Fish</h1>
+      <p style="color:#c7e2dc;margin:4px 0 0;font-size:13px;">Waybill Update</p>
+    </div>
+    <div class="ina-card" style="background:white;padding:24px;border:1px solid #e2d8c8;border-top:none;border-radius:0 0 12px 12px;">
+      <p style="font-size:15px;color:#38322a;">Dear ${esc(data.customer_name)},</p>
+      <h2 style="font-size:18px;color:#3b655d;margin:0 0 8px;">Your Air Waybill has been updated</h2>
+      <p style="font-size:15px;color:#38322a;margin-top:0;">
+        The Air Waybill for your shipment has changed${data.previous_awb ? " — please disregard the number in our earlier email" : ""}.
+        Use the details below to track your consignment from now on.
+      </p>
+      <div style="background:#faf7f2;padding:16px;border-radius:8px;margin:16px 0;">
+        <table style="width:100%;font-size:14px;">
+          <tr><td style="color:#8e8270;padding:3px 0;">Reference</td><td style="font-weight:bold;color:#3b655d;">${esc(data.order_reference)}</td></tr>
+          ${previousRow}
+          <tr><td style="color:#8e8270;padding:3px 0;">New Air Waybill</td><td style="font-weight:bold;color:#3b655d;">${esc(data.awb_number)}</td></tr>
+          ${carrier ? `<tr><td style="color:#8e8270;padding:3px 0;">Airline</td><td style="font-weight:bold;">${esc(carrier)}</td></tr>` : ""}
+          ${stage ? `<tr><td style="color:#8e8270;padding:3px 0;">Stage</td><td style="font-weight:bold;">${esc(stage.label)}</td></tr>` : ""}
+        </table>
+      </div>
+      ${trackButton}
+      <p style="font-size:13px;color:#8e8270;">If you have questions, reply to this email or contact us on WhatsApp.</p>
+    </div>
+    <p style="text-align:center;margin:16px 0 0;font-size:11px;color:#b0a48e;">© ${new Date().getFullYear()} INÁ Ornamental Fish</p>
+  </div>
+</body></html>`,
+    });
+  } catch (err) {
+    console.error("Waybill correction email error:", err);
+  }
+}
