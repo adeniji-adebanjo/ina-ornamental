@@ -3,6 +3,7 @@ import { STIX_Two_Text, Manrope, Geist } from "next/font/google";
 import "./globals.css";
 import LayoutShell from "@/components/layout/LayoutShell";
 import Providers from "@/components/Providers";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
@@ -124,6 +125,7 @@ export default function RootLayout({
         <Providers>
           <LayoutShell>{children}</LayoutShell>
         </Providers>
+        <GoogleAnalytics />
       </body>
     </html>
   );
