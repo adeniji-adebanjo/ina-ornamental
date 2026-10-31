@@ -1,9 +1,10 @@
-// Best-effort, in-memory rate limiting + short-window request dedup.
+// In-memory rate limiting + short-window request dedup.
 //
-// NOTE: on serverless (per-instance memory) this is a MITIGATION, not a hard
-// guarantee — it blunts scripted floods and accidental double-submits but is
-// not a global limiter. For production-grade limits pair it with a CAPTCHA
-// (Cloudflare Turnstile) and/or a durable store (e.g. Upstash Redis).
+// Production runs as a single long-lived `next start` process behind Nginx
+// (deploy/), so this memory IS global for the site. Nginx `limit_req` sits in
+// front as the coarse first line (deploy/nginx); this is the per-endpoint
+// layer. If the app is ever run as several instances or on serverless, move
+// these maps to a shared store (e.g. Redis).
 
 interface Bucket {
   count: number;
@@ -45,14 +46,47 @@ export function rememberRecent(key: string, value: string, ttlMs: number): void 
   if (recent.size > 5000) sweep(Date.now());
 }
 
+const PENDING = "\u0000pending";
+
+/**
+ * Claim `key` for a request that's about to do non-idempotent work. Returns
+ * "new" (claimed — call rememberRecent on success or forgetRecent on failure),
+ * "pending" (an identical request is still in flight) or the stored result.
+ * Claiming before the work starts is what stops a double-click or a retried
+ * request from creating a second order while the first is still running.
+ */
+export function claimOnce(
+  key: string,
+  ttlMs: number,
+): { state: "new" } | { state: "pending" } | { state: "done"; value: string } {
+  const hit = recallRecent(key);
+  if (hit === PENDING) return { state: "pending" };
+  if (hit !== null) return { state: "done", value: hit };
+  rememberRecent(key, PENDING, ttlMs);
+  return { state: "new" };
+}
+
+export function forgetRecent(key: string): void {
+  recent.delete(key);
+}
+
 function sweep(now: number) {
   for (const [k, b] of buckets) if (b.resetAt <= now) buckets.delete(k);
   for (const [k, r] of recent) if (r.expiresAt <= now) recent.delete(k);
 }
 
-// Extract a best-effort client IP from proxy headers.
+// The client's IP as seen by our own proxy. Nginx overwrites X-Real-IP with
+// $remote_addr, so a client can't forge it. The FIRST X-Forwarded-For entry is
+// whatever the client sent (Nginx appends to it), so rotating it would dodge
+// every limit; when X-Real-IP is absent use the LAST entry, the one our proxy
+// added.
 export function clientIp(headers: Headers): string {
+  const real = headers.get("x-real-ip")?.trim();
+  if (real) return real;
   const xff = headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]!.trim();
-  return headers.get("x-real-ip") || "unknown";
+  if (xff) {
+    const hops = xff.split(",").map((s) => s.trim()).filter(Boolean);
+    if (hops.length) return hops[hops.length - 1]!;
+  }
+  return "unknown";
 }

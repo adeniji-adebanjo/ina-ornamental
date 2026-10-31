@@ -1,7 +1,6 @@
+import { pageOpenGraph } from "@/app/shared-metadata";
 import { getSpecies } from "@/lib/queries/species";
 import { speciesToFishProduct } from "@/lib/adapters";
-import { fishProducts } from "@/data/products";
-import type { FishProduct } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 import { Camera, Fish } from "lucide-react";
@@ -11,6 +10,12 @@ export const metadata = {
   description:
     "Browse our gallery of premium West African ornamental fish — bichirs, cichlids, tetras, puffers, catfish and exotic oddballs sourced from Nigeria.",
   alternates: { canonical: "/gallery" },
+  openGraph: pageOpenGraph({
+    title: "Species Gallery | INÁ Ornamental Fish",
+    description:
+      "Photos of premium West African ornamental fish — bichirs, cichlids, tetras, puffers, catfish and exotic oddballs sourced from Nigeria.",
+    url: "/gallery",
+  }),
 };
 
 // Reflect newly added species without a rebuild.
@@ -19,13 +24,9 @@ export const revalidate = 300;
 const PLACEHOLDER = "/images/fish-placeholder.svg";
 
 export default async function GalleryPage() {
-  let species: FishProduct[];
-  try {
-    const rows = await getSpecies();
-    species = rows.length > 0 ? rows.map(speciesToFishProduct) : fishProducts;
-  } catch {
-    species = fishProducts;
-  }
+  // A failed read throws to app/error.tsx; an empty result shows the
+  // "coming soon" state below rather than placeholder data.
+  const species = (await getSpecies()).map(speciesToFishProduct);
 
   return (
     <main className="min-h-screen bg-white">

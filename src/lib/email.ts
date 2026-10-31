@@ -4,9 +4,13 @@ import { getAirlineTrackingUrl } from "./tracking/airlines";
 import { getShipmentStage } from "./tracking/shipment-stages";
 import type { ShipmentStatus } from "@/types/database";
 
-let transporter: nodemailer.Transporter | null = null;
+// nodemailer 10 ships its own types without the old `nodemailer.Transporter`
+// namespace; derive the type instead of depending on its export name.
+type Transporter = ReturnType<typeof nodemailer.createTransport>;
 
-function getTransporter(): nodemailer.Transporter | null {
+let transporter: Transporter | null = null;
+
+function getTransporter(): Transporter | null {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
   if (!transporter) {
     transporter = nodemailer.createTransport({
@@ -221,7 +225,7 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
   const transport = getTransporter();
   if (!transport) {
     console.warn("SMTP_USER/SMTP_PASS not set, skipping email notifications");
-    return;
+    return { sent: 0, failed: 0 };
   }
 
   // Generate Excel invoice attachment
@@ -251,7 +255,9 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
       transport.sendMail({
         from: `"INÁ Ornamental Fish" <${FROM_EMAIL}>`,
         to: data.email,
-        subject: `Order Confirmed — ${data.order_reference} | INÁ Ornamental Fish`,
+        // "Received", not "Confirmed": the team confirms it later (status
+        // `confirmed`), and a no-price-list order is only a quote request.
+        subject: `Order Received — ${data.order_reference} | INÁ Ornamental Fish`,
         html: buildEmailHTML(data, false),
         attachments,
       }),
@@ -269,11 +275,16 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
     }),
   );
 
-  try {
-    await Promise.allSettled(promises);
-  } catch (err) {
-    console.error("Email send error:", err);
+  // allSettled never rejects, so failures must be read from the results or
+  // they vanish (an SMTP outage would otherwise leave orders unseen).
+  const results = await Promise.allSettled(promises);
+  const failures = results.filter(
+    (r): r is PromiseRejectedResult => r.status === "rejected",
+  );
+  for (const f of failures) {
+    console.error(`Order email failed (${data.order_reference}):`, f.reason);
   }
+  return { sent: results.length - failures.length, failed: failures.length };
 }
 
 export async function sendOrderStatusUpdate(data: {

@@ -70,12 +70,17 @@ export default function ProductCard({ product }: ProductCardProps) {
     setTimeout(() => setAdded(false), 1200);
   };
 
+  const openDetails = () => {
+    setSelectedProduct(product);
+    setStoreSize(product.sizes[0] || "");
+  };
+
   return (
+    // The whole card is a mouse/touch convenience target; keyboard and screen
+    // reader users open the details via the title button below (a role=button
+    // card can't contain the nested size / add-to-quote buttons).
     <Card
-      onClick={() => {
-        setSelectedProduct(product);
-        setStoreSize(product.sizes[0] || "");
-      }}
+      onClick={openDetails}
       className="group rounded-2xl border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-col p-0"
     >
       <div className="relative aspect-4/3 bg-linear-to-br from-sky-50 to-emerald-50 overflow-hidden">
@@ -116,7 +121,18 @@ export default function ProductCard({ product }: ProductCardProps) {
       <CardContent className="p-4 flex-1 flex flex-col">
         <div className="flex-1">
           <h3 className="font-bold text-slate-900 text-lg leading-tight group-hover:text-sky-700 transition-colors">
-            {product.commonName}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                openDetails();
+              }}
+              aria-haspopup="dialog"
+              className="text-left rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+            >
+              {product.commonName}
+              <span className="sr-only"> — view details</span>
+            </button>
           </h3>
           <p className="text-sm text-emerald-700 italic mt-0.5">
             {product.scientificName}
@@ -152,6 +168,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   setSelectedSize(size);
                 }}
                 variant={selectedSize === size ? "default" : "outline"}
+                aria-pressed={selectedSize === size}
                 size="xs"
                 className={`rounded-full ${
                   selectedSize === size

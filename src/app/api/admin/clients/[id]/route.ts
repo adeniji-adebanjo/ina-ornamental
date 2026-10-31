@@ -3,6 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 
 export async function PUT(
   request: NextRequest,
@@ -12,7 +13,7 @@ export async function PUT(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
@@ -44,7 +45,7 @@ export async function DELETE(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;

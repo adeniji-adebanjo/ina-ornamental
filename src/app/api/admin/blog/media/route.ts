@@ -1,5 +1,6 @@
 import { getAdminUser } from "@/lib/admin-auth";
 import { uploadMedia } from "@/lib/blog";
+import { checkImageUpload } from "@/lib/upload-limits";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -11,18 +12,16 @@ export async function POST(request: NextRequest) {
   if (!(file instanceof File))
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-  if (!file.type.startsWith("image/"))
-    return NextResponse.json(
-      { error: "Only image files are allowed" },
-      { status: 400 },
-    );
+  const invalid = await checkImageUpload(file);
+  if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
 
   try {
     const media = await uploadMedia(file, file.name || "upload");
     return NextResponse.json(media);
   } catch (e) {
+    console.error("Blog media upload failed:", e);
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Upload failed" },
+      { error: "The image couldn't be uploaded to the media library. Please try again." },
       { status: 502 },
     );
   }

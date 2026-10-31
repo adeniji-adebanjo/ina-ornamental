@@ -2,6 +2,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
 
@@ -14,7 +15,7 @@ export async function GET(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = await createAdminSupabaseClient();

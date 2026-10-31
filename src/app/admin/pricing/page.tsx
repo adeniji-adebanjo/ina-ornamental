@@ -5,10 +5,10 @@ import PricingListClient from "./PricingListClient";
 export default async function AdminPricingPage() {
   const supabase = await createAdminSupabaseClient();
   const [
-    { data: priceLists },
-    { data: clients },
-    { data: species },
-    { data: locationPricingRaw },
+    { data: priceLists, error: priceListsError },
+    { data: clients, error: clientsError },
+    { data: species, error: speciesError },
+    { data: locationPricingRaw, error: locationsError },
   ] = await Promise.all([
     supabase
       .from("client_price_lists")
@@ -17,10 +17,14 @@ export default async function AdminPricingPage() {
       )
       .order("created_at", { ascending: false }),
     supabase.from("clients").select("id, name, company").order("name"),
-    supabase
-      .from("species")
-      .select("id, common_name, scientific_name, availability")
-      .order("common_name"),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("species")
+        .select("id, common_name, scientific_name, availability")
+        .order("common_name")
+        .order("id")
+        .range(from, to),
+    ),
     fetchAllRows((from, to) =>
       supabase
         .from("location_pricing")
@@ -29,6 +33,11 @@ export default async function AdminPricingPage() {
         .range(from, to),
     ),
   ]);
+
+  // Surface failures via app/admin/error.tsx instead of rendering empty lists.
+  const error =
+    priceListsError ?? clientsError ?? speciesError ?? locationsError;
+  if (error) throw new Error(`Failed to load pricing data: ${error.message}`);
 
   // Get unique locations
   const locations = [

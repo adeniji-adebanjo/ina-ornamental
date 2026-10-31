@@ -3,7 +3,9 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 import { toCsv } from "@/lib/csv";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 
 interface ExportRow {
   slug: string;
@@ -29,16 +31,22 @@ export async function GET() {
   const {
     data: { user },
   } = await auth.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = await createAdminSupabaseClient();
-  const { data, error } = await admin
-    .from("species")
-    .select(
-      "slug, common_name, scientific_name, class_order, origin, description, sizes, tags, qty_per_box, availability, featured, best_seller, sort_order, category:categories(name), images:species_images(image_url, sort_order)",
-    )
-    .order("sort_order");
+  // Paged past the 1000-row cap; `id` tiebreaks the non-unique sort_order so
+  // pages can't overlap or skip.
+  const { data, error } = await fetchAllRows((from, to) =>
+    admin
+      .from("species")
+      .select(
+        "slug, common_name, scientific_name, class_order, origin, description, sizes, tags, qty_per_box, availability, featured, best_seller, sort_order, category:categories(name), images:species_images(image_url, sort_order)",
+      )
+      .order("sort_order")
+      .order("id")
+      .range(from, to),
+  );
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });

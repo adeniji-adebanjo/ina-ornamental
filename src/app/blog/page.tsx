@@ -1,3 +1,4 @@
+import { pageOpenGraph } from "@/app/shared-metadata";
 import { fetchCategories, fetchPosts } from "@/lib/blog";
 import { getInstagramPosts } from "@/lib/queries/instagram";
 import BlogIndexClient from "./BlogIndexClient";
@@ -5,8 +6,14 @@ import BlogIndexClient from "./BlogIndexClient";
 export const metadata = {
   title: "Blog",
   description:
-    "News, care guides and stories from INA Ornamental Fish — West African ornamental fish exporters.",
+    "News, care guides and stories from INÁ Ornamental Fish — West African ornamental fish exporters.",
   alternates: { canonical: "/blog" },
+  openGraph: pageOpenGraph({
+    title: "Blog | INÁ Ornamental Fish",
+    description:
+      "News, care guides and stories from INÁ Ornamental Fish — West African ornamental fish exporters.",
+    url: "/blog",
+  }),
 };
 
 // Revalidate the listing periodically so newly published posts appear.

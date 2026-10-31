@@ -72,7 +72,7 @@ export default function BlogIndexClient({
             From the team
           </p>
           <h1 className="text-3xl md:text-5xl font-black text-white mb-4">
-            The INA Journal
+            The INÁ Journal
           </h1>
           <p className="text-sky-100 max-w-2xl mx-auto md:text-lg">
             Care guides, species spotlights and stories from the world of West

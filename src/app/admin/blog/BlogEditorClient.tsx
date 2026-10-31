@@ -1,7 +1,7 @@
 "use client";
 
 import RichTextEditor from "@/components/admin/RichTextEditor";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { BlogCategory, BlogPost, BlogStatus } from "@/types";
@@ -149,10 +149,12 @@ export default function BlogEditorClient({ post, categories }: Props) {
     <div className="max-w-5xl mx-auto">
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/admin/blog">
-            <Button variant="ghost" size="icon-sm">
-              <ArrowLeft className="size-4" />
-            </Button>
+          <Link
+            href="/admin/blog"
+            aria-label="Back to blog posts"
+            className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+          >
+            <ArrowLeft className="size-4" />
           </Link>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">
             {isEdit ? "Edit post" : "New post"}
@@ -186,10 +188,11 @@ export default function BlogEditorClient({ post, categories }: Props) {
         {/* Main column */}
         <div className="lg:col-span-2 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label htmlFor="post-title" className="block text-sm font-medium text-slate-700 mb-1">
               Title
             </label>
             <Input
+              id="post-title"
               value={title}
               onChange={(e) => onTitleChange(e.target.value)}
               placeholder="Post title"
@@ -198,14 +201,19 @@ export default function BlogEditorClient({ post, categories }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <p
+              id="post-content-label"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Content
-            </label>
-            <RichTextEditor
-              value={content}
-              onChange={setContent}
-              onImageUpload={async (file) => (await uploadToWp(file)).url}
-            />
+            </p>
+            <div role="group" aria-labelledby="post-content-label">
+              <RichTextEditor
+                value={content}
+                onChange={setContent}
+                onImageUpload={async (file) => (await uploadToWp(file)).url}
+              />
+            </div>
           </div>
         </div>
 
@@ -235,10 +243,11 @@ export default function BlogEditorClient({ post, categories }: Props) {
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-            <label className="block text-sm font-semibold text-slate-800">
+            <label htmlFor="post-slug" className="block text-sm font-semibold text-slate-800">
               Slug
             </label>
             <Input
+              id="post-slug"
               value={slug}
               onChange={(e) => {
                 setSlug(e.target.value);
@@ -278,6 +287,7 @@ export default function BlogEditorClient({ post, categories }: Props) {
                   onClick={removeFeatured}
                   className="absolute top-2 right-2 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
                   title="Remove featured image"
+                  aria-label="Remove featured image"
                 >
                   <X className="size-4" />
                 </button>
@@ -328,10 +338,11 @@ export default function BlogEditorClient({ post, categories }: Props) {
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-            <label className="block text-sm font-semibold text-slate-800">
+            <label htmlFor="post-excerpt" className="block text-sm font-semibold text-slate-800">
               Excerpt
             </label>
             <Textarea
+              id="post-excerpt"
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
               placeholder="Short summary shown in cards and search results."

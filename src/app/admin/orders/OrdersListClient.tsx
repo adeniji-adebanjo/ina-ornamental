@@ -16,6 +16,7 @@ import {
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/format";
 import OrderUploadDialog from "./OrderUploadDialog";
 import ShipmentTrackingEditor from "./ShipmentTrackingEditor";
 
@@ -178,7 +179,7 @@ export default function OrdersListClient({
                       {order.company_name && ` • ${order.company_name}`}
                     </p>
                     <p className="text-xs text-slate-400">
-                      {new Date(order.submitted_at).toLocaleDateString()} •{" "}
+                      {formatDate(order.submitted_at)} •{" "}
                       {totalItems} items • {order.order_groups?.length ?? 0}{" "}
                       groups
                     </p>

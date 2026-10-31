@@ -3,6 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 import { SETTINGS_TAG } from "@/lib/queries/settings";
 import { revalidateTag } from "next/cache";
 
@@ -21,7 +22,7 @@ export async function PUT(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();

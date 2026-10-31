@@ -3,6 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 import { fetchAllRows } from "@/lib/supabase/paginate";
 
 // GET: Fetch prices for a specific location (used when creating client price lists)
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const location = request.nextUrl.searchParams.get("location");

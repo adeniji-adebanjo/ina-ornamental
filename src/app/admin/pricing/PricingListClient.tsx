@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -432,22 +432,27 @@ export default function PricingListClient({
       items,
     };
 
-    const res = await fetch("/api/admin/pricing", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch("/api/admin/pricing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    if (res.ok) {
-      toast.success("Price list created");
-      setShowForm(false);
-      setNewItems([{ species_id: "", custom_price: "" }]);
-      router.refresh();
-    } else {
-      const data = await res.json();
-      toast.error(data.error || "Failed to create price list");
+      if (res.ok) {
+        toast.success("Price list created");
+        setShowForm(false);
+        setNewItems([{ species_id: "", custom_price: "" }]);
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error(data?.error || "Failed to create price list");
+      }
+    } catch {
+      toast.error("Network error — couldn't create the price list. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   function handleDelete(id: string) {
@@ -683,6 +688,7 @@ export default function PricingListClient({
                           type="button"
                           variant="ghost"
                           size="icon-sm"
+                          aria-label="Remove species row"
                           onClick={() => removeItemRow(idx)}
                         >
                           <Trash2 className="size-4 text-red-500" />
@@ -756,6 +762,7 @@ export default function PricingListClient({
                     size="icon-sm"
                     onClick={() => copyLink(pl)}
                     title="Copy link"
+                    aria-label="Copy order link"
                   >
                     <Copy className="size-4" />
                   </Button>
@@ -763,10 +770,14 @@ export default function PricingListClient({
                     href={`/orders/${pl.slug}?token=${pl.access_token}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    title="Open"
+                    aria-label="Open order page in a new tab"
+                    className={buttonVariants({
+                      variant: "ghost",
+                      size: "icon-sm",
+                    })}
                   >
-                    <Button variant="ghost" size="icon-sm" title="Open">
-                      <ExternalLink className="size-4" />
-                    </Button>
+                    <ExternalLink className="size-4" />
                   </a>
 
                   {/* Download this client's price list (info only, no order fields) */}
@@ -778,6 +789,8 @@ export default function PricingListClient({
                       variant="ghost"
                       size="icon-sm"
                       title="Download price list"
+                      aria-label="Download price list"
+                      aria-expanded={downloadFor === pl.id}
                       onClick={() =>
                         setDownloadFor(downloadFor === pl.id ? null : pl.id)
                       }
@@ -811,6 +824,7 @@ export default function PricingListClient({
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    aria-label="Delete price list"
                     onClick={() => handleDelete(pl.id)}
                   >
                     <Trash2 className="size-4 text-red-500" />
@@ -818,6 +832,12 @@ export default function PricingListClient({
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    aria-label={
+                      expanded === pl.id
+                        ? "Collapse price list"
+                        : "Expand price list"
+                    }
+                    aria-expanded={expanded === pl.id}
                     onClick={() =>
                       setExpanded(expanded === pl.id ? null : pl.id)
                     }
@@ -914,6 +934,7 @@ export default function PricingListClient({
                                     disabled={busyItemId === item.id}
                                     onClick={() => saveItemPrice(pl.id, item)}
                                     title="Save"
+                                    aria-label="Save price"
                                   >
                                     {busyItemId === item.id ? (
                                       <Loader2 className="size-4 animate-spin" />
@@ -927,6 +948,7 @@ export default function PricingListClient({
                                     size="icon-sm"
                                     onClick={() => setEditingItemId(null)}
                                     title="Cancel"
+                                    aria-label="Cancel editing price"
                                   >
                                     <X className="size-4 text-slate-500" />
                                   </Button>
@@ -938,6 +960,7 @@ export default function PricingListClient({
                                   size="icon-sm"
                                   onClick={() => removeItem(pl.id, item)}
                                   title="Remove species"
+                                  aria-label="Remove species from price list"
                                 >
                                   <Trash2 className="size-4 text-red-500" />
                                 </Button>

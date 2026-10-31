@@ -27,6 +27,11 @@ export async function loadWorkbook(file: File): Promise<ExcelJS.Workbook> {
 // hyperlinks come back as objects. Flatten any of them to plain text.
 export function cellText(value: unknown): string {
   if (value == null) return "";
+  // Excel (and ExcelJS's CSV reader) turn entries like "3/4" or "2026-01-05"
+  // into dates. Returning "" dropped them silently; an ISO date at least
+  // keeps the cell visible so a wrong value can be spotted and fixed.
+  if (value instanceof Date)
+    return Number.isNaN(value.getTime()) ? "" : value.toISOString().slice(0, 10);
   if (typeof value === "object") {
     const v = value as Record<string, unknown>;
     if (Array.isArray(v.richText))

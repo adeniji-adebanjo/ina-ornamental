@@ -85,10 +85,11 @@ export default function SettingsClient({
               Species section on the homepage. Leave empty to show species
               marked as &quot;featured&quot;.
             </p>
-            <label className="text-sm font-medium text-slate-700 mb-1 block">
+            <label htmlFor="settings-featured-category" className="text-sm font-medium text-slate-700 mb-1 block">
               Featured Category
             </label>
             <select
+              id="settings-featured-category"
               value={featuredCategory}
               onChange={(e) => setFeaturedCategory(e.target.value)}
               className="w-full rounded-xl border border-slate-200 h-10 px-3 text-sm"

@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import type {
   OrderWithGroups,
   OrderInsert,
@@ -15,24 +16,33 @@ export async function getOrders(options?: {
 }): Promise<OrderWithGroups[]> {
   const supabase = await createServerSupabaseClient();
 
-  let query = supabase
-    .from("orders")
-    .select(
-      `
-      *,
-      order_groups(
+  const build = () => {
+    let query = supabase
+      .from("orders")
+      .select(
+        `
         *,
-        order_items(*)
+        order_groups(
+          *,
+          order_items(*)
+        )
+      `,
       )
-    `,
-    )
-    .order("submitted_at", { ascending: false });
+      .order("submitted_at", { ascending: false })
+      .order("id"); // tiebreak so pages don't overlap or skip rows
 
-  if (options?.status) query = query.eq("status", options.status);
-  if (options?.clientId) query = query.eq("client_id", options.clientId);
-  if (options?.limit) query = query.limit(options.limit);
+    if (options?.status) query = query.eq("status", options.status);
+    if (options?.clientId) query = query.eq("client_id", options.clientId);
+    return query;
+  };
 
-  const { data } = await query;
+  // An explicit limit is one page; otherwise page through everything — the
+  // API caps each response at 1000 rows, which silently dropped older orders
+  // from the list and the dashboard totals.
+  const { data, error } = options?.limit
+    ? await build().limit(options.limit)
+    : await fetchAllRows((from, to) => build().range(from, to));
+  if (error) throw new Error(`Failed to load orders: ${error.message}`);
   return (data as OrderWithGroups[]) ?? [];
 }
 

@@ -135,10 +135,26 @@ export default function CatalogueClient({
           </div>
         ) : (
           <div className="mt-10 text-center py-14 bg-slate-50 border border-slate-100 rounded-2xl">
-            <p className="text-slate-500">No species matched your filters.</p>
-            <p className="text-sm text-slate-400 mt-1">
-              Try another category or a broader search term.
-            </p>
+            {products.length === 0 ? (
+              <>
+                <p className="text-slate-500">
+                  Our live inventory is being updated.
+                </p>
+                <p className="text-sm text-slate-400 mt-1">
+                  Please check back shortly, or contact us for current
+                  availability.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-slate-500">
+                  No species matched your filters.
+                </p>
+                <p className="text-sm text-slate-400 mt-1">
+                  Try another category or a broader search term.
+                </p>
+              </>
+            )}
           </div>
         )}
       </section>

@@ -4,6 +4,13 @@ import Image from "next/image";
 import { useStore } from "@/store/useStore";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { X, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -19,14 +26,18 @@ export default function ProductModal() {
 
   if (!selectedProduct) return null;
 
+  // ui/dialog supplies role="dialog", Esc-to-close, focus trap/return and
+  // scroll lock. Bottom sheet on mobile, centred card from sm up.
   return (
-    <div
-      className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-      onClick={() => setSelectedProduct(null)}
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) setSelectedProduct(null);
+      }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-2xl max-h-[90vh] sm:max-h-[85vh] bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col"
+      <DialogContent
+        showCloseButton={false}
+        className="top-auto bottom-0 translate-y-0 max-w-full sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 sm:max-w-2xl w-full max-h-[90vh] sm:max-h-[85vh] p-0 gap-0 bg-white rounded-b-none rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col"
       >
         <div className="relative aspect-16/8 sm:aspect-16/8 shrink-0 bg-linear-to-br from-sky-50 to-emerald-50">
           <Image
@@ -36,23 +47,27 @@ export default function ProductModal() {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 768px"
           />
-          <Button
-            onClick={() => setSelectedProduct(null)}
-            variant="ghost"
-            size="icon-sm"
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow"
+          <DialogClose
+            aria-label="Close"
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 rounded-full bg-white/90 hover:bg-white text-slate-700 shadow"
+              />
+            }
           >
             <X className="size-5" />
-          </Button>
+          </DialogClose>
         </div>
 
         <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-          <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
             {selectedProduct.commonName}
-          </h3>
-          <p className="text-sm sm:text-base text-emerald-700 italic mt-1">
+          </DialogTitle>
+          <DialogDescription className="text-sm sm:text-base text-emerald-700 italic mt-1">
             {selectedProduct.scientificName}
-          </p>
+          </DialogDescription>
 
           <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-3 text-sm">
             <Card className="bg-slate-50 border-0 rounded-xl">
@@ -91,6 +106,7 @@ export default function ProductModal() {
                   key={size}
                   onClick={() => setSelectedSize(size)}
                   variant={selectedSize === size ? "default" : "outline"}
+                  aria-pressed={selectedSize === size}
                   size="sm"
                   className={`rounded-full ${
                     selectedSize === size
@@ -136,7 +152,7 @@ export default function ProductModal() {
             </a>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

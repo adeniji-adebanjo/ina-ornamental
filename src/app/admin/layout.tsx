@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/admin-auth";
 import AdminLayoutClient from "./AdminLayoutClient";
 
 // Admin is auth-gated; keep the whole section out of search indexes.
@@ -17,7 +18,8 @@ export default async function AdminLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login?redirect=/admin");
+  if (!isAdmin(user))
+    redirect(`/login?redirect=/admin${user ? "&error=not_admin" : ""}`);
 
   return <AdminLayoutClient user={user}>{children}</AdminLayoutClient>;
 }

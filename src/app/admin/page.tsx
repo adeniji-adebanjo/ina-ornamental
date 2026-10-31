@@ -5,6 +5,7 @@ import {
 } from "@/lib/queries/species";
 import { getOrders } from "@/lib/queries/orders";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDate, formatUSD } from "@/lib/format";
 import {
   Fish,
   Package,
@@ -71,10 +72,7 @@ export default async function AdminDashboard() {
     d.setDate(startOfToday.getDate() - i);
     dayIndex.set(d.toISOString().slice(0, 10), ordersPerDay.length);
     ordersPerDay.push({
-      label: d.toLocaleDateString(undefined, {
-        day: "numeric",
-        month: "short",
-      }),
+      label: formatDate(d, { day: "numeric", month: "short" }),
       value: 0,
     });
   }
@@ -224,9 +222,7 @@ export default async function AdminDashboard() {
             title="Orders — last 30 days"
             subtitle={`${orders30} order${orders30 === 1 ? "" : "s"}${
               value30 > 0
-                ? ` · $${value30.toLocaleString(undefined, {
-                    maximumFractionDigits: 0,
-                  })} est. value`
+                ? ` · ${formatUSD(value30, { whole: true })} est. value`
                 : ""
             }`}
             className="lg:col-span-2"
@@ -279,10 +275,7 @@ export default async function AdminDashboard() {
             <div className="divide-y divide-slate-100">
               {recentOrders.map((order) => {
                 const { pieces, value } = orderTotals(order);
-                const date = new Date(order.submitted_at).toLocaleDateString(
-                  undefined,
-                  { day: "numeric", month: "short", year: "numeric" },
-                );
+                const date = formatDate(order.submitted_at);
                 return (
                   <Link
                     key={order.id}
@@ -309,7 +302,7 @@ export default async function AdminDashboard() {
                     <div className="text-right shrink-0">
                       <p className="text-sm font-semibold text-slate-800">
                         {value > 0
-                          ? `$${value.toFixed(2)}`
+                          ? formatUSD(value)
                           : `${pieces} pcs`}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">{date}</p>

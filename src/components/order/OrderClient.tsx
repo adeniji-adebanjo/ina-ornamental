@@ -208,7 +208,9 @@ export default function OrderClient() {
       customer_name: formData.get("customer_name") as string,
       company_name: formData.get("company_name") as string,
       email: formData.get("email") as string,
-      phone: `${selectedCountry.dialCode} ${phoneNumber}`,
+      phone: phoneNumber.trim()
+        ? `${selectedCountry.dialCode} ${phoneNumber.trim()}`
+        : "",
       country: selectedCountry.name,
       delivery_address: formData.get("delivery_address") as string,
       notes: formData.get("notes") as string,

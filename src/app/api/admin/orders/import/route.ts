@@ -1,7 +1,9 @@
 import { getAdminUser } from "@/lib/admin-auth";
 import { cellText, loadWorkbook, parsePrice } from "@/lib/excel";
+import { checkSpreadsheetUpload } from "@/lib/upload-limits";
 import { generateUniqueOrderReference } from "@/lib/queries/orders";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import { NextRequest, NextResponse } from "next/server";
 
 interface ParsedItem {
@@ -49,15 +51,29 @@ export async function POST(request: NextRequest) {
 
   // Build a name/slug/scientific → id resolver, plus canonical names for
   // denormalisation onto each line item.
-  const { data: allSpecies } = await admin
-    .from("species")
-    .select("id, common_name, slug, scientific_name");
+  const { data: allSpecies, error: speciesError } = await fetchAllRows<{
+    id: string;
+    common_name: string;
+    slug: string | null;
+    scientific_name: string | null;
+  }>((from, to) =>
+    admin
+      .from("species")
+      .select("id, common_name, slug, scientific_name")
+      .order("id")
+      .range(from, to),
+  );
+  if (speciesError)
+    return NextResponse.json(
+      { error: `Couldn't read species: ${speciesError.message}` },
+      { status: 500 },
+    );
   const nameToId = new Map<string, string>();
   const idToRecord = new Map<
     string,
     { common_name: string; scientific_name: string | null }
   >();
-  for (const s of allSpecies ?? []) {
+  for (const s of allSpecies) {
     if (s.common_name) nameToId.set(s.common_name.toLowerCase(), s.id);
     if (s.slug) nameToId.set(s.slug.toLowerCase(), s.id);
     if (s.scientific_name) nameToId.set(s.scientific_name.toLowerCase(), s.id);
@@ -66,6 +82,10 @@ export async function POST(request: NextRequest) {
       scientific_name: s.scientific_name ?? null,
     });
   }
+
+  const badFile = checkSpreadsheetUpload(file);
+  if (badFile)
+    return NextResponse.json({ error: badFile }, { status: 400 });
 
   let workbook;
   try {
@@ -85,7 +105,7 @@ export async function POST(request: NextRequest) {
 
   const headerIndex = new Map<string, number>();
   ws.getRow(1).eachCell((cell, col) => {
-    const v = String(cell.value || "").trim().toLowerCase();
+    const v = cellText(cell.value).trim().toLowerCase();
     if (v) headerIndex.set(v, col);
   });
   const groupCol = headerIndex.get("group") ?? 1;

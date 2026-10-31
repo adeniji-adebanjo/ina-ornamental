@@ -1,7 +1,7 @@
+import { pageOpenGraph } from "@/app/shared-metadata";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { getSpecies } from "@/lib/queries/species";
-import { fishProducts } from "@/data/products";
 import {
   Flame,
   ShieldCheck,
@@ -26,6 +26,12 @@ export const metadata = {
   description:
     "INÁ Ornamental Fish — the international trade brand of DCM Tropical Fish Ltd. A Tier-1 B2B wholesale exporter of West African and Nigerian freshwater ornamental fish, engineered for predictable supply, seamless customs compliance, and high live-arrival rates.",
   alternates: { canonical: "/about" },
+  openGraph: pageOpenGraph({
+    title: "About | INÁ Ornamental Fish",
+    description:
+      "The international trade brand of DCM Tropical Fish Ltd — a B2B wholesale exporter of West African freshwater ornamental fish.",
+    url: "/about",
+  }),
 };
 
 // ISR — the portfolio species images come from the tagged data cache.
@@ -283,15 +289,10 @@ function SectionHeading({
 }
 
 // Build a scientific-name → image map so the portfolio can show real photos.
-// Uploaded catalogue images take priority; the static dataset fills gaps.
+// Species without an uploaded image fall back to an icon placeholder.
 async function getPortfolioImages(): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   const PLACEHOLDER = "/images/fish-placeholder.svg";
-  for (const p of fishProducts) {
-    if (p.scientificName && p.imageUrl && p.imageUrl !== PLACEHOLDER) {
-      map.set(p.scientificName.toLowerCase().trim(), p.imageUrl);
-    }
-  }
   try {
     const species = await getSpecies();
     for (const s of species) {
@@ -301,7 +302,7 @@ async function getPortfolioImages(): Promise<Map<string, string>> {
       }
     }
   } catch {
-    // Fall back to whatever the static dataset provided.
+    // Non-critical: the portfolio renders icon placeholders instead.
   }
   return map;
 }

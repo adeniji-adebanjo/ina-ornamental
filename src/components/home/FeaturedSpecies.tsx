@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Package } from "lucide-react";
-import { fishProducts } from "@/data/products";
 import { getSpecies, getCategories } from "@/lib/queries/species";
 import { getSetting } from "@/lib/queries/settings";
 import { speciesToFishProduct } from "@/lib/adapters";
@@ -37,13 +36,15 @@ export default async function FeaturedSpecies() {
       supabaseSpecies = await getSpecies({ featured: true, limit: 6 });
     }
 
-    featured =
-      supabaseSpecies.length > 0
-        ? supabaseSpecies.map(speciesToFishProduct)
-        : fishProducts.filter((p) => p.featured).slice(0, 6);
-  } catch {
-    featured = fishProducts.filter((p) => p.featured).slice(0, 6);
+    featured = supabaseSpecies.map(speciesToFishProduct);
+  } catch (err) {
+    // A home-page section should not take the whole page down; hide it instead.
+    console.error("FeaturedSpecies: failed to load species", err);
+    return null;
   }
+
+  // Nothing to feature (yet) — omit the section rather than show placeholders.
+  if (featured.length === 0) return null;
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">

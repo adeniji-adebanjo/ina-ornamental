@@ -2,6 +2,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 import { CATALOG_TAG } from "@/lib/queries/species";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
@@ -74,7 +75,7 @@ export async function POST() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = await createAdminSupabaseClient();

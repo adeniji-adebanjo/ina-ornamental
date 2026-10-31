@@ -8,39 +8,55 @@ describe("sanitizeHtml", () => {
   });
 
   test("removes iframe/object/embed/style", () => {
-    assert.equal(
-      sanitizeHtml(`<iframe src="//evil"></iframe><h2>ok</h2>`),
-      "<h2>ok</h2>",
+    const out = sanitizeHtml(
+      `<iframe src="//evil"></iframe><object data="x"></object><embed src="y"><style>b{}</style><h2>ok</h2>`,
     );
-    assert.ok(!/<(object|embed|style)/i.test(sanitizeHtml(
-      `<object data="x"></object><embed src="y"><style>b{}</style><p>t</p>`,
-    )));
+    assert.ok(!/<(iframe|object|embed|style)/i.test(out));
+    assert.ok(out.includes("<h2>ok</h2>"));
   });
 
   test("strips inline event handlers (quoted and bare)", () => {
-    assert.equal(sanitizeHtml(`<img src=x onerror="alert(1)">`), "<img src=x>");
+    assert.ok(!/onerror/i.test(sanitizeHtml(`<img src="x.jpg" onerror="alert(1)">`)));
     assert.equal(sanitizeHtml(`<p onclick=alert(1)>t</p>`), "<p>t</p>");
   });
 
-  test("neutralizes javascript:/vbscript: URIs", () => {
-    assert.equal(sanitizeHtml(`<a href="javascript:alert(1)">x</a>`), `<a href="#">x</a>`);
-    assert.equal(sanitizeHtml(`<a href='vbscript:x'>y</a>`), `<a href="#">y</a>`);
+  test("strips handlers with no whitespace before them (regex bypass)", () => {
+    const out = sanitizeHtml(`<img src=x/onerror=alert(1)>`);
+    assert.ok(!/\sonerror\s*=/i.test(out), out);
+  });
+
+  test("drops javascript:/vbscript: URIs, quoted, unquoted or entity-encoded", () => {
+    for (const html of [
+      `<a href="javascript:alert(1)">x</a>`,
+      `<a href='vbscript:x'>x</a>`,
+      `<a href=javascript:alert(1)>x</a>`,
+      `<a href="jav&#x61;script:alert(1)">x</a>`,
+    ]) {
+      const out = sanitizeHtml(html);
+      assert.ok(!/script:/i.test(out), `${html} → ${out}`);
+    }
   });
 
   test("preserves safe links, images and formatting", () => {
-    const safe = `<a href="https://ok.com">safe</a> <img src="/wp-content/x.jpg"><strong>bold</strong>`;
-    assert.equal(sanitizeHtml(safe), safe);
+    const out = sanitizeHtml(
+      `<a href="https://ok.com">safe</a> <img src="/wp-content/x.jpg" alt="fish"><strong>bold</strong>`,
+    );
+    assert.ok(out.includes(`<a href="https://ok.com">safe</a>`));
+    assert.ok(out.includes(`<img src="/wp-content/x.jpg" alt="fish" />`));
+    assert.ok(out.includes("<strong>bold</strong>"));
   });
 
   test("allows data: URIs only for images", () => {
     assert.ok(sanitizeHtml(`<img src="data:image/png;base64,AAA">`).includes("data:image/png"));
-    assert.equal(sanitizeHtml(`<a href="data:text/html,hello">x</a>`), `<a href="#">x</a>`);
+    assert.ok(!sanitizeHtml(`<a href="data:text/html,hello">x</a>`).includes("data:"));
   });
 
-  test("neutralizes a script embedded inside an attribute value (stays safe)", () => {
-    const out = sanitizeHtml(`<a href="data:text/html,<script>alert(1)</script>">x</a>`);
-    assert.ok(!/<script/i.test(out), "no script tag survives");
-    assert.ok(!/data:text\/html/i.test(out) || /href="#"/.test(out));
+  test("adds rel=noopener to target=_blank links", () => {
+    assert.ok(
+      sanitizeHtml(`<a href="https://x.com" target="_blank">x</a>`).includes(
+        `rel="noopener noreferrer"`,
+      ),
+    );
   });
 
   test("empty input", () => {

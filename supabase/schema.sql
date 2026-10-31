@@ -225,25 +225,23 @@ create policy "Public read species_images" on species_images for select using (t
 create policy "Public read instagram" on instagram_posts for select using (true);
 create policy "Public read site_settings" on site_settings for select using (true);
 
--- Admin full access (authenticated users)
-create policy "Admin all categories" on categories for all using (auth.role() = 'authenticated');
-create policy "Admin all species" on species for all using (auth.role() = 'authenticated');
-create policy "Admin all species_images" on species_images for all using (auth.role() = 'authenticated');
-create policy "Admin all clients" on clients for all using (auth.role() = 'authenticated');
-create policy "Admin all client_price_lists" on client_price_lists for all using (auth.role() = 'authenticated');
-create policy "Admin all client_price_items" on client_price_items for all using (auth.role() = 'authenticated');
-create policy "Admin all orders" on orders for all using (auth.role() = 'authenticated');
-create policy "Admin all order_groups" on order_groups for all using (auth.role() = 'authenticated');
-create policy "Admin all order_items" on order_items for all using (auth.role() = 'authenticated');
-create policy "Admin all instagram" on instagram_posts for all using (auth.role() = 'authenticated');
-create policy "Admin all site_settings" on site_settings for all using (auth.role() = 'authenticated');
-create policy "Admin all location_pricing" on location_pricing for all using (auth.role() = 'authenticated');
+-- Admin full access: only accounts with app_metadata.role = 'admin' (see
+-- migrations/0006_admin_role_rls.sql). Orders and client price lists have no
+-- public policies: the app reads/writes them server-side with the service role.
+create or replace function public.is_admin()
+returns boolean language sql stable as $$
+  select coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'admin'
+$$;
 
--- Public insert for orders (customers submitting)
-create policy "Public insert orders" on orders for insert with check (true);
-create policy "Public insert order_groups" on order_groups for insert with check (true);
-create policy "Public insert order_items" on order_items for insert with check (true);
-
--- Public read for client pricing (validated by app logic with token)
-create policy "Public read client_price_lists" on client_price_lists for select using (active = true);
-create policy "Public read client_price_items" on client_price_items for select using (true);
+create policy "Admin all categories" on categories for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all species" on species for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all species_images" on species_images for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all clients" on clients for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all client_price_lists" on client_price_lists for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all client_price_items" on client_price_items for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all orders" on orders for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all order_groups" on order_groups for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all order_items" on order_items for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all instagram_posts" on instagram_posts for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all site_settings" on site_settings for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin all location_pricing" on location_pricing for all using (public.is_admin()) with check (public.is_admin());

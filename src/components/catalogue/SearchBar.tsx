@@ -9,9 +9,10 @@ export default function SearchBar() {
 
   return (
     <div className="relative">
-      <Search className="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      <Search aria-hidden="true" className="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
       <Input
         type="text"
+        aria-label="Search species"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Search species, scientific name, category…"

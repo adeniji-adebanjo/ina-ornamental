@@ -3,6 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 
 // Accept an empty string / null (clears the date) or a YYYY-MM-DD value.
 function normalizeDate(v: unknown): string | null | undefined {
@@ -20,7 +21,7 @@ export async function PATCH(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
@@ -84,7 +85,7 @@ export async function DELETE(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;

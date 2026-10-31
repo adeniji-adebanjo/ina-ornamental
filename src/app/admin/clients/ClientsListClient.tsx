@@ -142,22 +142,27 @@ export default function ClientsListClient({
       : "/api/admin/clients";
     const method = editing ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    if (res.ok) {
-      toast.success(editing ? "Client updated" : "Client created");
-      setShowForm(false);
-      setEditing(null);
-      router.refresh();
-    } else {
-      const err = await res.json().catch(() => null);
-      toast.error(err?.error || "Couldn't save the client. Please try again.");
+      if (res.ok) {
+        toast.success(editing ? "Client updated" : "Client created");
+        setShowForm(false);
+        setEditing(null);
+        router.refresh();
+      } else {
+        const err = await res.json().catch(() => null);
+        toast.error(err?.error || "Couldn't save the client. Please try again.");
+      }
+    } catch {
+      toast.error("Network error — couldn't save the client. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   function handleDelete(id: string) {
@@ -215,12 +220,14 @@ export default function ClientsListClient({
               <Input
                 required
                 name="name"
+                aria-label="Client name"
                 placeholder="Client Name"
                 defaultValue={editing?.name ?? prefill.name ?? ""}
                 className="rounded-xl"
               />
               <Input
                 name="company"
+                aria-label="Company"
                 placeholder="Company"
                 defaultValue={editing?.company ?? prefill.company ?? ""}
                 className="rounded-xl"
@@ -228,6 +235,7 @@ export default function ClientsListClient({
               <Input
                 name="email"
                 type="email"
+                aria-label="Email"
                 placeholder="Email"
                 defaultValue={editing?.email ?? prefill.email ?? ""}
                 className="rounded-xl"
@@ -238,6 +246,8 @@ export default function ClientsListClient({
                   <button
                     type="button"
                     onClick={() => setPhoneCodeOpen(!phoneCodeOpen)}
+                    aria-label={`Dial code ${selectedCountry.dialCode}, change country code`}
+                    aria-expanded={phoneCodeOpen}
                     className="flex items-center gap-1 px-2.5 bg-slate-50 border-r border-input text-sm font-medium text-slate-700 hover:bg-slate-100 shrink-0"
                   >
                     {selectedCountry.dialCode}
@@ -245,6 +255,7 @@ export default function ClientsListClient({
                   </button>
                   <input
                     type="tel"
+                    aria-label="Phone number"
                     placeholder={`Phone (${selectedCountry.minDigits}-${selectedCountry.maxDigits} digits)`}
                     value={phoneNumber}
                     maxLength={selectedCountry.maxDigits}
@@ -264,6 +275,7 @@ export default function ClientsListClient({
                         <Search className="size-3.5 text-slate-400" />
                         <input
                           type="text"
+                          aria-label="Search countries"
                           placeholder="Search country..."
                           className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
                           onChange={(e) => setCountrySearch(e.target.value)}
@@ -303,6 +315,8 @@ export default function ClientsListClient({
                 <button
                   type="button"
                   onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
+                  aria-label={`Country: ${selectedCountry.name}`}
+                  aria-expanded={countryDropdownOpen}
                   className="flex items-center justify-between w-full h-10 px-3 rounded-xl border border-input bg-transparent text-sm hover:bg-slate-50"
                 >
                   <span className="text-slate-900">{selectedCountry.name}</span>
@@ -315,6 +329,7 @@ export default function ClientsListClient({
                         <Search className="size-3.5 text-slate-400" />
                         <input
                           type="text"
+                          aria-label="Search countries"
                           placeholder="Search country..."
                           className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
                           onChange={(e) => setCountrySearch(e.target.value)}
@@ -369,6 +384,7 @@ export default function ClientsListClient({
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
         <Input
+          aria-label="Search clients"
           placeholder="Search clients..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -398,6 +414,7 @@ export default function ClientsListClient({
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    aria-label={`Edit ${c.name}`}
                     onClick={() => {
                       setEditing(c);
                       setShowForm(true);
@@ -408,6 +425,7 @@ export default function ClientsListClient({
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    aria-label={`Delete ${c.name}`}
                     onClick={() => handleDelete(c.id)}
                   >
                     <Trash2 className="size-4 text-red-500" />

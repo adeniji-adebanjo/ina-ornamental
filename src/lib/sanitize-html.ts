@@ -1,41 +1,67 @@
-// Minimal, dependency-free HTML sanitizer for rendering untrusted WordPress
-// post HTML on the public site.
+// Sanitizer for rendering untrusted WordPress post HTML on the public site.
 //
-// INTERIM MITIGATION: the npm registry is currently unavailable to add a proper
-// parser-based sanitizer (DOMPurify / sanitize-html). This strips the common
-// stored-XSS vectors — script/style/iframe/object/embed elements, inline event
-// handlers, and dangerous URI schemes — but it is regex-based and NOT a full
-// HTML parser, so it should be replaced by DOMPurify + a nonce-based CSP.
+// Allow-list based and backed by a real HTML parser (htmlparser2 via
+// sanitize-html), so malformed markup like `<img src=x/onerror=…>` or an
+// unquoted / entity-encoded `javascript:` href can't slip through the way
+// they could with the previous regex filter.
+import sanitize from "sanitize-html";
 
-// Elements removed together with their contents.
-const DANGEROUS_ELEMENTS =
-  /<\s*(script|style|iframe|object|embed|form|noscript|template|svg|math)\b[\s\S]*?(<\s*\/\s*\1\s*>|$)/gi;
-// Void/standalone elements that have no closing tag.
-const VOID_DANGEROUS = /<\s*(link|meta|base)\b[^>]*>/gi;
+const OPTIONS: sanitize.IOptions = {
+  allowedTags: [
+    ...sanitize.defaults.allowedTags,
+    "img",
+    "figure",
+    "figcaption",
+    "picture",
+    "source",
+    "video",
+    "audio",
+    "del",
+    "ins",
+    "sup",
+    "sub",
+  ],
+  allowedAttributes: {
+    a: ["href", "name", "target", "rel", "title"],
+    img: ["src", "srcset", "sizes", "alt", "title", "width", "height", "loading"],
+    source: ["src", "srcset", "type", "media", "sizes"],
+    video: ["src", "poster", "controls", "width", "height", "preload"],
+    audio: ["src", "controls", "preload"],
+    "*": ["class", "id", "style", "align"],
+    td: ["colspan", "rowspan"],
+    th: ["colspan", "rowspan", "scope"],
+    ol: ["start", "type", "reversed"],
+  },
+  allowedSchemes: ["http", "https", "mailto", "tel"],
+  // data: URIs only on images (inline base64 thumbnails WordPress emits).
+  allowedSchemesByTag: { img: ["http", "https", "data"] },
+  allowProtocolRelative: true,
+  // Only harmless presentational styles survive.
+  allowedStyles: {
+    "*": {
+      "text-align": [/^(left|right|center|justify)$/],
+      color: [/^#[0-9a-f]{3,8}$/i, /^rgba?\([\d\s.,%]+\)$/i],
+      "font-weight": [/^(normal|bold|\d{3})$/],
+      "font-style": [/^(normal|italic)$/],
+      width: [/^\d+(px|%)$/],
+      height: [/^\d+(px|%)$/],
+    },
+  },
+  // Removed together with their contents, not just unwrapped.
+  nonTextTags: ["script", "style", "textarea", "option", "noscript", "template", "svg", "math"],
+  transformTags: {
+    // Links that open a new tab can't reach back into our page.
+    a: (tagName, attribs) => ({
+      tagName,
+      attribs:
+        attribs.target === "_blank"
+          ? { ...attribs, rel: "noopener noreferrer" }
+          : attribs,
+    }),
+  },
+};
 
 export function sanitizeHtml(input: string): string {
   if (!input) return "";
-  let html = input;
-
-  html = html.replace(DANGEROUS_ELEMENTS, "");
-  html = html.replace(VOID_DANGEROUS, "");
-
-  // Inline event handlers: onclick=, onerror=, onload=, … (quoted or bare).
-  html = html.replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, "");
-  html = html.replace(/\son[a-z]+\s*=\s*'[^']*'/gi, "");
-  html = html.replace(/\son[a-z]+\s*=\s*[^\s>]+/gi, "");
-
-  // Dangerous URI schemes in href/src/xlink:href (allow data: only for images).
-  html = html.replace(
-    /\s(href|src|xlink:href)\s*=\s*("|')\s*(?:javascript:|vbscript:|data:(?!image\/))[^"']*\2/gi,
-    ' $1="#"',
-  );
-
-  // Inline styles carrying script-y payloads (legacy IE expression / js url).
-  html = html.replace(
-    /\sstyle\s*=\s*("|')[^"']*(?:expression\(|javascript:)[^"']*\1/gi,
-    "",
-  );
-
-  return html;
+  return sanitize(input, OPTIONS);
 }

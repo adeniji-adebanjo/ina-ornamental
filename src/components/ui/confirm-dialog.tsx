@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -39,6 +40,9 @@ export function ConfirmDialog({
     setLoading(true);
     try {
       await onConfirm();
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
       onOpenChange(false);

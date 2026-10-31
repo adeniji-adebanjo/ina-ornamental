@@ -7,7 +7,8 @@ import type {
   Category,
   AvailabilityStatus,
 } from "@/types/database";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -202,20 +203,24 @@ export default function SpeciesListClient({ species, categories }: Props) {
   }
 
   async function handleExport() {
-    const res = await fetch("/api/admin/species/export");
-    if (!res.ok) {
-      toast.error("Failed to export species");
-      return;
+    try {
+      const res = await fetch("/api/admin/species/export");
+      if (!res.ok) {
+        toast.error("Failed to export species");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ina-species-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Network error — couldn't export species. Please try again.");
     }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `ina-species-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
   }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -282,11 +287,12 @@ export default function SpeciesListClient({ species, categories }: Props) {
             <Download className="size-4 mr-2" />
             Export CSV
           </Button>
-          <Link href="/admin/species/new" className="w-full sm:w-auto">
-            <Button className="rounded-xl w-full sm:w-auto">
-              <Plus className="size-4 mr-2" />
-              Add Species
-            </Button>
+          <Link
+            href="/admin/species/new"
+            className={cn(buttonVariants(), "rounded-xl w-full sm:w-auto")}
+          >
+            <Plus className="size-4 mr-2" />
+            Add Species
           </Link>
         </div>
       </div>
@@ -295,6 +301,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
           <Input
+            aria-label="Search species"
             placeholder="Search species..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -302,6 +309,7 @@ export default function SpeciesListClient({ species, categories }: Props) {
           />
         </div>
         <select
+          aria-label="Filter by category"
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
           className="w-full sm:w-auto px-3 py-2 rounded-xl border border-slate-200 text-sm"
@@ -331,11 +339,12 @@ export default function SpeciesListClient({ species, categories }: Props) {
               explore the admin dashboard.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Link href="/admin/species/new">
-                <Button className="rounded-xl">
-                  <Plus className="size-4 mr-2" />
-                  Add Species
-                </Button>
+              <Link
+                href="/admin/species/new"
+                className={cn(buttonVariants(), "rounded-xl")}
+              >
+                <Plus className="size-4 mr-2" />
+                Add Species
               </Link>
               <Button
                 variant="outline"
@@ -402,14 +411,20 @@ export default function SpeciesListClient({ species, categories }: Props) {
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
-                  <Link href={`/admin/species/${s.id}`}>
-                    <Button variant="ghost" size="icon-sm">
-                      <Pencil className="size-4 text-slate-500" />
-                    </Button>
+                  <Link
+                    href={`/admin/species/${s.id}`}
+                    aria-label={`Edit ${s.common_name}`}
+                    className={buttonVariants({
+                      variant: "ghost",
+                      size: "icon-sm",
+                    })}
+                  >
+                    <Pencil className="size-4 text-slate-500" />
                   </Link>
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    aria-label={`Delete ${s.common_name}`}
                     onClick={() => handleDelete(s.id, s.common_name)}
                   >
                     <Trash2 className="size-4 text-red-500" />

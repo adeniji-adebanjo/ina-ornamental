@@ -3,6 +3,8 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import {
   cellText,
   parsePrice,
@@ -10,6 +12,7 @@ import {
   normalizeAvailability,
   applyAvailabilityUpdates,
 } from "@/lib/excel";
+import { checkSpreadsheetUpload } from "@/lib/upload-limits";
 import { CATALOG_TAG } from "@/lib/queries/species";
 import { revalidateTag } from "next/cache";
 
@@ -20,7 +23,7 @@ export async function POST(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const formData = await request.formData();
@@ -29,15 +32,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
+  const badFile = checkSpreadsheetUpload(file);
+  if (badFile)
+    return NextResponse.json({ error: badFile }, { status: 400 });
+
   const workbook = await loadWorkbook(file);
 
   const admin = await createAdminSupabaseClient();
-  const { data: allSpecies } = await admin
-    .from("species")
-    .select("id, common_name, slug, scientific_name");
+  const { data: allSpecies, error: speciesError } = await fetchAllRows<{
+    id: string;
+    common_name: string | null;
+    slug: string | null;
+    scientific_name: string | null;
+  }>((from, to) =>
+    admin
+      .from("species")
+      .select("id, common_name, slug, scientific_name")
+      .order("id")
+      .range(from, to),
+  );
+  if (speciesError) {
+    return NextResponse.json(
+      { error: `Couldn't read species: ${speciesError.message}` },
+      { status: 500 },
+    );
+  }
 
   const speciesMap = new Map<string, string>();
-  for (const s of allSpecies ?? []) {
+  for (const s of allSpecies) {
     if (s.common_name) speciesMap.set(s.common_name.toLowerCase(), s.id);
     if (s.slug) speciesMap.set(s.slug.toLowerCase(), s.id);
     if (s.scientific_name)
@@ -55,7 +77,7 @@ export async function POST(request: NextRequest) {
   const headerRow = ws.getRow(1);
   const headerIndex = new Map<string, number>();
   headerRow.eachCell((cell, colNumber) => {
-    const value = String(cell.value || "").trim().toLowerCase();
+    const value = cellText(cell.value).trim().toLowerCase();
     if (value) headerIndex.set(value, colNumber);
   });
 
@@ -76,11 +98,15 @@ export async function POST(request: NextRequest) {
     headerIndex.get("price"),
     headerIndex.get("custom price"),
     headerIndex.get("amount"),
+    // Descriptive columns people commonly add — never prices.
+    ...["#", "no", "no.", "s/n", "notes", "note", "comments", "qty/box",
+      "qty per box", "box qty", "pcs/box", "unit", "origin", "category",
+      "slug", "tags", "description"].map((h) => headerIndex.get(h)),
   ].filter(Boolean) as number[]);
 
   const locationColumns: { col: number; location: string }[] = [];
   headerRow.eachCell((cell, colNumber) => {
-    const value = String(cell.value || "").trim();
+    const value = cellText(cell.value).trim();
     if (!value) return;
     if (!knownHeaders.has(colNumber)) {
       locationColumns.push({ col: colNumber, location: value });

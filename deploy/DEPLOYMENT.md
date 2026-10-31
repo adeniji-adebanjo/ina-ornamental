@@ -93,8 +93,10 @@ echo '*/15 * * * * www-data curl -s https://inaornamentalfish.com/wp-cron.php?do
 ## 4. Nginx + TLS (certbot)
 
 ```bash
-# Security snippet + site config
+# Security + proxy snippets, image cache dir, site config
 sudo cp deploy/nginx/snippets/ina-security.conf /etc/nginx/snippets/
+sudo cp deploy/nginx/snippets/ina-next-proxy.conf /etc/nginx/snippets/
+sudo mkdir -p /var/cache/nginx/ina_img && sudo chown www-data: /var/cache/nginx/ina_img
 sudo cp deploy/nginx/inaornamentalfish.com.conf /etc/nginx/sites-available/
 sudo ln -sf /etc/nginx/sites-available/inaornamentalfish.com.conf /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
@@ -165,8 +167,50 @@ in the Next.js app; place a test order to confirm SMTP email still sends; confir
 
 ---
 
+## 7. Release checklist: security & performance update (Nov 2026)
+
+Do these in order. Steps 1–2 happen in the Supabase dashboard **before** the
+new code goes live, or admins get locked out.
+
+1. **Disable public sign-ups:** Authentication → Sign In / Providers →
+   "Allow new users to sign up" = off.
+2. **Grant the admin role** to each real admin (SQL editor):
+   ```sql
+   update auth.users
+      set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
+    where email in ('admin@example.com');
+   ```
+   Review the list first (`select email, created_at from auth.users order by created_at;`)
+   and delete any account you don't recognise.
+3. **Run migrations** `supabase/migrations/0006_admin_role_rls.sql` then
+   `0007_replace_location_pricing.sql` (SQL editor, or `supabase db push`).
+4. **Env:** add `NEXT_PUBLIC_GA_ID=G-…` to `.env.production` (analytics no
+   longer has a hard-coded fallback and stays off without it). Optionally
+   `CRON_SECRET` for the Instagram sync.
+5. **Deploy the app** (`npm ci && npm run build`, restart the service).
+6. **Nginx:** copy the updated site conf + both snippets, create the image
+   cache dir (section 4), `sudo nginx -t && sudo systemctl reload nginx`.
+7. **Admins sign out and back in** so their session carries the new role.
+
+Smoke tests after the release:
+```bash
+# Throttling: the 7th rapid order POST in a minute should get 429 from Nginx
+for i in $(seq 1 8); do curl -s -o /dev/null -w "%{http_code}\n" -X POST \
+  https://inaornamentalfish.com/api/orders -H 'content-type: application/json' -d '{}'; done
+# Image cache: second request should say HIT
+curl -sI "https://inaornamentalfish.com/_next/image?url=%2Fimages%2Ffish-placeholder.svg&w=640&q=75" | grep -i x-cache-status
+```
+Then, logged out in a private window, place a small order through a client
+price-list link, and confirm the emails arrive.
+
+---
+
 ## Notes
 - Next.js binds to `127.0.0.1:3000` only; Nginx is the sole public listener.
+- Rate limiting is two-layer: Nginx `limit_req` per IP (cheap, before Node),
+  then the app's per-endpoint limits in `src/lib/rate-limit.ts`. The app's
+  limiter is in-process memory, which is correct for this single-process
+  deployment; run more than one instance and it must move to Redis.
 - `next.config.ts` (this repo uses TS, not `.js`) already whitelists
   `inaornamentalfish.com/wp-content/uploads/**` for `next/image`.
 - The `map $http_upgrade $connection_upgrade` block lives at the bottom of the

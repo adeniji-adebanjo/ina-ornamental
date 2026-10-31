@@ -4,6 +4,7 @@ import {
 } from "@/lib/supabase/server";
 import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import type {
   SpeciesWithImages,
   Category,
@@ -38,10 +39,11 @@ function categoryRank(slug: string): number {
 }
 
 async function queryCategories(supabase: SupabaseClient): Promise<Category[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("categories")
     .select("*")
     .order("sort_order");
+  if (error) throw new Error(`Failed to load categories: ${error.message}`);
   const categories = data ?? [];
   // Stable reorder: pinned categories first, then by sort_order as before.
   return categories.slice().sort((a, b) => {
@@ -74,47 +76,54 @@ async function querySpecies(
       ? options.categorySlug
       : null;
 
-  // Use an inner join (`!inner`) on the category when filtering by its slug —
-  // otherwise PostgREST filters the embedded category but returns ALL species.
-  let query = supabase
-    .from("species")
-    .select(
-      `
-      *,
-      category:categories${categorySlug ? "!inner" : ""}(*),
-      images:species_images(*)
-    `,
-    )
-    .order("sort_order")
-    .order("sort_order", { referencedTable: "species_images" });
+  const build = () => {
+    // Use an inner join (`!inner`) on the category when filtering by its slug —
+    // otherwise PostgREST filters the embedded category but returns ALL species.
+    let query = supabase
+      .from("species")
+      .select(
+        `
+        *,
+        category:categories${categorySlug ? "!inner" : ""}(*),
+        images:species_images(*)
+      `,
+      )
+      .order("sort_order")
+      .order("id") // tiebreak: sort_order isn't unique, pages must be stable
+      .order("sort_order", { referencedTable: "species_images" });
 
-  if (categorySlug) {
-    query = query.eq("category.slug", categorySlug);
-  }
-  if (options?.search) {
-    // Strip PostgREST-structural characters so the term can't break out of the
-    // intended `or(...)` filter (comma/parens/wildcards/quotes/backslash).
-    const safe = options.search.replace(/[,()*%"'\\]/g, " ").trim();
-    if (safe) {
-      query = query.or(
-        `common_name.ilike.%${safe}%,scientific_name.ilike.%${safe}%`,
-      );
+    if (categorySlug) {
+      query = query.eq("category.slug", categorySlug);
     }
-  }
-  if (options?.availability) {
-    query = query.eq("availability", options.availability);
-  }
-  if (options?.featured !== undefined) {
-    query = query.eq("featured", options.featured);
-  }
-  if (options?.bestSeller !== undefined) {
-    query = query.eq("best_seller", options.bestSeller);
-  }
-  if (options?.limit) {
-    query = query.limit(options.limit);
-  }
+    if (options?.search) {
+      // Strip PostgREST-structural characters so the term can't break out of the
+      // intended `or(...)` filter (comma/parens/wildcards/quotes/backslash).
+      const safe = options.search.replace(/[,()*%"'\\]/g, " ").trim();
+      if (safe) {
+        query = query.or(
+          `common_name.ilike.%${safe}%,scientific_name.ilike.%${safe}%`,
+        );
+      }
+    }
+    if (options?.availability) {
+      query = query.eq("availability", options.availability);
+    }
+    if (options?.featured !== undefined) {
+      query = query.eq("featured", options.featured);
+    }
+    if (options?.bestSeller !== undefined) {
+      query = query.eq("best_seller", options.bestSeller);
+    }
+    return query;
+  };
 
-  const { data } = await query;
+  const { data, error } = options?.limit
+    ? await build().limit(options.limit)
+    : await fetchAllRows((from, to) => build().range(from, to));
+  // Throw rather than return []: unstable_cache doesn't cache a thrown error,
+  // so an outage isn't pinned as an "empty catalogue" for the TTL, and the
+  // page's error boundary shows instead.
+  if (error) throw new Error(`Failed to load species: ${error.message}`);
   return (data as SpeciesWithImages[]) ?? [];
 }
 

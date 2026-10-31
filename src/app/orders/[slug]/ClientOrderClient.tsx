@@ -63,8 +63,12 @@ interface OrderGroup {
 
 export default function ClientOrderClient({
   priceList,
+  slug,
+  token,
 }: {
   priceList: ClientPriceListWithItems;
+  slug: string;
+  token: string;
 }) {
   const [groups, setGroups] = useState<OrderGroup[]>([
     { id: 1, name: "Order A", items: {} },
@@ -87,7 +91,30 @@ export default function ClientOrderClient({
           activeGroupId?: number;
         };
         if (draft.groups?.length) {
-          setGroups(draft.groups);
+          // The list may have changed since the draft was saved: drop species
+          // that were removed or have gone out of stock, and say so.
+          const orderable = new Set(
+            priceList.items
+              .filter((pi) => pi.species?.availability !== "out_of_stock")
+              .map((pi) => pi.species_id),
+          );
+          let dropped = 0;
+          const groupsNow = draft.groups.map((g) => ({
+            ...g,
+            items: Object.fromEntries(
+              Object.entries(g.items ?? {}).filter(([id]) => {
+                if (orderable.has(id)) return true;
+                dropped++;
+                return false;
+              }),
+            ),
+          }));
+          if (dropped > 0) {
+            toast.info(
+              `${dropped} saved item${dropped === 1 ? " is" : "s are"} no longer available and ${dropped === 1 ? "was" : "were"} removed from your draft.`,
+            );
+          }
+          setGroups(groupsNow);
           const stillExists = draft.groups.some(
             (g) => g.id === draft.activeGroupId,
           );
@@ -101,6 +128,8 @@ export default function ClientOrderClient({
     };
     load();
     draftLoadedRef.current = true;
+    // Restore once per list; priceList.items is fixed for the page's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [STORAGE_KEY]);
 
   // Save on change (only after the initial restore, so we don't clobber it).
@@ -457,8 +486,9 @@ export default function ClientOrderClient({
       consignee_phone: formData.get("consignee_phone"),
       consignee_address: formData.get("consignee_address"),
       notes: formData.get("notes"),
-      price_list_id: priceList.id,
-      client_id: priceList.client_id,
+      // The server re-validates the link and prices every line from the list.
+      slug,
+      token,
       groups: orderGroups,
     };
 
@@ -731,6 +761,7 @@ export default function ClientOrderClient({
               const avail =
                 AVAILABILITY_CONFIG[sp.availability] ??
                 AVAILABILITY_CONFIG.on_request;
+              const unavailable = sp.availability === "out_of_stock";
 
               return (
                 <Card key={item.id} className="rounded-xl overflow-hidden">
@@ -774,6 +805,13 @@ export default function ClientOrderClient({
                       </span>
                     </div>
 
+                    {/* Quantity controls — a disabled fieldset disables every
+                        button/input inside it for unavailable species. */}
+                    <fieldset
+                      disabled={unavailable}
+                      aria-label={`Quantity for ${sp.common_name}`}
+                      className="space-y-2 min-w-0 disabled:opacity-40"
+                    >
                     {/* Quick box buttons */}
                     <div className="flex gap-1.5">
                       {[0.25, 0.5, 1].map((frac) => (
@@ -874,6 +912,7 @@ export default function ClientOrderClient({
                         </div>
                       </div>
                     </div>
+                    </fieldset>
                   </CardContent>
                 </Card>
               );

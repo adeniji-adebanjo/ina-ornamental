@@ -3,6 +3,9 @@ import {
   createAdminSupabaseClient,
   createServerSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
+import { fetchAllRows } from "@/lib/supabase/paginate";
+import { toCsv } from "@/lib/csv";
 import type {
   OrderWithGroups,
   OrderGroup,
@@ -15,21 +18,30 @@ export async function GET() {
   const {
     data: { user },
   } = await auth.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabase = await createAdminSupabaseClient();
 
-  // Fetch orders with groups and items
-  const { data: orders, error } = await supabase
-    .from("orders")
-    .select(`*, order_groups(*, order_items(*))`)
-    .order("submitted_at", { ascending: false });
+  // Fetch every order with groups and items (paged past the 1000-row cap).
+  const { data: orders, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from("orders")
+      .select(`*, order_groups(*, order_items(*))`)
+      .order("submitted_at", { ascending: false })
+      .order("id")
+      .range(from, to),
+  );
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("Orders export failed:", error.message);
+    return NextResponse.json(
+      { error: "Couldn't export orders. Please try again." },
+      { status: 500 },
+    );
+  }
 
-  // Build CSV
-  const rows: string[] = [];
+  const rows: unknown[][] = [];
   const headers = [
     "order_reference",
     "customer_name",
@@ -44,9 +56,9 @@ export async function GET() {
     "submitted_at",
     "groups_json",
   ];
-  rows.push(headers.join(","));
+  rows.push(headers);
 
-  for (const o of (orders ?? []) as OrderWithGroups[]) {
+  for (const o of orders as OrderWithGroups[]) {
     const groups = (o.order_groups || []).map(
       (g: OrderGroup & { order_items: OrderItem[] }) => ({
         group_name: g.group_name,
@@ -60,29 +72,26 @@ export async function GET() {
       }),
     );
 
-    const row = [
+    // toCsv quotes any field containing , " or a newline and doubles inner
+    // quotes (RFC 4180), so addresses and the JSON column stay one cell.
+    rows.push([
       o.order_reference,
       o.customer_name,
-      o.company_name || "",
+      o.company_name,
       o.email,
-      o.phone || "",
-      o.country || "",
-      (o.delivery_address || "").replace(/\n/g, " ").replace(/,/g, ";"),
-      o.awb_number || "",
-      o.airline_name || "",
-      o.manual_status || "",
+      o.phone,
+      o.country,
+      o.delivery_address,
+      o.awb_number,
+      o.airline_name,
+      o.manual_status,
       o.submitted_at,
-      JSON.stringify(groups).replace(/"/g, '"'),
-    ];
-    // Escape commas inside fields by wrapping with quotes
-    const esc = row.map((r) => {
-      if (String(r).includes(",")) return `"${String(r).replace(/"/g, '"')}"`;
-      return String(r);
-    });
-    rows.push(esc.join(","));
+      JSON.stringify(groups),
+    ]);
   }
 
-  const csv = rows.join("\n");
+  // BOM so Excel opens it as UTF-8 (names like "INÁ" otherwise garble).
+  const csv = "﻿" + toCsv(rows);
 
   return new Response(csv, {
     status: 200,

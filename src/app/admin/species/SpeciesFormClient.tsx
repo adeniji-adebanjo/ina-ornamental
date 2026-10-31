@@ -93,21 +93,28 @@ export default function SpeciesFormClient({ species, categories }: Props) {
       : "/api/admin/species";
     const method = isEdit ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    if (res.ok) {
-      toast.success(isEdit ? "Species updated" : "Species created");
-      router.push("/admin/species");
-      router.refresh();
-    } else {
-      const data = await res.json().catch(() => null);
-      toast.error(data?.error || "Couldn't save the species. Please try again.");
+      if (res.ok) {
+        toast.success(isEdit ? "Species updated" : "Species created");
+        router.push("/admin/species");
+        router.refresh();
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error(
+          data?.error || "Couldn't save the species. Please try again.",
+        );
+      }
+    } catch {
+      toast.error("Network error — couldn't save the species. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   return (
@@ -129,10 +136,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  <label htmlFor="species-common-name" className="text-xs font-medium text-slate-600 mb-1 block">
                     Common Name *
                   </label>
                   <Input
+                    id="species-common-name"
                     required
                     value={form.common_name}
                     onChange={(e) => handleNameChange(e.target.value)}
@@ -140,10 +148,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  <label htmlFor="species-scientific-name" className="text-xs font-medium text-slate-600 mb-1 block">
                     Scientific Name
                   </label>
                   <Input
+                    id="species-scientific-name"
                     value={form.scientific_name}
                     onChange={(e) =>
                       setForm((f) => ({
@@ -158,10 +167,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  <label htmlFor="species-slug" className="text-xs font-medium text-slate-600 mb-1 block">
                     Slug
                   </label>
                   <Input
+                    id="species-slug"
                     required
                     value={form.slug}
                     onChange={(e) =>
@@ -171,10 +181,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  <label htmlFor="species-category" className="text-xs font-medium text-slate-600 mb-1 block">
                     Category
                   </label>
                   <select
+                    id="species-category"
                     value={form.category_id}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, category_id: e.target.value }))
@@ -193,10 +204,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  <label htmlFor="species-class-order" className="text-xs font-medium text-slate-600 mb-1 block">
                     Class/Order
                   </label>
                   <Input
+                    id="species-class-order"
                     value={form.class_order}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, class_order: e.target.value }))
@@ -205,10 +217,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  <label htmlFor="species-origin" className="text-xs font-medium text-slate-600 mb-1 block">
                     Origin
                   </label>
                   <Input
+                    id="species-origin"
                     value={form.origin}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, origin: e.target.value }))
@@ -219,10 +232,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                <label htmlFor="species-description" className="text-xs font-medium text-slate-600 mb-1 block">
                   Description
                 </label>
                 <Textarea
+                  id="species-description"
                   value={form.description}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, description: e.target.value }))
@@ -234,10 +248,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  <label htmlFor="species-sizes" className="text-xs font-medium text-slate-600 mb-1 block">
                     Sizes (comma-separated)
                   </label>
                   <Input
+                    id="species-sizes"
                     value={form.sizes}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, sizes: e.target.value }))
@@ -247,10 +262,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1 block">
+                  <label htmlFor="species-tags" className="text-xs font-medium text-slate-600 mb-1 block">
                     Tags (comma-separated)
                   </label>
                   <Input
+                    id="species-tags"
                     value={form.tags}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, tags: e.target.value }))
@@ -279,10 +295,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
               <h2 className="font-semibold text-slate-900">Status</h2>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                <label htmlFor="species-availability" className="text-xs font-medium text-slate-600 mb-1 block">
                   Availability
                 </label>
                 <select
+                  id="species-availability"
                   value={form.availability}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -301,10 +318,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                <label htmlFor="species-qty-per-box" className="text-xs font-medium text-slate-600 mb-1 block">
                   Qty per Box
                 </label>
                 <Input
+                  id="species-qty-per-box"
                   type="number"
                   min={1}
                   value={form.qty_per_box}
@@ -319,10 +337,11 @@ export default function SpeciesFormClient({ species, categories }: Props) {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">
+                <label htmlFor="species-sort-order" className="text-xs font-medium text-slate-600 mb-1 block">
                   Sort Order
                 </label>
                 <Input
+                  id="species-sort-order"
                   type="number"
                   value={form.sort_order}
                   onChange={(e) =>

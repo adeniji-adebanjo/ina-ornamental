@@ -1,6 +1,5 @@
 import { getSpecies } from "@/lib/queries/species";
 import { speciesToFishProduct } from "@/lib/adapters";
-import { fishProducts } from "@/data/products";
 import type { FishProduct } from "@/types";
 import { ArrowRight, Fish } from "lucide-react";
 import Image from "next/image";
@@ -12,9 +11,11 @@ export default async function GalleryPreview() {
   let species: FishProduct[];
   try {
     const rows = await getSpecies();
-    species = rows.length > 0 ? rows.map(speciesToFishProduct) : fishProducts;
-  } catch {
-    species = fishProducts;
+    species = rows.map(speciesToFishProduct);
+  } catch (err) {
+    // A home-page section should not take the whole page down; hide it instead.
+    console.error("GalleryPreview: failed to load species", err);
+    return null;
   }
 
   // Prefer species that actually have a photo for the preview strip.

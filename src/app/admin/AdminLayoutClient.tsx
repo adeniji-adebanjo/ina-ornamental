@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   Fish,
   Package,
@@ -14,7 +15,6 @@ import {
   Image as ImageIcon,
   LogOut,
   Menu,
-  X,
   Settings,
   Upload,
   Newspaper,
@@ -188,33 +188,27 @@ export default function AdminLayoutClient({
       </aside>
 
       {/* Mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+      {/* Sheet provides Esc-to-close, focus trap, focus return and scroll lock */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent
+          side="left"
+          className="data-[side=left]:w-64 p-0 gap-0 lg:hidden"
         >
-          <aside
-            className="w-64 bg-white h-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 text-slate-500"
-            >
-              <X className="size-5" />
-            </button>
-            {sidebar}
-          </aside>
-        </div>
-      )}
+          <SheetTitle className="sr-only">Admin navigation</SheetTitle>
+          {sidebar}
+        </SheetContent>
+      </Sheet>
 
       {/* Main content — min-w-0 lets this flex child shrink instead of being
           stretched horizontally by wide content (e.g. the species list rows). */}
       <main className="flex-1 lg:ml-64 min-w-0">
         <header className="bg-white border-b border-slate-200 px-4 lg:px-8 py-4 flex items-center gap-4 sticky top-0 z-30">
           <button
+            type="button"
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden text-slate-600"
+            aria-label="Open navigation menu"
+            aria-expanded={sidebarOpen}
           >
             <Menu className="size-5" />
           </button>

@@ -1,3 +1,4 @@
+import { pageOpenGraph } from "@/app/shared-metadata";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle, Mail, MapPin } from "lucide-react";
 
@@ -6,6 +7,12 @@ export const metadata = {
   description:
     "Contact INÁ Ornamental Fish for B2B ornamental fish export inquiries, catalogue requests, pricing, and global shipment support.",
   alternates: { canonical: "/contact" },
+  openGraph: pageOpenGraph({
+    title: "Contact | INÁ Ornamental Fish",
+    description:
+      "B2B ornamental fish export inquiries, catalogue requests, pricing and global shipment support.",
+    url: "/contact",
+  }),
 };
 
 export default function ContactPage() {

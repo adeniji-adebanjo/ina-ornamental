@@ -4,6 +4,8 @@ import {
   rateLimit,
   recallRecent,
   rememberRecent,
+  claimOnce,
+  forgetRecent,
   clientIp,
 } from "@/lib/rate-limit";
 
@@ -62,13 +64,36 @@ describe("recallRecent / rememberRecent", () => {
   });
 });
 
-describe("clientIp", () => {
-  test("takes the first x-forwarded-for entry", () => {
-    const h = new Headers({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" });
-    assert.equal(clientIp(h), "1.2.3.4");
+describe("claimOnce / forgetRecent", () => {
+  test("first claim is new, a concurrent one is pending, then done", () => {
+    const key = "test:claim:" + Math.random();
+    assert.deepEqual(claimOnce(key, 60_000), { state: "new" });
+    assert.deepEqual(claimOnce(key, 60_000), { state: "pending" });
+    rememberRecent(key, "INA-9", 60_000);
+    assert.deepEqual(claimOnce(key, 60_000), { state: "done", value: "INA-9" });
   });
-  test("falls back to x-real-ip then 'unknown'", () => {
-    assert.equal(clientIp(new Headers({ "x-real-ip": "9.9.9.9" })), "9.9.9.9");
+
+  test("forgetRecent releases a failed claim so a retry can proceed", () => {
+    const key = "test:forget:" + Math.random();
+    claimOnce(key, 60_000);
+    forgetRecent(key);
+    assert.deepEqual(claimOnce(key, 60_000), { state: "new" });
+  });
+});
+
+describe("clientIp", () => {
+  test("prefers x-real-ip, which the proxy sets and clients can't forge", () => {
+    const h = new Headers({
+      "x-real-ip": "9.9.9.9",
+      "x-forwarded-for": "1.2.3.4, 9.9.9.9",
+    });
+    assert.equal(clientIp(h), "9.9.9.9");
+  });
+  test("ignores the client-controlled first x-forwarded-for entry", () => {
+    const h = new Headers({ "x-forwarded-for": "6.6.6.6, 5.6.7.8" });
+    assert.equal(clientIp(h), "5.6.7.8");
+  });
+  test("falls back to 'unknown'", () => {
     assert.equal(clientIp(new Headers()), "unknown");
   });
 });

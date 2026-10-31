@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import ExcelJS from "exceljs";
 
 export async function GET() {
@@ -7,14 +9,24 @@ export async function GET() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = await createAdminSupabaseClient();
-  const { data: species } = await admin
-    .from("species")
-    .select("common_name, class_order, scientific_name, sizes, availability")
-    .order("common_name");
+  const { data: species } = await fetchAllRows<{
+    common_name: string;
+    class_order: string | null;
+    scientific_name: string | null;
+    sizes: string[] | null;
+    availability: string | null;
+  }>((from, to) =>
+    admin
+      .from("species")
+      .select("common_name, class_order, scientific_name, sizes, availability")
+      .order("common_name")
+      .order("id")
+      .range(from, to),
+  );
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "INÁ Ornamental Fish";
@@ -53,7 +65,7 @@ export async function GET() {
   ws.getColumn(6).width = 14;
 
   for (const sp of species ?? []) {
-    const sizes = sp.sizes?.length > 0 ? sp.sizes : ["-"];
+    const sizes = sp.sizes?.length ? sp.sizes : ["-"];
     for (const size of sizes) {
       const row = ws.addRow([
         sp.common_name,

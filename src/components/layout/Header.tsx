@@ -44,6 +44,10 @@ export default function Header() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartLabel =
+    itemCount > 0
+      ? `Quote cart, ${itemCount} item${itemCount === 1 ? "" : "s"}`
+      : "Quote cart, empty";
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -104,6 +108,7 @@ export default function Header() {
             <Link
               href="/order"
               title="Quote Cart"
+              aria-label={cartLabel}
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
                 "relative",
@@ -111,7 +116,10 @@ export default function Header() {
             >
               <ShoppingCart className="size-5" />
               {itemCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 size-5 justify-center rounded-full px-0 text-[10px] bg-emerald-600 text-white border-0">
+                <Badge
+                  aria-hidden="true"
+                  className="absolute -top-1 -right-1 size-5 justify-center rounded-full px-0 text-[10px] bg-emerald-600 text-white border-0"
+                >
                   {itemCount}
                 </Badge>
               )}
@@ -135,6 +143,7 @@ export default function Header() {
             <Link
               href="/order"
               title="Quote Cart"
+              aria-label={cartLabel}
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
                 "relative",
@@ -142,7 +151,10 @@ export default function Header() {
             >
               <ShoppingCart className="size-5" />
               {itemCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 size-5 justify-center rounded-full px-0 text-[10px] bg-emerald-600 text-white border-0">
+                <Badge
+                  aria-hidden="true"
+                  className="absolute -top-1 -right-1 size-5 justify-center rounded-full px-0 text-[10px] bg-emerald-600 text-white border-0"
+                >
                   {itemCount}
                 </Badge>
               )}

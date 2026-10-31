@@ -1,3 +1,4 @@
+import { baseOpenGraph } from "@/app/shared-metadata";
 import { fetchPostBySlug } from "@/lib/blog";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -21,16 +22,22 @@ export async function generateMetadata({
   if (!post) return { title: "Article not found" };
 
   const description =
-    post.excerpt || `Read "${post.title}" on the INA Ornamental Fish blog.`;
+    post.excerpt || `Read "${post.title}" on the INÁ Ornamental Fish blog.`;
   return {
     title: post.title,
     description,
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
+      ...baseOpenGraph,
       type: "article",
       title: post.title,
       description,
-      images: post.featuredImageUrl ? [{ url: post.featuredImageUrl }] : undefined,
+      url: `/blog/${post.slug}`,
+      publishedTime: post.date || undefined,
+      modifiedTime: post.modified || undefined,
+      images: post.featuredImageUrl
+        ? [{ url: post.featuredImageUrl }]
+        : baseOpenGraph.images,
     },
   };
 }

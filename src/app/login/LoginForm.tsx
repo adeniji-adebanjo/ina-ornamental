@@ -16,7 +16,14 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/admin";
+  // Only same-site paths: "?redirect=https://evil.example" (or "//evil…")
+  // would otherwise bounce a freshly signed-in admin to a phishing page.
+  const requested = searchParams.get("redirect") ?? "";
+  const redirect =
+    requested.startsWith("/") && !requested.startsWith("//") && !requested.startsWith("/\\")
+      ? requested
+      : "/admin";
+  const notAdmin = searchParams.get("error") === "not_admin";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,13 +31,22 @@ export default function LoginForm() {
     setError("");
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (authError) {
       setError(authError.message);
+      setLoading(false);
+      return;
+    }
+
+    // A valid account isn't enough — it must carry the admin role. Sign
+    // straight back out so a non-admin session doesn't linger.
+    if (data.user?.app_metadata?.role !== "admin") {
+      await supabase.auth.signOut();
+      setError("This account doesn't have admin access. Contact the site owner if you need it.");
       setLoading(false);
       return;
     }
@@ -62,6 +78,8 @@ export default function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="email"
+              aria-label="Email address"
+              autoComplete="email"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -71,6 +89,8 @@ export default function LoginForm() {
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
+                aria-label="Password"
+                autoComplete="current-password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -80,15 +100,22 @@ export default function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                {showPassword ? (
+                  <EyeOff className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
               </button>
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                {error}
+            {(error || notAdmin) && (
+              <p role="alert" className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                {error ||
+                  "That account doesn't have admin access. Sign in with an admin account."}
               </p>
             )}
 

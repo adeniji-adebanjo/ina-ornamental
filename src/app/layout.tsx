@@ -88,19 +88,6 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: SITE_URL,
-    languages: {
-      "en-US": SITE_URL,
-      "en-GB": SITE_URL,
-      "en-DE": SITE_URL,
-      "en-NL": SITE_URL,
-      "en-JP": SITE_URL,
-      "en-CN": SITE_URL,
-      "en-HK": SITE_URL,
-      "en-SG": SITE_URL,
-      "en-RU": SITE_URL,
-      "en-AE": SITE_URL,
-      "x-default": SITE_URL,
-    },
   },
 };
 

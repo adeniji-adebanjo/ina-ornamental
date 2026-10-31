@@ -24,5 +24,18 @@ export default async function ClientOrderPage({
   const priceList = await getClientPriceList(slug, token);
   if (!priceList) notFound();
 
-  return <ClientOrderClient priceList={priceList} />;
+  // Everything passed to a client component is visible in the page payload.
+  // Strip secrets and admin-only fields; the form only prefills contact info.
+  const safePriceList = {
+    ...priceList,
+    access_token: "",
+    password_hash: null,
+    client: priceList.client
+      ? { ...priceList.client, notes: null, address: null }
+      : null,
+  };
+
+  return (
+    <ClientOrderClient priceList={safePriceList} slug={slug} token={token} />
+  );
 }

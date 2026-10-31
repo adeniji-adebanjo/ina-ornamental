@@ -2,8 +2,14 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 import { CATALOG_TAG } from "@/lib/queries/species";
 import { revalidateTag } from "next/cache";
+import {
+  pickSpeciesFields,
+  parseImageUrls,
+  replaceSpeciesImages,
+} from "@/lib/species-write";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
@@ -15,33 +21,48 @@ export async function PUT(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const { image_urls, ...speciesData } = body;
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object")
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+
+  const picked = pickSpeciesFields(body);
+  if ("error" in picked)
+    return NextResponse.json({ error: picked.error }, { status: 400 });
+  const imageUrls = parseImageUrls(body.image_urls);
+  if (imageUrls && "error" in imageUrls)
+    return NextResponse.json({ error: imageUrls.error }, { status: 400 });
 
   const admin = await createAdminSupabaseClient();
   const { data, error } = await admin
     .from("species")
-    .update(speciesData)
+    .update({ ...picked.data, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) {
+    const msg =
+      error.code === "23505"
+        ? "Another species already uses this slug"
+        : "Couldn't save the species";
+    console.error("Species update failed:", error.message);
+    return NextResponse.json({ error: msg }, { status: 400 });
+  }
+  if (!data)
+    return NextResponse.json({ error: "Species not found" }, { status: 404 });
 
-  // Replace images
-  if (image_urls !== undefined) {
-    await admin.from("species_images").delete().eq("species_id", id);
-    if (image_urls.length > 0) {
-      const images = image_urls.map((url: string, i: number) => ({
-        species_id: id,
-        image_url: url,
-        sort_order: i,
-      }));
-      await admin.from("species_images").insert(images);
+  if (Array.isArray(imageUrls)) {
+    const imgError = await replaceSpeciesImages(admin, id, imageUrls);
+    if (imgError) {
+      console.error("Species image update failed:", imgError);
+      revalidateTag(CATALOG_TAG, "max");
+      return NextResponse.json(
+        { error: "Details saved, but the images couldn't be updated. Please try again." },
+        { status: 500 },
+      );
     }
   }
 
@@ -58,7 +79,7 @@ export async function DELETE(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = await createAdminSupabaseClient();

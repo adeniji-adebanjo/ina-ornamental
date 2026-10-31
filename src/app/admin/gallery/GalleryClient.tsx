@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/format";
 import { RefreshCw, Camera, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
@@ -110,9 +111,7 @@ export default function GalleryClient({
                     {post.media_type}
                   </Badge>
                   <span className="text-xs text-slate-400">
-                    {post.timestamp
-                      ? new Date(post.timestamp).toLocaleDateString()
-                      : "—"}
+                    {formatDate(post.timestamp)}
                   </span>
                 </div>
               </CardContent>

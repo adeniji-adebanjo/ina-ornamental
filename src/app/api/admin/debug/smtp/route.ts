@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 import nodemailer from "nodemailer";
 
 async function verifySmtpConnection() {
@@ -47,7 +48,7 @@ async function requireAdmin() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!isAdmin(user)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return null;

@@ -3,6 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin-auth";
 import { fetchAllRows } from "@/lib/supabase/paginate";
 import {
   cellText,
@@ -11,6 +12,7 @@ import {
   normalizeAvailability,
   applyAvailabilityUpdates,
 } from "@/lib/excel";
+import { checkSpreadsheetUpload } from "@/lib/upload-limits";
 
 // GET: Fetch all location pricing data (or filter by location)
 export async function GET(request: NextRequest) {
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const location = request.nextUrl.searchParams.get("location");
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const contentType = request.headers.get("content-type") || "";
@@ -64,14 +66,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    const badFile = checkSpreadsheetUpload(file);
+    if (badFile)
+      return NextResponse.json({ error: badFile }, { status: 400 });
+
     const workbook = await loadWorkbook(file);
 
-    // Get all species for name-to-id mapping
-    const { data: allSpecies } = await admin
-      .from("species")
-      .select("id, common_name, slug, scientific_name");
+    // Get all species for name-to-id mapping (paged: >1000 species would
+    // otherwise silently report the rest as "Unknown species").
+    const { data: allSpecies, error: speciesError } = await fetchAllRows<{
+      id: string;
+      common_name: string | null;
+      slug: string | null;
+      scientific_name: string | null;
+    }>((from, to) =>
+      admin
+        .from("species")
+        .select("id, common_name, slug, scientific_name")
+        .order("id")
+        .range(from, to),
+    );
+    if (speciesError) {
+      return NextResponse.json(
+        { error: `Couldn't read species: ${speciesError.message}` },
+        { status: 500 },
+      );
+    }
     const speciesMap = new Map<string, string>();
-    for (const s of allSpecies ?? []) {
+    for (const s of allSpecies) {
       if (s.common_name) speciesMap.set(s.common_name.toLowerCase(), s.id);
       if (s.slug) speciesMap.set(s.slug.toLowerCase(), s.id);
       if (s.scientific_name)
@@ -98,10 +120,10 @@ export async function POST(request: NextRequest) {
 
     const headerRow = ws.getRow(1);
     const knownHeaders = new Map<string, number>();
+    // cellText, not String(): a rich-text/formula header would otherwise read
+    // "[object Object]" and be created as a location.
     headerRow.eachCell((cell, colNumber) => {
-      const val = String(cell.value || "")
-        .trim()
-        .toLowerCase();
+      const val = cellText(cell.value).trim().toLowerCase();
       if (!val) return;
       knownHeaders.set(val, colNumber);
     });
@@ -121,7 +143,7 @@ export async function POST(request: NextRequest) {
 
     const locationColumns: { col: number; location: string }[] = [];
     headerRow.eachCell((cell, colNumber) => {
-      const val = String(cell.value || "").trim();
+      const val = cellText(cell.value).trim();
       if (!val) return;
       if (!recognizedCols.has(colNumber)) {
         locationColumns.push({ col: colNumber, location: val });
@@ -145,7 +167,10 @@ export async function POST(request: NextRequest) {
       const scientificName = scientificNameCol
         ? cellText(row.getCell(scientificNameCol).value).trim()
         : "";
-      const size = cellText(row.getCell(sizeCol).value).trim() || null;
+      // The template writes "-" for species without sizes; store that as no
+      // size (NULL) so auto-fill can tell the generic price from a sized one.
+      const sizeText = cellText(row.getCell(sizeCol).value).trim();
+      const size = /^[-–—]?$/.test(sizeText) ? null : sizeText;
 
       if (!speciesName && !scientificName) return;
 
@@ -169,9 +194,13 @@ export async function POST(request: NextRequest) {
 
       for (const { col, location } of locationColumns) {
         const price = parsePrice(row.getCell(col).value);
-        if (!isNaN(price) && price > 0) {
-          pricingRows.push({ species_id: speciesId, location, size, price });
+        if (isNaN(price) || price <= 0) continue;
+        // decimal(10,2): anything larger would fail the whole replace.
+        if (price >= 1e8) {
+          errors.push(`Row ${rowNumber}: price ${price} for "${location}" is too large — skipped`);
+          continue;
         }
+        pricingRows.push({ species_id: speciesId, location, size, price });
       }
     });
 
@@ -196,16 +225,23 @@ export async function POST(request: NextRequest) {
     const dedupedRows = [...dedupedByKey.values()];
     const duplicateCount = pricingRows.length - dedupedRows.length;
 
-    // Upsert: delete existing for these locations, then insert
+    // Replace these locations' prices in ONE transaction (migration 0007): if
+    // the insert fails, the old prices are still there.
     const locations = [...new Set(dedupedRows.map((r) => r.location))];
-    await admin.from("location_pricing").delete().in("location", locations);
+    const { error: replaceError } = await admin.rpc("replace_location_pricing", {
+      p_locations: locations,
+      p_rows: dedupedRows,
+    });
 
-    const { error: insertError } = await admin
-      .from("location_pricing")
-      .insert(dedupedRows);
-
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    if (replaceError) {
+      console.error("Location pricing replace failed:", replaceError.message);
+      return NextResponse.json(
+        {
+          error:
+            "Couldn't save the pricing. Nothing was changed — the previous prices are still in place.",
+        },
+        { status: 500 },
+      );
     }
 
     const availabilityUpdated = await applyAvailabilityUpdates(
@@ -222,25 +258,12 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // JSON body: manual entries
-  const body = await request.json();
-  const { items } = body;
-  if (!items?.length) {
-    return NextResponse.json(
-      { error: "No pricing items provided" },
-      { status: 400 },
-    );
-  }
-
-  const { error } = await admin.from("location_pricing").upsert(items, {
-    onConflict: "species_id,location,size",
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ inserted: items.length });
+  // The old unvalidated JSON "manual entries" path was unused by the admin UI
+  // and has been removed; uploads are the only way in.
+  return NextResponse.json(
+    { error: "Upload a pricing spreadsheet (multipart/form-data)." },
+    { status: 415 },
+  );
 }
 
 // DELETE: Clear all pricing for a given location
@@ -249,7 +272,7 @@ export async function DELETE(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const location = request.nextUrl.searchParams.get("location");
@@ -258,7 +281,17 @@ export async function DELETE(request: NextRequest) {
   }
 
   const admin = await createAdminSupabaseClient();
-  await admin.from("location_pricing").delete().eq("location", location);
+  const { error } = await admin
+    .from("location_pricing")
+    .delete()
+    .eq("location", location);
+  if (error) {
+    console.error("Location pricing delete failed:", error.message);
+    return NextResponse.json(
+      { error: "Couldn't delete this location's pricing. Please try again." },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ success: true });
 }
@@ -269,7 +302,7 @@ export async function PATCH(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user)
+  if (!isAdmin(user))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json().catch(() => null);

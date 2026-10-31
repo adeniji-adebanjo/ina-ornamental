@@ -1,3 +1,4 @@
+import { pageOpenGraph } from "@/app/shared-metadata";
 import TrackShipmentClient from "./TrackShipmentClient";
 
 export const metadata = {
@@ -5,6 +6,12 @@ export const metadata = {
   description:
     "Track your INÁ Ornamental Fish air cargo shipment. Enter your order reference to see live flight status on the airline's official cargo portal.",
   alternates: { canonical: "/track" },
+  openGraph: pageOpenGraph({
+    title: "Track Your Shipment | INÁ Ornamental Fish",
+    description:
+      "Enter your order reference to see live flight status for your air cargo shipment on the airline's official cargo portal.",
+    url: "/track",
+  }),
 };
 
 export default function TrackPage() {

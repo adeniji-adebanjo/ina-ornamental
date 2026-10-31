@@ -140,6 +140,7 @@ export default function CategoryManager({
 
         <div className="flex gap-2">
           <Input
+            aria-label="New category name"
             placeholder="New category name"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
@@ -152,6 +153,7 @@ export default function CategoryManager({
             onClick={handleCreate}
             disabled={creating || !newName.trim()}
             className="rounded-lg shrink-0"
+            aria-label="Add category"
           >
             {creating ? (
               <Loader2 className="size-4 animate-spin" />
@@ -175,6 +177,7 @@ export default function CategoryManager({
                 {editingId === cat.id ? (
                   <>
                     <Input
+                      aria-label={`Rename ${cat.name}`}
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyDown={(e) => {
@@ -189,6 +192,7 @@ export default function CategoryManager({
                       size="icon-sm"
                       disabled={busyId === cat.id}
                       onClick={() => handleRename(cat.id)}
+                      aria-label="Save category name"
                     >
                       <Check className="size-4 text-emerald-600" />
                     </Button>
@@ -196,6 +200,7 @@ export default function CategoryManager({
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => setEditingId(null)}
+                      aria-label="Cancel rename"
                     >
                       <X className="size-4 text-slate-500" />
                     </Button>
@@ -212,6 +217,7 @@ export default function CategoryManager({
                       variant="ghost"
                       size="icon-sm"
                       title="Rename"
+                      aria-label={`Rename ${cat.name}`}
                       onClick={() => {
                         setEditingId(cat.id);
                         setEditName(cat.name);
@@ -223,6 +229,7 @@ export default function CategoryManager({
                       variant="ghost"
                       size="icon-sm"
                       title="Delete"
+                      aria-label={`Delete ${cat.name}`}
                       disabled={busyId === cat.id}
                       onClick={() => handleDelete(cat)}
                     >

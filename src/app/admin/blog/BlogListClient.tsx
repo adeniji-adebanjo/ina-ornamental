@@ -1,7 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   ConfirmDialog,
@@ -121,15 +122,20 @@ export default function BlogListClient({ posts, categories, writable }: Props) {
             <Tags className="size-4 mr-2" />
             Categories
           </Button>
-          <Link href="/admin/blog/new" className="w-full sm:w-auto">
-            <Button
-              disabled={!writable}
-              className="rounded-xl w-full sm:w-auto"
+          {writable ? (
+            <Link
+              href="/admin/blog/new"
+              className={cn(buttonVariants(), "rounded-xl w-full sm:w-auto")}
             >
               <Plus className="size-4 mr-2" />
               New Post
+            </Link>
+          ) : (
+            <Button disabled className="rounded-xl w-full sm:w-auto">
+              <Plus className="size-4 mr-2" />
+              New Post
             </Button>
-          </Link>
+          )}
         </div>
       </div>
 
@@ -152,6 +158,7 @@ export default function BlogListClient({ posts, categories, writable }: Props) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
           <Input
+            aria-label="Search posts"
             placeholder="Search posts..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -159,6 +166,7 @@ export default function BlogListClient({ posts, categories, writable }: Props) {
           />
         </div>
         <select
+          aria-label="Filter by status"
           value={statusFilter}
           onChange={(e) =>
             setStatusFilter(e.target.value as "all" | "publish" | "draft")
@@ -186,11 +194,12 @@ export default function BlogListClient({ posts, categories, writable }: Props) {
                 : "Once WordPress writeback is configured, your posts will appear here."}
             </p>
             {writable && (
-              <Link href="/admin/blog/new">
-                <Button className="rounded-xl">
-                  <Plus className="size-4 mr-2" />
-                  New Post
-                </Button>
+              <Link
+                href="/admin/blog/new"
+                className={cn(buttonVariants(), "rounded-xl")}
+              >
+                <Plus className="size-4 mr-2" />
+                New Post
               </Link>
             )}
           </CardContent>
@@ -253,6 +262,9 @@ export default function BlogListClient({ posts, categories, writable }: Props) {
                     title={
                       post.status === "publish" ? "Unpublish" : "Publish"
                     }
+                    aria-label={
+                      post.status === "publish" ? "Unpublish post" : "Publish post"
+                    }
                     disabled={busyId === post.id}
                     onClick={() => togglePublish(post)}
                   >
@@ -262,15 +274,22 @@ export default function BlogListClient({ posts, categories, writable }: Props) {
                       <Eye className="size-4 text-emerald-600" />
                     )}
                   </Button>
-                  <Link href={`/admin/blog/${post.id}`}>
-                    <Button variant="ghost" size="icon-sm" title="Edit">
-                      <Pencil className="size-4 text-slate-500" />
-                    </Button>
+                  <Link
+                    href={`/admin/blog/${post.id}`}
+                    title="Edit"
+                    aria-label="Edit post"
+                    className={buttonVariants({
+                      variant: "ghost",
+                      size: "icon-sm",
+                    })}
+                  >
+                    <Pencil className="size-4 text-slate-500" />
                   </Link>
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     title="Delete"
+                    aria-label="Delete post"
                     onClick={() => handleDelete(post)}
                   >
                     <Trash2 className="size-4 text-red-500" />
