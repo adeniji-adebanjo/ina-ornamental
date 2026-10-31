@@ -4,6 +4,7 @@ import {
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
 import ExcelJS from "exceljs";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -20,9 +21,13 @@ export async function GET() {
     .order("common_name");
 
   // Get existing locations
-  const { data: existingPricing } = await admin
-    .from("location_pricing")
-    .select("location");
+  const { data: existingPricing } = await fetchAllRows((from, to) =>
+    admin
+      .from("location_pricing")
+      .select("location")
+      .order("id")
+      .range(from, to),
+  );
   const existingLocations = [
     ...new Set((existingPricing ?? []).map((r) => r.location)),
   ];

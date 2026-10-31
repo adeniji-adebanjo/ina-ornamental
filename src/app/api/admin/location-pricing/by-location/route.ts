@@ -3,6 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 
 // GET: Fetch prices for a specific location (used when creating client price lists)
 export async function GET(request: NextRequest) {
@@ -21,13 +22,22 @@ export async function GET(request: NextRequest) {
     );
 
   const admin = await createAdminSupabaseClient();
-  const { data, error } = await admin
-    .from("location_pricing")
-    .select("species_id, size, price")
-    .eq("location", location);
+
+  // A location carries one row per species+size, so it can exceed the 1000-row
+  // response cap. (species_id, location, size) is unique, so this order is
+  // stable across pages and puts the generic (no-size) price first per species.
+  const { data, error } = await fetchAllRows((from, to) =>
+    admin
+      .from("location_pricing")
+      .select("species_id, size, price")
+      .eq("location", location)
+      .order("species_id")
+      .order("size", { nullsFirst: true })
+      .range(from, to),
+  );
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(data);
 }

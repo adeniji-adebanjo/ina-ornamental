@@ -1,4 +1,5 @@
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import PricingListClient from "./PricingListClient";
 
 export default async function AdminPricingPage() {
@@ -20,7 +21,13 @@ export default async function AdminPricingPage() {
       .from("species")
       .select("id, common_name, scientific_name, availability")
       .order("common_name"),
-    supabase.from("location_pricing").select("location"),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("location_pricing")
+        .select("location")
+        .order("id")
+        .range(from, to),
+    ),
   ]);
 
   // Get unique locations

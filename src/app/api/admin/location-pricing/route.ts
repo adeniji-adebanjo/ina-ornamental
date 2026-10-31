@@ -3,6 +3,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import {
   cellText,
   parsePrice,
@@ -23,17 +24,20 @@ export async function GET(request: NextRequest) {
   const location = request.nextUrl.searchParams.get("location");
 
   const admin = await createAdminSupabaseClient();
-  let query = admin
-    .from("location_pricing")
-    .select("*, species:species(id, common_name, scientific_name, slug, sizes)")
-    .order("location")
-    .order("species_id");
+  const { data, error } = await fetchAllRows((from, to) => {
+    let query = admin
+      .from("location_pricing")
+      .select("*, species:species(id, common_name, scientific_name, slug, sizes)")
+      .order("location")
+      .order("species_id")
+      .order("id");
 
-  if (location) {
-    query = query.eq("location", location);
-  }
+    if (location) {
+      query = query.eq("location", location);
+    }
 
-  const { data, error } = await query;
+    return query.range(from, to);
+  });
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
 
