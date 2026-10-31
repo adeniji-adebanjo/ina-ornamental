@@ -44,7 +44,7 @@ jobs:
       NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # The commit CI actually tested, not whatever main is now.
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
