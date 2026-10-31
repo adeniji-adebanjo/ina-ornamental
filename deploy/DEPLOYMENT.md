@@ -284,6 +284,58 @@ sudo systemctl restart inaornamentalfish-next
 
 ---
 
+## 9. Vercel (preview deployments)
+
+`.github/workflows/vercel.yml` deploys to Vercel from GitHub Actions:
+
+- **Every pull request** gets a preview deployment. Its URL is posted (and kept
+  up to date) as a PR comment.
+- **Production on Vercel is manual only:** Actions → Vercel → Run workflow →
+  target `production`, gated by the `vercel-production` environment. The live
+  site stays on the Nginx server (section 8). Attach `inaornamentalfish.com` to
+  only one of the two.
+- `vercel.json` turns off Vercel's own Git auto-deploys, so the Actions workflow
+  is the only thing that deploys and nothing builds twice.
+
+### One-time setup
+
+1. Create a Vercel project for this repo (framework: Next.js). With the Vercel
+   CLI, `vercel link` prints the IDs, which are also saved in `.vercel/project.json`
+   (git-ignored).
+2. Create a token at vercel.com → Account Settings → Tokens.
+3. GitHub → Settings → Secrets and variables → Actions, add the repository
+   secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID`.
+4. GitHub → Settings → Environments, create `vercel-production`, and add yourself
+   as a required reviewer.
+5. Vercel → Project → Settings → Environment Variables: add the app's variables
+   (`.env.example` lists them) for **Preview** and, if you'll use it,
+   **Production**. The build fetches these with `vercel pull`.
+6. Vercel → Project → Settings → Deployment Protection: keep **Vercel
+   Authentication** on for previews, so only your team can open them.
+
+### Before relying on previews — read this
+
+- **Use a separate test database for Preview.** If the Preview variables point at
+  the production Supabase project, then any order placed on a preview is a real
+  order, and every admin edit changes live data. Create a second Supabase
+  project, apply `schema.sql` and the migrations, and use its keys for Preview.
+- **Leave SMTP unset for Preview** unless you want previews sending real emails.
+  Email is skipped entirely when `SMTP_USER`/`SMTP_PASS` are missing.
+- **The Nginx protections don't exist on Vercel.** That means no `limit_req`
+  throttling and no image cache. The in-app rate limiter keeps its counts in
+  memory, and on Vercel each serverless instance has its own memory, so its
+  limits are per instance rather than site-wide. That's fine for team-only
+  previews. Before using Vercel as the *public* production host, move the limiter
+  to a shared store (e.g. Upstash Redis) and review Vercel's image-optimisation
+  usage limits.
+- **The CSP and security headers are set in Nginx too,** so Vercel deployments
+  don't send them. Add them via `headers()` in `next.config.ts` if Vercel becomes
+  the public host.
+- `NEXT_PUBLIC_SITE_URL` controls links in emails and the sitemap. For Preview,
+  either leave it as the real domain or set it per environment in Vercel.
+
+---
+
 ## Notes
 - Next.js binds to `127.0.0.1:3000` only; Nginx is the sole public listener.
 - Rate limiting is two-layer: Nginx `limit_req` per IP (cheap, before Node),

@@ -369,6 +369,10 @@ When changing `deploy/nginx/`, run `sudo nginx -t` before reloading.
 - `.github/workflows/deploy.yml` deploys `main` after CI passes. The build runs on
   GitHub's machines, and the server switches releases atomically, rolling back
   automatically if the health check fails.
+- `.github/workflows/vercel.yml` gives every pull request a Vercel preview
+  deployment and posts its URL on the PR. A Vercel production deploy only runs
+  when started by hand. Previews should point at a separate test database (see
+  [DEPLOYMENT.md §9](deploy/DEPLOYMENT.md)).
 - Dependabot opens weekly dependency update PRs.
 - Database migrations are always applied by hand.
 
