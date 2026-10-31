@@ -174,16 +174,13 @@ new code goes live, or admins get locked out.
 
 1. **Disable public sign-ups:** Authentication → Sign In / Providers →
    "Allow new users to sign up" = off.
-2. **Grant the admin role** to each real admin (SQL editor):
-   ```sql
-   update auth.users
-      set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
-    where email in ('admin@example.com');
-   ```
-   Review the list first (`select email, created_at from auth.users order by created_at;`)
-   and delete any account you don't recognise.
+2. **Check the user list** (`select email, created_at from auth.users order by created_at;`)
+   and delete any account you don't recognise. Both admin accounts
+   (`inaornamental@gmail.com`, `aeben.adebanjo@gmail.com`) must already exist.
 3. **Run migrations** `supabase/migrations/0006_admin_role_rls.sql` then
    `0007_replace_location_pricing.sql` (SQL editor, or `supabase db push`).
+   0006 grants the admin role to the two accounts above and aborts (changing
+   nothing) if either is missing.
 4. **Env:** add `NEXT_PUBLIC_GA_ID=G-…` to `.env.production` (analytics no
    longer has a hard-coded fallback and stays off without it). Optionally
    `CRON_SECRET` for the Instagram sync.

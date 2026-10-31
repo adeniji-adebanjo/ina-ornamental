@@ -222,7 +222,7 @@ alter table location_pricing enable row level security;
 create policy "Public read categories" on categories for select using (true);
 create policy "Public read species" on species for select using (true);
 create policy "Public read species_images" on species_images for select using (true);
-create policy "Public read instagram" on instagram_posts for select using (true);
+create policy "Public read instagram_posts" on instagram_posts for select using (true);
 create policy "Public read site_settings" on site_settings for select using (true);
 
 -- Admin full access: only accounts with app_metadata.role = 'admin' (see
