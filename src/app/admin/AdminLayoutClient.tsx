@@ -181,9 +181,9 @@ export default function AdminLayoutClient({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:block w-64 bg-white border-r border-slate-200 fixed inset-y-0">
+    <div className="min-h-screen bg-slate-50 flex print:bg-white">
+      {/* Desktop sidebar (hidden when printing, e.g. a report saved as PDF) */}
+      <aside className="hidden lg:block w-64 bg-white border-r border-slate-200 fixed inset-y-0 print:!hidden">
         {sidebar}
       </aside>
 
@@ -201,8 +201,8 @@ export default function AdminLayoutClient({
 
       {/* Main content — min-w-0 lets this flex child shrink instead of being
           stretched horizontally by wide content (e.g. the species list rows). */}
-      <main className="flex-1 lg:ml-64 min-w-0">
-        <header className="bg-white border-b border-slate-200 px-4 lg:px-8 py-4 flex items-center gap-4 sticky top-0 z-30">
+      <main className="flex-1 lg:ml-64 min-w-0 print:ml-0">
+        <header className="bg-white border-b border-slate-200 px-4 lg:px-8 py-4 flex items-center gap-4 sticky top-0 z-30 print:hidden">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -217,7 +217,7 @@ export default function AdminLayoutClient({
             View Site →
           </Link>
         </header>
-        <div className="p-4 lg:p-8">{children}</div>
+        <div className="p-4 lg:p-8 print:p-0">{children}</div>
       </main>
 
       {/* Idle warning — gives a grace period before auto sign-out */}

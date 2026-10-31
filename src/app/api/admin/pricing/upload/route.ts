@@ -74,7 +74,21 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const headerRow = ws.getRow(1);
+  // The header is usually row 1, but the app's own price-list export puts a
+  // title block above it. Use the first of the top 20 rows that names a
+  // species/name column, so an exported list can be re-uploaded as-is.
+  let headerRowNum = 1;
+  for (let r = 1; r <= Math.min(20, ws.rowCount); r++) {
+    const labels: string[] = [];
+    ws.getRow(r).eachCell((cell) =>
+      labels.push(cellText(cell.value).trim().toLowerCase()),
+    );
+    if (labels.includes("species") || labels.includes("name")) {
+      headerRowNum = r;
+      break;
+    }
+  }
+  const headerRow = ws.getRow(headerRowNum);
   const headerIndex = new Map<string, number>();
   headerRow.eachCell((cell, colNumber) => {
     const value = cellText(cell.value).trim().toLowerCase();
@@ -83,6 +97,7 @@ export async function POST(request: NextRequest) {
 
   const hasExplicitPriceHeader =
     headerIndex.has("price") ||
+    headerIndex.has("unit price") ||
     headerIndex.has("custom price") ||
     headerIndex.has("amount");
 
@@ -96,6 +111,7 @@ export async function POST(request: NextRequest) {
     headerIndex.get("class"),
     headerIndex.get("availability"),
     headerIndex.get("price"),
+    headerIndex.get("unit price"),
     headerIndex.get("custom price"),
     headerIndex.get("amount"),
     // Descriptive columns people commonly add — never prices.
@@ -130,12 +146,13 @@ export async function POST(request: NextRequest) {
     // Simple format: Name/Species in column A and price in a dedicated Price column or column B.
     priceCol =
       headerIndex.get("price") ||
+      headerIndex.get("unit price") ||
       headerIndex.get("custom price") ||
       headerIndex.get("amount") ||
       2;
 
     ws.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return;
+      if (rowNumber <= headerRowNum) return;
       const speciesName = cellText(row.getCell(nameCol).value).trim();
       const scientificName = sciCol
         ? cellText(row.getCell(sciCol).value).trim()
@@ -183,7 +200,7 @@ export async function POST(request: NextRequest) {
     priceCol = locationColumns[0].col;
 
     ws.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return;
+      if (rowNumber <= headerRowNum) return;
       const speciesName = cellText(row.getCell(nameCol).value).trim();
       const scientificName = sciCol
         ? cellText(row.getCell(sciCol).value).trim()

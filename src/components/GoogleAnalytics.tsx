@@ -3,21 +3,24 @@
 import { useEffect } from "react";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
+import { useConsent } from "@/lib/consent";
 
 // GA4 measurement ID — must be supplied via env; nothing loads without it, so
 // dev/staging builds never report into the production property by accident.
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID;
-const ENABLED =
+export const ANALYTICS_ENABLED =
   process.env.NODE_ENV === "production" && Boolean(GA_MEASUREMENT_ID);
+const ENABLED = ANALYTICS_ENABLED;
 
 // Private / authenticated areas are never tracked.
 const EXCLUDED_PREFIXES = ["/admin", "/login", "/orders"];
 
-function isExcluded(pathname: string) {
+export function isAnalyticsExcludedPath(pathname: string) {
   return EXCLUDED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
 }
+const isExcluded = isAnalyticsExcludedPath;
 
 /**
  * Google tag (gtag.js) for GA4 — production only, public pages only.
@@ -32,16 +35,19 @@ function isExcluded(pathname: string) {
  */
 export default function GoogleAnalytics() {
   const pathname = usePathname();
-  const excluded = !pathname || isExcluded(pathname);
+  const consent = useConsent();
+  // Withdrawn consent (or an excluded path) also stops an already-loaded tag.
+  const blocked = !pathname || isExcluded(pathname) || consent !== "granted";
 
   useEffect(() => {
     if (!ENABLED) return;
     (window as unknown as Record<string, unknown>)[
       `ga-disable-${GA_MEASUREMENT_ID}`
-    ] = excluded;
-  }, [excluded]);
+    ] = blocked;
+  }, [blocked]);
 
-  if (!ENABLED || excluded) return null;
+  // Nothing is requested from Google until the visitor accepts the banner.
+  if (!ENABLED || blocked) return null;
 
   return (
     <>

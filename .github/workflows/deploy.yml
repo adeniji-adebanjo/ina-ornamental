@@ -1,0 +1,109 @@
+name: Deploy
+
+# Builds the production bundle on GitHub's runners (so the server never runs
+# the CPU-heavy `next build`), uploads it, and switches the live site over
+# atomically with an automatic rollback if the health check fails
+# (deploy/remote-deploy.sh). Database migrations are NOT run here — they're
+# applied deliberately, per deploy/DEPLOYMENT.md.
+
+on:
+  # After CI succeeds on main…
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # …or manually (Actions → Deploy → Run workflow), e.g. to redeploy.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two deploys at once; a newer one waits for the current one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & deploy to production
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Holds the secrets below. Add required reviewers to this environment
+    # (Settings → Environments → production) to require a click to deploy.
+    environment:
+      name: production
+      url: https://inaornamentalfish.com
+    env:
+      # Build-time values: NEXT_PUBLIC_* are compiled into the browser bundle.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_SITE_URL: https://inaornamentalfish.com
+      NEXT_PUBLIC_GA_ID: ${{ secrets.NEXT_PUBLIC_GA_ID }}
+      NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
+      NEXT_PUBLIC_WP_API_URL: ${{ secrets.NEXT_PUBLIC_WP_API_URL }}
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The commit CI actually tested, not whatever main is now.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - run: npm run build
+
+      - name: Package release
+        id: pkg
+        run: |
+          RELEASE_ID="$(date -u +%Y%m%d%H%M%S)-$(git rev-parse --short HEAD)"
+          echo "id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
+          # Runtime files only: the build output (minus its cache), public
+          # assets and what `npm ci --omit=dev` needs on the server.
+          tar -czf release.tgz \
+            --exclude='.next/cache' \
+            .next public package.json package-lock.json next.config.ts tsconfig.json
+          ls -lh release.tgz
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pinned host key (from `ssh-keyscan`), so a spoofed server is refused.
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Upload and switch over
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          RELEASE_ID: ${{ steps.pkg.outputs.id }}
+        run: |
+          SSH="ssh -i ~/.ssh/deploy_key -o BatchMode=yes"
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+            release.tgz deploy/remote-deploy.sh "$USER@$HOST:/tmp/"
+          $SSH "$USER@$HOST" \
+            "bash /tmp/remote-deploy.sh '$RELEASE_ID' /tmp/release.tgz && rm -f /tmp/remote-deploy.sh"
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 10); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://inaornamentalfish.com/ || true)
+            [ "$code" = "200" ] && { echo "Site is up (200)"; exit 0; }
+            sleep 5
+          done
+          echo "::error::https://inaornamentalfish.com/ did not return 200 after deploy"
+          exit 1
+
+      - name: Clean up key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

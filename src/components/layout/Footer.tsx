@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 import { MessageCircle, Mail, MapPin } from "lucide-react";
+import { CookieSettingsLink } from "@/components/CookieConsent";
 
 const quickLinks = [
   { href: "/", label: "Home" },
@@ -124,10 +125,13 @@ export default function Footer() {
 
         <Separator className="mt-12 bg-slate-800" />
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-500">
-            © {new Date().getFullYear()} INÁ Ornamental Fish. All rights
-            reserved.
-          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <p className="text-xs text-slate-500">
+              © {new Date().getFullYear()} INÁ Ornamental Fish. All rights
+              reserved.
+            </p>
+            <CookieSettingsLink />
+          </div>
           <div className="flex items-center gap-4">
             <a
               href="https://www.instagram.com/inaornamentalfish/"

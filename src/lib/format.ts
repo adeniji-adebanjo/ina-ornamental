@@ -29,6 +29,22 @@ export function formatDate(
   }).format(date);
 }
 
+const dayKeyFormat = new Intl.DateTimeFormat("en-CA", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  timeZone: TIME_ZONE,
+});
+
+/**
+ * The calendar day (YYYY-MM-DD) a moment falls on in Lagos — for grouping by
+ * day. `toISOString().slice(0, 10)` gives the UTC day, which puts orders
+ * placed 00:00–01:00 Lagos time on the previous day.
+ */
+export function lagosDayKey(value: string | number | Date): string {
+  return dayKeyFormat.format(value instanceof Date ? value : new Date(value));
+}
+
 const usd2 = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",

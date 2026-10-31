@@ -136,20 +136,32 @@ function ValidityEditor({
   return (
     <div className="mb-4 flex flex-col sm:flex-row sm:items-end gap-3 rounded-xl bg-slate-50 p-3">
       <div>
-        <label className="text-xs font-medium text-slate-600 mb-1 block">
+        <label
+          htmlFor={`${id}-valid-from`}
+          className="text-xs font-medium text-slate-600 mb-1 block"
+        >
           Valid from
         </label>
         <DatePicker
+          id={`${id}-valid-from`}
           value={from}
           onChange={setFrom}
           placeholder="No start date"
         />
       </div>
       <div>
-        <label className="text-xs font-medium text-slate-600 mb-1 block">
+        <label
+          htmlFor={`${id}-valid-until`}
+          className="text-xs font-medium text-slate-600 mb-1 block"
+        >
           Valid until
         </label>
-        <DatePicker value={until} onChange={setUntil} placeholder="No expiry" />
+        <DatePicker
+          id={`${id}-valid-until`}
+          value={until}
+          onChange={setUntil}
+          placeholder="No expiry"
+        />
       </div>
       <Button
         type="button"
@@ -505,10 +517,14 @@ export default function PricingListClient({
         <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 mb-1 block">
+                  <label
+                    htmlFor="new-price-list-client"
+                    className="text-sm font-medium text-slate-700 mb-1 block"
+                  >
                     Client
                   </label>
                   <select
+                    id="new-price-list-client"
                     name="client_id"
                     required
                     className="w-full rounded-xl border border-slate-200 h-10 px-3 text-sm"
@@ -524,6 +540,7 @@ export default function PricingListClient({
                 <Input
                   required
                   name="title"
+                  aria-label="Price list title"
                   placeholder="Price List Title"
                   className="rounded-xl mt-auto"
                 />
@@ -585,6 +602,7 @@ export default function PricingListClient({
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Globe className="size-4 text-sky-700 shrink-0" />
                       <select
+                        aria-label="Auto-fill prices from a location"
                         onChange={(e) =>
                           handleAutoFillFromLocation(e.target.value)
                         }
@@ -651,6 +669,7 @@ export default function PricingListClient({
                     return (
                     <div key={idx} className="flex flex-col sm:flex-row gap-2">
                       <select
+                        aria-label={`Species, row ${idx + 1}`}
                         value={item.species_id}
                         onChange={(e) =>
                           updateItem(idx, "species_id", e.target.value)
@@ -676,6 +695,7 @@ export default function PricingListClient({
                         type="number"
                         step="0.01"
                         min="0"
+                        aria-label={`Price (USD), row ${idx + 1}`}
                         value={item.custom_price}
                         onChange={(e) =>
                           updateItem(idx, "custom_price", e.target.value)

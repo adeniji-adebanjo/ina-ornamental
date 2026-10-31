@@ -5,7 +5,7 @@ import {
 } from "@/lib/queries/species";
 import { getOrders } from "@/lib/queries/orders";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatDate, formatUSD } from "@/lib/format";
+import { formatDate, formatUSD, lagosDayKey } from "@/lib/format";
 import {
   Fish,
   Package,
@@ -62,15 +62,15 @@ export default async function AdminDashboard() {
 
   // ── Analytics aggregation (server-side) ──
   // Orders per day over the last 30 days.
+  // Days are Lagos calendar days, matching the Lagos-time labels. Stepping
+  // back in whole 24h periods from "now" is safe: Lagos has no DST.
   const DAYS = 30;
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  const now = new Date().getTime();
   const dayIndex = new Map<string, number>();
   const ordersPerDay: { label: string; value: number }[] = [];
   for (let i = DAYS - 1; i >= 0; i--) {
-    const d = new Date(startOfToday);
-    d.setDate(startOfToday.getDate() - i);
-    dayIndex.set(d.toISOString().slice(0, 10), ordersPerDay.length);
+    const d = new Date(now - i * 24 * 60 * 60 * 1000);
+    dayIndex.set(lagosDayKey(d), ordersPerDay.length);
     ordersPerDay.push({
       label: formatDate(d, { day: "numeric", month: "short" }),
       value: 0,
@@ -79,7 +79,7 @@ export default async function AdminDashboard() {
   let orders30 = 0;
   let value30 = 0;
   for (const o of orders) {
-    const key = new Date(o.submitted_at).toISOString().slice(0, 10);
+    const key = lagosDayKey(o.submitted_at);
     const idx = dayIndex.get(key);
     if (idx !== undefined) {
       ordersPerDay[idx].value += 1;

@@ -96,6 +96,7 @@ echo '*/15 * * * * www-data curl -s https://inaornamentalfish.com/wp-cron.php?do
 # Security + proxy snippets, image cache dir, site config
 sudo cp deploy/nginx/snippets/ina-security.conf /etc/nginx/snippets/
 sudo cp deploy/nginx/snippets/ina-next-proxy.conf /etc/nginx/snippets/
+sudo cp deploy/nginx/snippets/ina-csp.conf /etc/nginx/snippets/
 sudo mkdir -p /var/cache/nginx/ina_img && sudo chown www-data: /var/cache/nginx/ina_img
 sudo cp deploy/nginx/inaornamentalfish.com.conf /etc/nginx/sites-available/
 sudo ln -sf /etc/nginx/sites-available/inaornamentalfish.com.conf /etc/nginx/sites-enabled/
@@ -199,6 +200,87 @@ curl -sI "https://inaornamentalfish.com/_next/image?url=%2Fimages%2Ffish-placeho
 ```
 Then, logged out in a private window, place a small order through a client
 price-list link, and confirm the emails arrive.
+
+---
+
+## 8. CI/CD (GitHub Actions)
+
+- **`.github/workflows/ci.yml`** runs on every push and pull request: lint,
+  type-check, unit tests, a dependency audit and a production build.
+- **`.github/workflows/deploy.yml`** runs after CI passes on `main`, or manually
+  from Actions → Deploy → Run workflow. It **builds on GitHub's machines**, so the
+  CPU-heavy `next build` never runs on the server. It then uploads the build and
+  runs `deploy/remote-deploy.sh`, which:
+  1. unpacks the build into its own release folder;
+  2. installs runtime packages only;
+  3. switches the live link over to the new release;
+  4. restarts the service and health-checks it;
+  5. **rolls back automatically** if the health check fails.
+- **Database migrations are never run automatically.** Apply them deliberately
+  (section 7) *before* deploying code that depends on them.
+
+### One-time server setup
+
+The existing systemd unit and Nginx config keep working unchanged:
+`/var/www/ina-app` becomes a link to the current release.
+
+```bash
+# 1. A deploy user that can only restart the app service
+sudo adduser --disabled-password --gecos "" deploy
+sudo usermod -aG www-data deploy
+echo 'deploy ALL=(root) NOPASSWD: /bin/systemctl restart inaornamentalfish-next' \
+  | sudo tee /etc/sudoers.d/ina-deploy && sudo chmod 440 /etc/sudoers.d/ina-deploy
+
+# 2. Release layout; move the existing secrets into the shared folder
+sudo mkdir -p /var/www/ina/releases /var/www/ina/shared
+sudo cp /var/www/ina-app/.env.production /var/www/ina/shared/.env.production
+sudo chown -R deploy:www-data /var/www/ina && sudo chmod 640 /var/www/ina/shared/.env.production
+
+# 3. Turn the current install into the first "release" and link it
+sudo mv /var/www/ina-app /var/www/ina/releases/initial
+sudo ln -sfn /var/www/ina/releases/initial /var/www/ina-app
+sudo chown -h deploy:www-data /var/www/ina-app
+sudo chown deploy:www-data /var/www   # deploy must be able to swap the link
+
+# 4. SSH key for GitHub Actions (on your own machine)
+ssh-keygen -t ed25519 -f ina-deploy -N "" -C "github-actions-deploy"
+# append ina-deploy.pub to /home/deploy/.ssh/authorized_keys on the server
+ssh-keyscan -t ed25519 inaornamentalfish.com   # → DEPLOY_KNOWN_HOSTS
+```
+
+If giving the deploy user `/var/www` feels too broad, move the link to a folder
+it owns (for example `/var/www/ina/current`). Then point the systemd
+`WorkingDirectory`/`EnvironmentFile` and the Nginx `/_next/static/` alias at
+that folder, and set `CURRENT` in `remote-deploy.sh` to match.
+
+### GitHub secrets
+
+Set these in Settings → Environments → **production** (deploy) and, for CI's
+build check, also as repository secrets:
+
+| Secret | Value |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Same as `.env.production` |
+| `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_WP_API_URL` | Same as `.env.production` (deploy only) |
+| `DEPLOY_HOST` | `inaornamentalfish.com` (or the server IP) |
+| `DEPLOY_USER` | `deploy` |
+| `DEPLOY_SSH_KEY` | Contents of the private key `ina-deploy` |
+| `DEPLOY_KNOWN_HOSTS` | Output of the `ssh-keyscan` line above |
+
+`NEXT_PUBLIC_*` values are compiled into the browser bundle at build time. If
+you change one, update the GitHub secret and redeploy; editing
+`.env.production` alone has no effect on them. Server-only values such as SMTP
+and WordPress are read from `.env.production` at runtime.
+
+Optional: add yourself as a **required reviewer** on the production
+environment so each deploy waits for one click of approval.
+
+**Manual rollback** (picks the previous release):
+```bash
+ls -1dt /var/www/ina/releases/*/        # newest first
+sudo -u deploy ln -sfn /var/www/ina/releases/<previous> /var/www/ina-app
+sudo systemctl restart inaornamentalfish-next
+```
 
 ---
 

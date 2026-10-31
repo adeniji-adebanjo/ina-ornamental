@@ -1,0 +1,19 @@
+# Weekly dependency update PRs. Each one runs CI, so a breaking update shows
+# up as a red check instead of in production.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Patch/minor updates in one PR; majors stay separate so they get a look.
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -4,6 +4,7 @@ import "./globals.css";
 import LayoutShell from "@/components/layout/LayoutShell";
 import Providers from "@/components/Providers";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import CookieConsent from "@/components/CookieConsent";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
@@ -113,6 +114,7 @@ export default function RootLayout({
           <LayoutShell>{children}</LayoutShell>
         </Providers>
         <GoogleAnalytics />
+        <CookieConsent />
       </body>
     </html>
   );

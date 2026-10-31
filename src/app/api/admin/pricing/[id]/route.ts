@@ -50,15 +50,6 @@ export async function PATCH(
     updates.valid_until = d;
   }
 
-  // Guard against an inverted window when both bounds are present.
-  const from = updates.valid_from;
-  const until = updates.valid_until;
-  if (from && until && until < from)
-    return NextResponse.json(
-      { error: "Valid-until cannot be before valid-from." },
-      { status: 400 },
-    );
-
   if (Object.keys(updates).length === 0)
     return NextResponse.json(
       { error: "Nothing to update." },
@@ -66,14 +57,43 @@ export async function PATCH(
     );
 
   const admin = await createAdminSupabaseClient();
+
+  // Guard against an inverted window. When only one bound is being changed,
+  // compare it with the stored other bound, not just with the request.
+  const { data: current, error: readError } = await admin
+    .from("client_price_lists")
+    .select("valid_from, valid_until")
+    .eq("id", id)
+    .maybeSingle();
+  if (readError) {
+    console.error("Price list read failed:", readError.message);
+    return NextResponse.json({ error: "Couldn't update the dates" }, { status: 500 });
+  }
+  if (!current)
+    return NextResponse.json({ error: "Price list not found" }, { status: 404 });
+
+  const day = (v: string | null | undefined) => (v ? v.slice(0, 10) : null);
+  const from = "valid_from" in updates ? updates.valid_from : day(current.valid_from);
+  const until = "valid_until" in updates ? updates.valid_until : day(current.valid_until);
+  if (from && until && until < from)
+    return NextResponse.json(
+      { error: "Valid-until cannot be before valid-from." },
+      { status: 400 },
+    );
+
   const { data, error } = await admin
     .from("client_price_lists")
     .update(updates)
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) {
+    console.error("Price list date update failed:", error.message);
+    return NextResponse.json({ error: "Couldn't update the dates" }, { status: 400 });
+  }
+  if (!data)
+    return NextResponse.json({ error: "Price list not found" }, { status: 404 });
   return NextResponse.json(data);
 }
 
