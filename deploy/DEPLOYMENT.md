@@ -261,7 +261,7 @@ build check, also as repository secrets:
 | Secret | Value |
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Same as `.env.production` |
-| `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_WP_API_URL` | Same as `.env.production` (deploy only) |
+| `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_WHATSAPP_NUMBER` | Same as `.env.production` (deploy only) |
 | `DEPLOY_HOST` | `inaornamentalfish.com` (or the server IP) |
 | `DEPLOY_USER` | `deploy` |
 | `DEPLOY_SSH_KEY` | Contents of the private key `ina-deploy` |
